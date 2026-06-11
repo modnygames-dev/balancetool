@@ -74,12 +74,12 @@ input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:var(--ac
 /* SLOT TABLE */
 .slot-table{width:100%;border-collapse:collapse;font-size:11px}
 .slot-table th{padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--muted);background:var(--bg3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-.slot-table td{padding:5px 8px;border-bottom:1px solid var(--border);text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px}
+.slot-table td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px}
 .slot-table td.sname{text-align:left;font-weight:600;color:#fff;padding-left:14px}
 .slot-table tr.disabled td{opacity:.35}
 .slot-table tr.total-row{background:var(--bg3)}
 .slot-table tr.total-row td{font-weight:700;color:#fff;border-top:2px solid var(--border)}
-.contrib{font-size:10px}
+.contrib{font-size:11px}
 .ok{color:var(--green)} .warn{color:var(--red)} .edge{color:var(--yellow)} .na{color:var(--muted)}
 .dps-box{display:flex;gap:20px;padding:12px 16px;background:var(--bg3);border-top:1px solid var(--border)}
 .dps-item{display:flex;flex-direction:column;gap:2px}
@@ -96,7 +96,7 @@ table.ttk th.yc{color:var(--yellow)}
 table.ttk td{padding:0;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:11px}
 table.ttk td.lbl{padding:6px 10px;font-weight:700;font-size:12px}
 .cw{padding:4px 6px}
-input.ti{background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:3px 4px;width:68px;text-align:center;outline:none}
+input.ti{background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:4px 6px;width:72px;text-align:center;outline:none}
 input.ti:focus{border-color:var(--accent)}
 .cv{padding:6px 8px;text-align:center;font-weight:700}
 tr.rs1{background:#0a1a10} tr.rs5{background:#0a1020} tr.rs10{background:#1a0a0a} tr.rmid{background:var(--bg)}
@@ -462,20 +462,20 @@ function renderSlotTable() {
     }
 
     // tier inputs
-    const ti=(key,idx,def)=>`<input type="number" value="${def}" style="width:38px" onchange="D.stages[${s}][${i}].tiers.t${key}[${idx}]=+this.value;save();recalcAll()" ${dis?'disabled':''}>`;
+    const ti=(key,idx,def)=>`<input type="number" value="${def}" style="width:52px;font-size:12px;padding:3px 4px" onchange="D.stages[${s}][${i}].tiers.t${key}[${idx}]=+this.value;save();recalcAll()" ${dis?'disabled':''}>`;
 
     html+=`<tr class="${dis}">
       <td><input type="checkbox" ${sl.equipped?'checked':''} onchange="D.stages[${s}][${i}].equipped=this.checked;save();recalcAll()"></td>
       <td class="sname">${slotDef.name} <small style="color:var(--muted);font-size:9px">${slotDef.stat}</small></td>
-      <td><select style="width:70px" onchange="D.stages[${s}][${i}].grade=this.value;save()" ${dis?'disabled':''}>
+      <td><select style="width:78px;font-size:11px" onchange="D.stages[${s}][${i}].grade=this.value;save()" ${dis?'disabled':''}>
         ${GRADES.map(g=>`<option ${sl.grade===g?'selected':''}>${g}</option>`).join('')}
       </select></td>
-      <td><input type="number" value="${sl.ilvl}" style="width:48px" onchange="D.stages[${s}][${i}].ilvl=+this.value;save();recalcAll()" ${dis?'disabled':''}></td>
+      <td><input type="number" value="${sl.ilvl}" style="width:56px;font-size:12px" onchange="D.stages[${s}][${i}].ilvl=+this.value;save();recalcAll()" ${dis?'disabled':''}></td>
       <td class="contrib">${ti(1,0,t1mn)}~${ti(1,1,t1mx)}</td>
       <td class="contrib">${ti(2,0,t2mn)}~${ti(2,1,t2mx)}</td>
       <td class="contrib">${ti(3,0,t3mn)}~${ti(3,1,t3mx)}</td>
       <td class="contrib">${ti(4,0,t4mn)}~${ti(4,1,t4mx)}</td>
-      <td class="contrib ${sl.equipped?'ok':'na'}" style="min-width:160px">${contrib}</td>
+      <td class="contrib ${sl.equipped?'ok':'na'}" style="min-width:180px;font-size:12px">${contrib}</td>
       <td class="contrib" style="color:var(--muted)">${note}</td>
     </tr>`;
   });
