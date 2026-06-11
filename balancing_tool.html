@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pew Pew — Balancing Tool</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+:root{
+  --bg:#0d0f14;--bg2:#13161d;--bg3:#1a1e27;--border:#2a2e3a;
+  --text:#c8d0e0;--muted:#5a6070;
+  --green:#4ade80;--green-dim:#0d2a18;
+  --red:#f87171;--red-dim:#2a0d0d;
+  --yellow:#fbbf24;--yellow-dim:#2a1f08;
+  --blue:#60a5fa;--blue-dim:#0d1a2a;
+  --purple:#a78bfa;--purple-dim:#1a0d2a;
+  --accent:#7c3aed;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px}
+
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.header h1{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:#fff}
+.header .sub{color:var(--muted);font-size:10px;font-family:'JetBrains Mono',monospace}
+.hright{margin-left:auto;display:flex;gap:8px;align-items:center}
+.badge{padding:3px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600}
+.bg{background:var(--green-dim);color:var(--green);border:1px solid #1a4a28}
+.br{background:var(--red-dim);color:var(--red);border:1px solid #4a1a1a}
+.bb{background:var(--blue-dim);color:var(--blue);border:1px solid #1a2a4a}
+
+.wrap{max-width:1300px;margin:0 auto;padding:20px;display:grid;gap:20px}
+
+/* PANEL */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.ph{background:var(--bg3);border-bottom:1px solid var(--border);padding:9px 16px;display:flex;align-items:center;gap:10px}
+.ph-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em}
+.ph-sub{font-size:10px;color:var(--muted);margin-left:4px}
+.ph-status{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px}
+
+/* STEP NUM */
+.snum{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0}
+.s1c{background:var(--green-dim);color:var(--green);border:1px solid #1a4a28}
+.s2c{background:var(--blue-dim);color:var(--blue);border:1px solid #1a2a4a}
+.s3c{background:var(--yellow-dim);color:var(--yellow);border:1px solid #4a2a0a}
+.s4c{background:var(--purple-dim);color:var(--purple);border:1px solid #2a1a4a}
+
+/* GUIDE */
+.guide{border-left:3px solid;padding:9px 13px;margin:12px 16px;border-radius:0 4px 4px 0;font-size:11px;line-height:1.7;background:var(--bg3)}
+.guide.green{border-color:var(--green);color:#a0d8b0}
+.guide.blue{border-color:var(--blue);color:#a0c4d8}
+.guide strong{color:#fff;display:block;margin-bottom:3px;font-size:12px}
+.guide code{font-family:'JetBrains Mono',monospace;background:#0d0f14;padding:1px 5px;border-radius:3px;font-size:10px}
+
+/* INPUT */
+input[type=number],select{background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:3px 5px;text-align:center;outline:none;transition:border-color .15s}
+input[type=number]:focus,select:focus{border-color:var(--accent)}
+select{color:var(--text);font-weight:400}
+input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:var(--accent)}
+
+/* WEAPON BTN */
+.wbtn{background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:5px 12px;cursor:pointer;transition:all .15s}
+.wbtn:hover{border-color:var(--accent);color:#fff}
+.wbtn.active{border-color:var(--yellow);color:var(--yellow);background:var(--yellow-dim)}
+
+/* STAGE TABS */
+.stage-tabs{display:flex;gap:0;border-bottom:1px solid var(--border)}
+.stab{padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s}
+.stab:hover{color:var(--text)}
+.stab.active{color:#fff;border-bottom-color:var(--accent)}
+.stab.s1a{border-bottom-color:var(--green);color:var(--green)}
+.stab.s5a{border-bottom-color:var(--blue);color:var(--blue)}
+.stab.s10a{border-bottom-color:var(--red);color:var(--red)}
+
+/* SLOT TABLE */
+.slot-table{width:100%;border-collapse:collapse;font-size:11px}
+.slot-table th{padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--muted);background:var(--bg3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.slot-table td{padding:5px 8px;border-bottom:1px solid var(--border);text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px}
+.slot-table td.sname{text-align:left;font-weight:600;color:#fff;padding-left:14px}
+.slot-table tr.disabled td{opacity:.35}
+.slot-table tr.total-row{background:var(--bg3)}
+.slot-table tr.total-row td{font-weight:700;color:#fff;border-top:2px solid var(--border)}
+.contrib{font-size:10px}
+.ok{color:var(--green)} .warn{color:var(--red)} .edge{color:var(--yellow)} .na{color:var(--muted)}
+.dps-box{display:flex;gap:20px;padding:12px 16px;background:var(--bg3);border-top:1px solid var(--border)}
+.dps-item{display:flex;flex-direction:column;gap:2px}
+.dps-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.dps-value{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--yellow)}
+.dps-sub{font-size:10px;color:var(--muted)}
+
+/* TTK TABLE */
+.tw{overflow-x:auto}
+table.ttk{width:100%;border-collapse:collapse;font-size:11px}
+table.ttk thead tr{background:var(--bg3)}
+table.ttk th{padding:7px 8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;border-bottom:2px solid var(--border);white-space:nowrap}
+table.ttk th.yc{color:var(--yellow)}
+table.ttk td{padding:0;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:11px}
+table.ttk td.lbl{padding:6px 10px;font-weight:700;font-size:12px}
+.cw{padding:4px 6px}
+input.ti{background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:3px 4px;width:68px;text-align:center;outline:none}
+input.ti:focus{border-color:var(--accent)}
+.cv{padding:6px 8px;text-align:center;font-weight:700}
+tr.rs1{background:#0a1a10} tr.rs5{background:#0a1020} tr.rs10{background:#1a0a0a} tr.rmid{background:var(--bg)}
+tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lbl{color:var(--red)}
+.vd{font-size:14px;text-align:center;padding:6px}
+
+/* CHECKLIST */
+.cl{display:grid;grid-template-columns:repeat(2,1fr)}
+.ci{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);cursor:pointer;transition:background .1s}
+.ci:hover{background:var(--bg3)} .ci:nth-child(2n){border-right:none}
+.cb{width:16px;height:16px;border:1px solid var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;margin-top:1px}
+.ci.done .cb{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+.cs{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);font-weight:600;margin-bottom:2px}
+.ct{font-weight:700;color:#fff;font-size:12px;margin-bottom:1px}
+.cg{font-size:10px;color:var(--muted)}
+.ci.done .ct{color:var(--muted);text-decoration:line-through}
+.pr{display:inline-flex;padding:1px 5px;border-radius:3px;font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.pn{background:var(--red-dim);color:var(--red);border:1px solid #5a2a2a}
+.pl{background:var(--bg3);color:var(--muted);border:1px solid var(--border)}
+
+/* URL COPY BTN */
+#copyBtn{background:var(--purple-dim);border:1px solid var(--accent);color:var(--purple);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:4px 12px;border-radius:4px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>⚔ PEW PEW — BALANCING TOOL</h1>
+    <div class="sub">아이템 가정 → 예상 DPS/HP → 스테이지 밸런싱</div>
+  </div>
+  <div class="hright">
+    <span class="badge bg">일반 0.5~1초</span>
+    <span class="badge br">보스 30~90초</span>
+    <span class="badge bb">맞이수 5~7대</span>
+    <button id="copyBtn" onclick="copyURL()">🔗 URL 복사</button>
+  </div>
+</div>
+
+<div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:0;flex-wrap:wrap">
+  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);margin-right:14px;text-transform:uppercase;letter-spacing:.06em">등급별 ILB Scale</span>
+  <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:4px;overflow:hidden">
+    <div style="padding:5px 12px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">Common</span>
+      <input type="number" id="gs0" value="0.01" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
+    </div>
+    <div style="padding:5px 12px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;color:#60d4fa;font-family:'JetBrains Mono',monospace">Magic</span>
+      <input type="number" id="gs1" value="0.015" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
+    </div>
+    <div style="padding:5px 12px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;color:#fbbf24;font-family:'JetBrains Mono',monospace">Rare</span>
+      <input type="number" id="gs2" value="0.02" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
+    </div>
+    <div style="padding:5px 12px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;color:#c084fc;font-family:'JetBrains Mono',monospace">Epic</span>
+      <input type="number" id="gs3" value="0.025" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
+    </div>
+    <div style="padding:5px 12px;background:var(--bg3);display:flex;align-items:center;gap:6px">
+      <span style="font-size:10px;color:#f97316;font-family:'JetBrains Mono',monospace">Unique</span>
+      <input type="number" id="gs4" value="0.03" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
+    </div>
+  </div>
+  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-left:14px">FinalValue = Random(TierMin, TierMax) × (1 + iLvl × GradeScale)</span>
+</div>
+<div class="wrap">
+
+<!-- ===== STEP 1: 아이템 가정 ===== -->
+<div class="panel">
+  <div class="ph">
+    <div class="snum s1c">1</div>
+    <span class="ph-title">아이템 가정</span>
+    <span class="ph-sub">무기 선택 + 슬롯별 장비 설정 → 예상 DPS/HP 자동 계산</span>
+    <div class="ph-status" id="st1status">—</div>
+  </div>
+
+  <!-- 무기 선택 -->
+  <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">무기</span>
+    <button class="wbtn active" onclick="selectWeapon(0)" id="wb0">🟢 Venom (DOT)</button>
+    <button class="wbtn" onclick="selectWeapon(1)" id="wb1">🔵 Ironpiercer (Pierce)</button>
+    <button class="wbtn" onclick="selectWeapon(2)" id="wb2">🟣 Abyss (Aura)</button>
+    <button class="wbtn" onclick="selectWeapon(3)" id="wb3">🟠 Tempest (Rapid)</button>
+    <button class="wbtn" onclick="selectWeapon(4)" id="wb4">🔴 Titan (Heavy)</button>
+    <span style="margin-left:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">Scale</span>
+    <input type="number" id="ilbScale" value="0.02" step="0.005" style="width:65px" onchange="recalcAll()">
+  </div>
+
+  <!-- 스테이지 탭 -->
+  <div class="stage-tabs" id="stageTabs"></div>
+
+  <!-- 슬롯 테이블 -->
+  <div style="overflow-x:auto">
+    <table class="slot-table">
+      <thead>
+        <tr>
+          <th style="width:30px">착용</th>
+          <th style="text-align:left;padding-left:14px">슬롯</th>
+          <th>등급</th>
+          <th>iLvl</th>
+          <th>T1 Min~Max</th>
+          <th>T2 Min~Max</th>
+          <th>T3 Min~Max</th>
+          <th>T4 Min~Max</th>
+          <th>스탯 기여</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody id="slotTbl"></tbody>
+    </table>
+  </div>
+
+  <!-- DPS/HP 요약 -->
+  <div class="dps-box" id="dpsSummary">
+    <div class="dps-item">
+      <div class="dps-label">예상 DPS</div>
+      <div class="dps-value" id="calcDPS">—</div>
+      <div class="dps-sub" id="calcDPSSub">—</div>
+    </div>
+    <div class="dps-item">
+      <div class="dps-label">예상 HP</div>
+      <div class="dps-value" id="calcHP">—</div>
+      <div class="dps-sub" id="calcHPSub">—</div>
+    </div>
+    <div class="dps-item">
+      <div class="dps-label">CritChance</div>
+      <div class="dps-value" id="calcCrit" style="font-size:14px">—</div>
+    </div>
+    <div class="dps-item">
+      <div class="dps-label">CritDamage</div>
+      <div class="dps-value" id="calcCritDmg" style="font-size:14px">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== STEP 2: 스테이지 밸런싱 ===== -->
+<div class="panel">
+  <div class="ph">
+    <div class="snum s2c">2</div>
+    <span class="ph-title">스테이지 밸런싱</span>
+    <span class="ph-sub">유닛 HP/ATK 입력 → TTK 자동 계산 (플레이어 DPS/HP는 1단계에서 자동 반영)</span>
+    <div class="ph-status" id="st2status">—</div>
+  </div>
+  <div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
+      일반 <input type="number" id="rn0" value="0.5" step="0.1" style="width:50px" onchange="calcTTK()"> ~ <input type="number" id="rn1" value="1.0" step="0.1" style="width:50px" onchange="calcTTK()"> 초
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
+      보스 <input type="number" id="rb0" value="30" style="width:50px" onchange="calcTTK()"> ~ <input type="number" id="rb1" value="90" style="width:50px" onchange="calcTTK()"> 초
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
+      맞이수 <input type="number" id="rh0" value="5" style="width:45px" onchange="calcTTK()"> ~ <input type="number" id="rh1" value="7" style="width:45px" onchange="calcTTK()"> 대
+    </div>
+  </div>
+  <div class="tw">
+    <table class="ttk">
+      <thead>
+        <tr>
+          <th>Stage</th><th>장비가정</th>
+          <th>플레이어<br>DPS</th><th>플레이어<br>HP</th>
+          <th class="yc">일반HP</th><th class="yc">일반ATK</th>
+          <th class="yc">보스HP</th>
+          <th>TTK<br>일반</th><th>TTK<br>보스</th><th>맞이수</th><th>판정</th>
+        </tr>
+      </thead>
+      <tbody id="ttkTbl"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== STEP 3: 이후 작업 ===== -->
+<div class="panel">
+  <div class="ph">
+    <div class="snum s4c">3</div>
+    <span class="ph-title">이후 작업</span>
+    <span class="ph-sub">레벨업 템포 → 스킬 → Archetype → 랜덤옵션 → 경제 → 드랍률</span>
+  </div>
+  <div class="cl" id="cl"></div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ===================== 데이터 =====================
+const WEAPONS = [
+  {name:'Venom (DOT)',     baseAtk:41.5, baseSpd:2.2},
+  {name:'Ironpiercer',    baseAtk:99,   baseSpd:0.6},
+  {name:'Abyss (Aura)',   baseAtk:56.5, baseSpd:1.2},
+  {name:'Tempest (Rapid)',baseAtk:58.5, baseSpd:1.5},
+  {name:'Titan (Heavy)',  baseAtk:79,   baseSpd:0.9},
+];
+
+const SLOTS = [
+  {id:'weapon', name:'Weapon',   stat:'ATK+ATKspd', statType:'attack',  baseHP:0,  baseATK:0},
+  {id:'helmet', name:'Helmet',   stat:'HP',         statType:'hp',      baseHP:0},
+  {id:'armor',  name:'Armor',    stat:'DEF',        statType:'def',     baseHP:0},
+  {id:'gloves', name:'Gloves',   stat:'CritChance%',statType:'crit',    baseHP:0},
+  {id:'boots',  name:'Boots',    stat:'MoveSpeed%', statType:'move',    baseHP:0},
+  {id:'ring',   name:'Ring',     stat:'CritDamage%',statType:'critdmg', baseHP:0},
+  {id:'necklace',name:'Necklace',stat:'MagicFind%', statType:'magic',   baseHP:0},
+];
+
+// 슬롯별 기본 T1~T4
+const SLOT_TIERS = {
+  weapon:   {t1:[5,12],   t2:[12,22],  t3:[22,38],  t4:[38,60]},  // ATK flat
+  weaponSpd:{t1:[5,12],   t2:[12,20],  t3:[20,30],  t4:[30,45]},  // ATKspd %
+  helmet:   {t1:[20,40],  t2:[40,70],  t3:[70,110], t4:[110,160]},
+  armor:    {t1:[8,18],   t2:[18,32],  t3:[32,50],  t4:[50,75]},
+  gloves:   {t1:[2,5],    t2:[5,10],   t3:[10,16],  t4:[16,22]},
+  boots:    {t1:[3,7],    t2:[7,12],   t3:[12,18],  t4:[18,25]},
+  ring:     {t1:[5,15],   t2:[15,28],  t3:[28,45],  t4:[45,65]},
+  necklace: {t1:[5,12],   t2:[12,22],  t3:[22,35],  t4:[35,50]},
+};
+
+const GRADES = ['없음','Common','Magic','Rare','Epic','Unique'];
+const GRADE_SCALE_DEFAULT = {'없음':0.02,'Common':0.01,'Magic':0.015,'Rare':0.02,'Epic':0.025,'Unique':0.03};
+let gradeScales = {...GRADE_SCALE_DEFAULT};
+const STAGE_EQUIP_LABEL = {
+  1:'없음',2:'Common',3:'Common',4:'Magic',5:'Magic',
+  6:'Rare',7:'Rare',8:'Rare',9:'Epic',10:'Unique'
+};
+
+const STAGE_ILVL_DEFAULT = {1:1,2:5,3:9,4:14,5:18,6:22,7:28,8:34,9:42,10:50};
+
+// ===================== 상태 =====================
+const SK = 'pp_bal4';
+const DEFAULTS = {
+  weaponIdx: 0,
+  scale: 0.02,
+  baseHP: 100,
+  stages: {},
+  units: {}
+};
+
+// 스테이지 기본 슬롯 설정
+function defaultStageSlots(s) {
+  const ilvl = STAGE_ILVL_DEFAULT[s];
+  const equipped = {1:[true,false,false,false,false,false,false],
+                    2:[true,false,false,false,false,false,false],
+                    3:[true,true,false,false,false,false,false],
+                    4:[true,true,false,false,false,false,false],
+                    5:[true,true,true,false,false,false,false],
+                    6:[true,true,true,false,false,false,false],
+                    7:[true,true,true,true,false,false,false],
+                    8:[true,true,true,true,true,false,false],
+                    9:[true,true,true,true,true,true,false],
+                    10:[true,true,true,true,true,true,true]};
+  return SLOTS.map((sl,i) => ({
+    equipped: equipped[s][i],
+    grade: 'Magic',
+    ilvl: ilvl,
+    tiers: {...SLOT_TIERS[sl.id]}
+  }));
+}
+
+function defaultUnits(s) {
+  const base = {1:{nh:230,na:10,bh:4600,ba:18}, 5:{nh:570,na:22,bh:11400,ba:38}, 10:{nh:1510,na:40,bh:30200,ba:75}};
+  const b1=base[1], b5=base[5], b10=base[10];
+  const lerp=(a,b,t)=>Math.round(a+(b-a)*t);
+  const t = s<=5?(s-1)/4:(s-5)/5;
+  const lo=s<=5?b1:b5, hi=s<=5?b5:b10;
+  return {nh:lerp(lo.nh,hi.nh,t), na:lerp(lo.na,hi.na,t), bh:lerp(lo.bh,hi.bh,t), ba:lerp(lo.ba,hi.ba,t)};
+}
+
+let saved = null;
+try { const h=location.hash.slice(1); if(h) saved=JSON.parse(decodeURIComponent(atob(h))); } catch(e){}
+if(!saved) try { saved=JSON.parse(localStorage.getItem(SK)); } catch(e){}
+let D = saved || JSON.parse(JSON.stringify(DEFAULTS));
+for(let s=1;s<=10;s++){
+  if(!D.stages[s]) D.stages[s]=defaultStageSlots(s);
+  if(!D.units[s])  D.units[s]=defaultUnits(s);
+}
+
+let currentStage = 1;
+let currentWeapon = D.weaponIdx||0;
+
+function save(){
+  const str=JSON.stringify(D);
+  localStorage.setItem(SK,str);
+  try{history.replaceState(null,'','#'+btoa(encodeURIComponent(str)));}catch(e){}
+}
+
+// ===================== 유틸 =====================
+function g(id){return +document.getElementById(id)?.value||0}
+function fmt(v,d=1){return(!v||!isFinite(v))?'-':v.toFixed(d)}
+function clsV(v,mn,mx){if(!v||!isFinite(v))return 'na';if(v>=mn&&v<=mx)return 'ok';if(v<mn*.7||v>mx*1.5)return 'warn';return 'edge'}
+
+function getTier(ilvl){return ilvl>=60?4:ilvl>=40?3:ilvl>=20?2:1}
+function getTierRange(tiers, ilvl){
+  const t=getTier(ilvl);
+  return tiers[`t${t}`]||[0,0];
+}
+function getMid(tiers, ilvl, scale, grade){
+  const [mn,mx]=getTierRange(tiers,ilvl);
+  const s = grade ? (gradeScales[grade]||scale||0.02) : (scale||0.02);
+  return ((mn+mx)/2)*(1+ilvl*s);
+}
+
+// ===================== DPS 계산 =====================
+function calcStageDPS(s) {
+  const slots = D.stages[s];
+  const scale = D.scale||0.02;
+  const w = WEAPONS[currentWeapon];
+  const baseHP = D.baseHP||100;
+
+  let flatATK=0, atkSpdPct=0, critChance=0, critDamage=0, hpBonus=0;
+
+  slots.forEach((sl,i)=>{
+    if(!sl.equipped) return;
+    const slotDef = SLOTS[i];
+    const mid = getMid(sl.tiers, sl.ilvl, scale, sl.grade);
+    if(slotDef.statType==='attack') {
+      flatATK += mid;
+      // weapon also has ATK spd
+      const midSpd = getMid(SLOT_TIERS.weaponSpd, sl.ilvl, scale, sl.grade);
+      atkSpdPct += midSpd;
+    }
+    if(slotDef.statType==='hp')     hpBonus  += mid;
+    if(slotDef.statType==='crit')   critChance += mid;
+    if(slotDef.statType==='critdmg') critDamage += mid;
+  });
+
+  const finalATK = w.baseAtk + flatATK;
+  const finalSpd = w.baseSpd * (1 + atkSpdPct/100);
+  const critMult = 1 + (critChance/100)*(critDamage/100);
+  const dps = finalATK * finalSpd * critMult;
+  const hp  = baseHP + hpBonus;
+
+  return {dps: Math.round(dps), hp: Math.round(hp), flatATK, atkSpdPct, critChance, critDamage, finalSpd};
+}
+
+// ===================== 렌더: 슬롯 테이블 =====================
+function renderSlotTable() {
+  const s = currentStage;
+  const slots = D.stages[s];
+  const scale = D.scale||0.02;
+  const {dps,hp,flatATK,atkSpdPct,critChance,critDamage,finalSpd} = calcStageDPS(s);
+
+  let html='';
+  slots.forEach((sl,i)=>{
+    const slotDef=SLOTS[i];
+    const dis=!sl.equipped?'disabled':'';
+    const mid=getMid(sl.tiers,sl.ilvl,scale);
+    const [t1mn,t1mx]=sl.tiers.t1||[0,0];
+    const [t2mn,t2mx]=sl.tiers.t2||[0,0];
+    const [t3mn,t3mx]=sl.tiers.t3||[0,0];
+    const [t4mn,t4mx]=sl.tiers.t4||[0,0];
+
+    let contrib='—',note='';
+    const w=WEAPONS[currentWeapon];
+    if(sl.equipped){
+      if(slotDef.statType==='attack'){
+        const midSpd=getMid(SLOT_TIERS.weaponSpd,sl.ilvl,scale);
+        contrib=`+${mid.toFixed(1)} ATK / +${midSpd.toFixed(1)}% SPD`;
+        note=`베이스 DPS: ${(w.baseAtk*w.baseSpd).toFixed(1)}`;
+      }
+      else if(slotDef.statType==='hp')     contrib=`+${mid.toFixed(0)} HP`;
+      else if(slotDef.statType==='crit')   contrib=`+${mid.toFixed(1)}% CritChance`;
+      else if(slotDef.statType==='critdmg') contrib=`+${mid.toFixed(1)}% CritDamage`;
+      else if(slotDef.statType==='def')    contrib=`+${mid.toFixed(1)} DEF`;
+      else if(slotDef.statType==='move')   contrib=`+${mid.toFixed(1)}% Speed`;
+      else if(slotDef.statType==='magic')  contrib=`+${mid.toFixed(1)}% MagicFind`;
+    }
+
+    // tier inputs
+    const ti=(key,idx,def)=>`<input type="number" value="${def}" style="width:38px" onchange="D.stages[${s}][${i}].tiers.t${key}[${idx}]=+this.value;save();recalcAll()" ${dis?'disabled':''}>`;
+
+    html+=`<tr class="${dis}">
+      <td><input type="checkbox" ${sl.equipped?'checked':''} onchange="D.stages[${s}][${i}].equipped=this.checked;save();recalcAll()"></td>
+      <td class="sname">${slotDef.name} <small style="color:var(--muted);font-size:9px">${slotDef.stat}</small></td>
+      <td><select style="width:70px" onchange="D.stages[${s}][${i}].grade=this.value;save()" ${dis?'disabled':''}>
+        ${GRADES.map(g=>`<option ${sl.grade===g?'selected':''}>${g}</option>`).join('')}
+      </select></td>
+      <td><input type="number" value="${sl.ilvl}" style="width:48px" onchange="D.stages[${s}][${i}].ilvl=+this.value;save();recalcAll()" ${dis?'disabled':''}></td>
+      <td class="contrib">${ti(1,0,t1mn)}~${ti(1,1,t1mx)}</td>
+      <td class="contrib">${ti(2,0,t2mn)}~${ti(2,1,t2mx)}</td>
+      <td class="contrib">${ti(3,0,t3mn)}~${ti(3,1,t3mx)}</td>
+      <td class="contrib">${ti(4,0,t4mn)}~${ti(4,1,t4mx)}</td>
+      <td class="contrib ${sl.equipped?'ok':'na'}" style="min-width:160px">${contrib}</td>
+      <td class="contrib" style="color:var(--muted)">${note}</td>
+    </tr>`;
+  });
+
+  document.getElementById('slotTbl').innerHTML=html;
+
+  // 요약
+  document.getElementById('calcDPS').textContent=dps;
+  document.getElementById('calcDPSSub').textContent=`ATK+${flatATK.toFixed(1)} | SPD+${atkSpdPct.toFixed(1)}%`;
+  document.getElementById('calcHP').textContent=hp;
+  document.getElementById('calcHPSub').textContent=`베이스 ${D.baseHP||100} + ${(hp-(D.baseHP||100)).toFixed(0)}`;
+  document.getElementById('calcCrit').textContent=critChance.toFixed(1)+'%';
+  document.getElementById('calcCritDmg').textContent=critDamage.toFixed(1)+'%';
+
+  // player stats 업데이트
+  D.stages[s]._dps=dps; D.stages[s]._hp=hp;
+}
+
+// ===================== 렌더: 스테이지 탭 =====================
+function renderTabs(){
+  const tabs=Array.from({length:10},(_,i)=>i+1).map(s=>{
+    const cls=s===currentStage?(s===1?'active s1a':s===5?'active s5a':s===10?'active s10a':'active'):'';
+    return `<div class="stab ${cls}" onclick="selectStage(${s})">S${s}</div>`;
+  }).join('');
+  document.getElementById('stageTabs').innerHTML=tabs;
+}
+
+function selectStage(s){
+  currentStage=s;
+  renderTabs();
+  renderSlotTable();
+}
+
+// ===================== 렌더: TTK 테이블 =====================
+function calcTTK(){
+  const rn0=g('rn0'),rn1=g('rn1'),rb0=g('rb0'),rb1=g('rb1'),rh0=g('rh0'),rh1=g('rh1');
+  let okCount=0, html='';
+
+  for(let s=1;s<=10;s++){
+    // DPS/HP 계산
+    const {dps,hp}=calcStageDPS(s);
+    const u=D.units[s];
+    const tN=dps?u.nh/dps:null;
+    const tB=dps?u.bh/dps:null;
+    const hN=u.na?hp/u.na:null;
+    const ok=tN&&tN>=rn0&&tN<=rn1&&tB&&tB>=rb0&&tB<=rb1&&hN&&hN>=rh0&&hN<=rh1;
+    if(ok&&[1,5,10].includes(s)) okCount++;
+    const rc=s===1?'rs1':s===5?'rs5':s===10?'rs10':'rmid';
+    html+=`<tr class="${rc}">
+      <td class="lbl">S${s}</td>
+      <td class="cv" style="font-size:10px;color:var(--muted)">${STAGE_EQUIP_LABEL[s]}</td>
+      <td class="cv ok">${dps}</td>
+      <td class="cv ok">${hp}</td>
+      <td><div class="cw"><input class="ti" type="number" value="${u.nh}" onchange="D.units[${s}].nh=+this.value;save();calcTTK()"></div></td>
+      <td><div class="cw"><input class="ti" type="number" value="${u.na}" onchange="D.units[${s}].na=+this.value;save();calcTTK()"></div></td>
+      <td><div class="cw"><input class="ti" type="number" value="${u.bh}" onchange="D.units[${s}].bh=+this.value;save();calcTTK()"></div></td>
+      <td class="cv ${clsV(tN,rn0,rn1)}">${fmt(tN)}초</td>
+      <td class="cv ${clsV(tB,rb0,rb1)}">${fmt(tB)}초</td>
+      <td class="cv ${clsV(hN,rh0,rh1)}">${fmt(hN)}대</td>
+      <td class="vd">${ok?'✅':'⚠️'}</td>
+    </tr>`;
+  }
+  document.getElementById('ttkTbl').innerHTML=html;
+  document.getElementById('st2status').textContent=okCount===3?'✅':okCount+'/3';
+}
+
+function recalcAll(){
+  D.scale=g('ilbScale')||0.02;
+  renderSlotTable();
+  calcTTK();
+  save();
+}
+
+function selectWeapon(i){
+  currentWeapon=i; D.weaponIdx=i;
+  document.querySelectorAll('[id^="wb"]').forEach((b,j)=>b.classList.toggle('active',i===j));
+  recalcAll();
+}
+
+// ===================== 체크리스트 =====================
+const CL=[
+  {s:'1단계',t:'전투 코어',g:'움직이는 것 자체가 재밌다',p:'now'},
+  {s:'2단계',t:'스테이지 밸런싱',g:'TTK 목표 달성',p:'now'},
+  {s:'3단계',t:'레벨업 템포',g:'레벨업이 기다려진다',p:'now'},
+  {s:'4단계',t:'스킬 선택',g:'무기 개성 강화',p:'now'},
+  {s:'5단계',t:'무기 Archetype',g:'무기 바꾸면 플레이가 달라진다',p:'now'},
+  {s:'6단계',t:'장비 메인스탯',g:'슬롯 역할 명확',p:'later'},
+  {s:'7단계',t:'랜덤옵션',g:'파밍 기대감 발생',p:'later'},
+  {s:'8단계',t:'경제',g:'소비 자연스럽다',p:'later'},
+  {s:'9단계',t:'드랍률',g:'파밍 루프 유지',p:'later'},
+  {s:'10단계',t:'광고버프',g:'광고 없이도 재밌다',p:'later'},
+];
+const chk=new Set(JSON.parse(localStorage.getItem('pp_cl')||'[]'));
+function renderCL(){
+  document.getElementById('cl').innerHTML=CL.map((x,i)=>`
+    <div class="ci ${chk.has(i)?'done':''}" onclick="tog(${i})">
+      <div class="cb">${chk.has(i)?'✓':''}</div>
+      <div><div class="cs">${x.s} <span class="pr ${x.p==='now'?'pn':'pl'}">${x.p==='now'?'▶ 지금':'● 나중에'}</span></div>
+      <div class="ct">${x.t}</div><div class="cg">${x.g}</div></div>
+    </div>`).join('');
+}
+function tog(i){chk.has(i)?chk.delete(i):chk.add(i);localStorage.setItem('pp_cl',JSON.stringify([...chk]));renderCL()}
+
+// URL 복사
+function copyURL(){
+  save();
+  navigator.clipboard.writeText(location.href).then(()=>{
+    const b=document.getElementById('copyBtn');
+    b.textContent='✅ 복사됨'; b.style.color='var(--green)';
+    setTimeout(()=>{b.textContent='🔗 URL 복사';b.style.color='var(--purple)';},2000);
+  });
+}
+
+// 등급별 Scale 업데이트
+function updateGradeScales(){
+  gradeScales['Common'] = +document.getElementById('gs0').value||0.01;
+  gradeScales['Magic']  = +document.getElementById('gs1').value||0.015;
+  gradeScales['Rare']   = +document.getElementById('gs2').value||0.02;
+  gradeScales['Epic']   = +document.getElementById('gs3').value||0.025;
+  gradeScales['Unique'] = +document.getElementById('gs4').value||0.03;
+  D.gradeScales = {...gradeScales};
+  save();
+  recalcAll();
+}
+
+// 초기 렌더
+document.getElementById('ilbScale').value=D.scale||0.02;
+// 저장된 gradeScales 복원
+if(D.gradeScales){
+  Object.assign(gradeScales, D.gradeScales);
+  if(D.gradeScales.Common) document.getElementById('gs0').value=D.gradeScales.Common;
+  if(D.gradeScales.Magic)  document.getElementById('gs1').value=D.gradeScales.Magic;
+  if(D.gradeScales.Rare)   document.getElementById('gs2').value=D.gradeScales.Rare;
+  if(D.gradeScales.Epic)   document.getElementById('gs3').value=D.gradeScales.Epic;
+  if(D.gradeScales.Unique) document.getElementById('gs4').value=D.gradeScales.Unique;
+}
+selectWeapon(currentWeapon);
+renderTabs();
+renderSlotTable();
+calcTTK();
+renderCL();
+</script>
+</body>
+</html>
