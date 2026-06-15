@@ -133,6 +133,8 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
     <span class="badge br">보스 30~90초</span>
     <span class="badge bb">맞이수 5~7대</span>
     <button id="copyBtn" onclick="copyURL()">🔗 URL 복사</button>
+    <button onclick="setToken()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer" id="tokenBtn">🔑 Token 설정</button>
+    <span id="syncStatus" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);padding:4px 8px">—</span>
   </div>
 </div>
 
@@ -337,6 +339,72 @@ const STAGE_EQUIP_LABEL = {
 const STAGE_ILVL_DEFAULT = {1:1,2:5,3:9,4:14,5:18,6:22,7:28,8:34,9:42,10:50};
 
 // ===================== 상태 =====================
+// ===== GIST 동기화 =====
+const GIST_ID = '17d3a083e16841b8372dc0c567c482b5';
+const GIST_TOKEN = localStorage.getItem('pp_gist_token') || '';
+const GIST_FILE = 'balancing_data.json';
+let saveTimer = null;
+
+function setToken() {
+  const t = prompt('GitHub Personal Access Token 입력 (gist 권한):', localStorage.getItem('pp_gist_token')||'');
+  if (t !== null) {
+    localStorage.setItem('pp_gist_token', t.trim());
+    document.getElementById('tokenBtn').style.color = t.trim() ? 'var(--green)' : 'var(--muted)';
+    location.reload();
+  }
+}
+
+function setSyncStatus(msg, color='var(--muted)') {
+  const el = document.getElementById('syncStatus');
+  if(el) { el.textContent = msg; el.style.color = color; }
+}
+
+async function loadFromGist() {
+  setSyncStatus('⟳ 불러오는 중...');
+  try {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      headers: { 'Authorization': `token ${GIST_TOKEN}` }
+    });
+    const json = await res.json();
+    const raw = json.files?.[GIST_FILE]?.content;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      setSyncStatus('✅ 로드 완료', 'var(--green)');
+      return parsed;
+    }
+  } catch(e) {
+    setSyncStatus('⚠️ 로드 실패', 'var(--red)');
+  }
+  return null;
+}
+
+async function saveToGist(data) {
+  setSyncStatus('⟳ 저장 중...');
+  try {
+    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `token ${GIST_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        files: { [GIST_FILE]: { content: JSON.stringify(data) } }
+      })
+    });
+    setSyncStatus('✅ 저장됨', 'var(--green)');
+    setTimeout(()=>setSyncStatus('—'), 3000);
+  } catch(e) {
+    setSyncStatus('⚠️ 저장 실패', 'var(--red)');
+  }
+}
+
+function debounceSave(data) {
+  if(saveTimer) clearTimeout(saveTimer);
+  setSyncStatus('○ 저장 대기...');
+  saveTimer = setTimeout(()=>saveToGist(data), 2000);
+}
+// ===== GIST 동기화 끝 =====
+
 const SK = 'pp_bal4';
 const DEFAULTS = {
   weaponIdx: 0,
@@ -392,6 +460,7 @@ function save(){
   const str=JSON.stringify(D);
   localStorage.setItem(SK,str);
   try{history.replaceState(null,'','#'+btoa(encodeURIComponent(str)));}catch(e){}
+  debounceSave(D);
 }
 
 // ===================== 유틸 =====================
@@ -679,23 +748,45 @@ function updateGradeScales(){
   recalcAll();
 }
 
-// 초기 렌더
-document.getElementById('ilbScale').value=D.scale||0.02;
-// 저장된 gradeScales 복원
-if(D.gradeScales){
+// 초기 로드: Gist 우선
+// Token 버튼 상태
+(()=>{
+  const t = localStorage.getItem('pp_gist_token');
+  const btn = document.getElementById('tokenBtn');
+  if(btn) btn.style.color = t ? 'var(--green)' : 'var(--red)';
+})();
+
+(async () => {
+  if (!GIST_TOKEN) {
+    setSyncStatus('⚠️ Token 없음 — 🔑 Token 설정 클릭', 'var(--red)');
+  }
+  const gistData = GIST_TOKEN ? await loadFromGist() : null;
+  if (gistData) {
+    D = gistData;
+    for(let s=1;s<=10;s++){
+      if(!D.stages[s]) D.stages[s]=defaultStageSlots(s);
+      if(!D.units[s])  D.units[s]=defaultUnits(s);
+    }
+    localStorage.setItem(SK, JSON.stringify(D));
+  }
+
+  document.getElementById('ilbScale').value=D.scale||0.02;
+  // 저장된 gradeScales 복원
+  if(D.gradeScales){
   Object.assign(gradeScales, D.gradeScales);
   if(D.gradeScales.Common) document.getElementById('gs0').value=D.gradeScales.Common;
   if(D.gradeScales.Magic)  document.getElementById('gs1').value=D.gradeScales.Magic;
   if(D.gradeScales.Rare)   document.getElementById('gs2').value=D.gradeScales.Rare;
   if(D.gradeScales.Epic)   document.getElementById('gs3').value=D.gradeScales.Epic;
   if(D.gradeScales.Unique) document.getElementById('gs4').value=D.gradeScales.Unique;
-}
-selectWeapon(currentWeapon);
-renderTabs();
-renderSlotTable();
-renderGradeCompare();
-calcTTK();
-renderCL();
+  }
+  selectWeapon(currentWeapon);
+  renderTabs();
+  renderSlotTable();
+  renderGradeCompare();
+  calcTTK();
+  renderCL();
+})();
 </script>
 </body>
 </html>
