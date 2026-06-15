@@ -230,6 +230,21 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
       <div class="dps-value" id="calcCritDmg" style="font-size:14px">—</div>
     </div>
   </div>
+
+  <!-- 등급별 DPS 비교 -->
+  <div style="border-top:1px solid var(--border);padding:10px 16px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
+      스테이지별 등급 자동 DPS 비교 (Weapon 기준, 현재 T1~T4 범위 적용)
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead>
+          <tr id="gradeCompareHdr"></tr>
+        </thead>
+        <tbody id="gradeCompareTbl"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- ===== STEP 2: 스테이지 밸런싱 ===== -->
@@ -542,9 +557,72 @@ function calcTTK(){
   document.getElementById('st2status').textContent=okCount===3?'✅':okCount+'/3';
 }
 
+function renderGradeCompare() {
+  const w = WEAPONS[currentWeapon];
+  const scale = D.scale || 0.02;
+  const grades = ['Common','Magic','Rare','Epic','Unique'];
+  const gradeColors = {
+    'Common':'var(--muted)', 'Magic':'#60d4fa',
+    'Rare':'var(--yellow)', 'Epic':'var(--purple)', 'Unique':'#f97316'
+  };
+
+  // 헤더
+  let hdr = '<th style="text-align:left;padding:5px 10px;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">Stage</th>';
+  grades.forEach(g => {
+    hdr += `<th style="text-align:center;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:${gradeColors[g]};border-bottom:1px solid var(--border)">${g}</th>`;
+  });
+  hdr += '<th style="text-align:center;padding:5px 10px;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">현재 설정</th>';
+  document.getElementById('gradeCompareHdr').innerHTML = hdr;
+
+  // 스테이지별 행
+  let rows = '';
+  const keyStages = [1,3,5,7,10];
+  const stageILVL = {1:1, 3:9, 5:18, 7:28, 10:50};
+
+  keyStages.forEach(s => {
+    const ilvl = stageILVL[s];
+    // Weapon 슬롯 T1~T4 (현재 설정)
+    const sl = D.stages[s][0]; // 첫번째 슬롯 = Weapon
+    const tiers = sl.tiers;
+
+    let row = `<tr style="background:${s===1?'var(--green-dim)':s===5?'var(--blue-dim)':s===10?'var(--red-dim)':'var(--bg)'}">`;
+    row += `<td style="padding:5px 10px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;border-bottom:1px solid var(--border)">S${s} <small style="opacity:.5;font-size:9px">iLvl${ilvl}</small></td>`;
+
+    let currentDPS = null;
+
+    grades.forEach(g => {
+      const gs = gradeScales[g] || 0.02;
+      const [mn,mx] = [
+        ilvl>=60?tiers.t4:ilvl>=40?tiers.t3:ilvl>=20?tiers.t2:tiers.t1
+      ].flat();
+      const atkMid = ((mn||5)+(mx||12))/2 * (1 + ilvl * gs);
+      // ATKspd
+      const spdTiers = SLOT_TIERS.weaponSpd;
+      const [smn,smx] = [
+        ilvl>=60?spdTiers.t4:ilvl>=40?spdTiers.t3:ilvl>=20?spdTiers.t2:spdTiers.t1
+      ].flat();
+      const spdMid = ((smn||5)+(smx||12))/2 * (1 + ilvl * gs);
+      const dps = Math.round((w.baseAtk + atkMid) * w.baseSpd * (1 + spdMid/100));
+
+      if (g === sl.grade) currentDPS = dps;
+
+      row += `<td style="text-align:center;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-weight:600;color:${gradeColors[g]};border-bottom:1px solid var(--border)">${dps}</td>`;
+    });
+
+    // 현재 설정 DPS
+    const cur = calcStageDPS(s);
+    row += `<td style="text-align:center;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--yellow);border-bottom:1px solid var(--border)">${cur.dps}</td>`;
+    row += '</tr>';
+    rows += row;
+  });
+
+  document.getElementById('gradeCompareTbl').innerHTML = rows;
+}
+
 function recalcAll(){
   D.scale=g('ilbScale')||0.02;
   renderSlotTable();
+  renderGradeCompare();
   calcTTK();
   save();
 }
@@ -615,6 +693,7 @@ if(D.gradeScales){
 selectWeapon(currentWeapon);
 renderTabs();
 renderSlotTable();
+renderGradeCompare();
 calcTTK();
 renderCL();
 </script>
