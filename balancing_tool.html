@@ -416,7 +416,30 @@ const DEFAULTS = {
   scale: 0.02,
   baseHP: 100,
   stages: {},
-  units: {}
+  units: {},
+  globalTiers: {
+    // 무기별 ATK/SPD 분리 (Venom/Ironpiercer/Abyss/Tempest/Titan)
+    weaponAtk: [
+      {t1:[5,12],  t2:[12,22], t3:[22,38], t4:[38,60]},  // Venom (빠른연사, ATK 낮음)
+      {t1:[12,22], t2:[22,38], t3:[38,60], t4:[60,85]},  // Ironpiercer (강타, ATK 높음)
+      {t1:[8,16],  t2:[16,28], t3:[28,45], t4:[45,65]},  // Abyss (중간)
+      {t1:[5,12],  t2:[12,22], t3:[22,38], t4:[38,60]},  // Tempest (빠른연사)
+      {t1:[10,20], t2:[20,35], t3:[35,55], t4:[55,80]},  // Titan (강타, ATK 높음)
+    ],
+    weaponSpd: [
+      {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60]},  // Venom (공속 높음)
+      {t1:[2,6],   t2:[6,12],  t3:[12,20], t4:[20,30]},  // Ironpiercer (공속 낮음)
+      {t1:[4,10],  t2:[10,18], t3:[18,28], t4:[28,40]},  // Abyss (중간)
+      {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60]},  // Tempest (공속 높음)
+      {t1:[2,6],   t2:[6,12],  t3:[12,20], t4:[20,30]},  // Titan (공속 낮음)
+    ],
+    helmet:    {t1:[20,40],  t2:[40,70],  t3:[70,110], t4:[110,160]},
+    armor:     {t1:[8,18],   t2:[18,32],  t3:[32,50],  t4:[50,75]},
+    gloves:    {t1:[2,5],    t2:[5,10],   t3:[10,16],  t4:[16,22]},
+    boots:     {t1:[3,7],    t2:[7,12],   t3:[12,18],  t4:[18,25]},
+    ring:      {t1:[5,15],   t2:[15,28],  t3:[28,45],  t4:[45,65]},
+    necklace:  {t1:[5,12],   t2:[12,22],  t3:[22,35],  t4:[35,50]},
+  }
 };
 
 // 스테이지 기본 슬롯 설정
@@ -436,7 +459,6 @@ function defaultStageSlots(s) {
     equipped: equipped[s][i],
     grade: 'Magic',
     ilvl: ilvl,
-    tiers: {...SLOT_TIERS[sl.id]}
   }));
 }
 
@@ -453,6 +475,9 @@ let saved = null;
 try { const h=location.hash.slice(1); if(h) saved=JSON.parse(decodeURIComponent(atob(h))); } catch(e){}
 if(!saved) try { saved=JSON.parse(localStorage.getItem(SK)); } catch(e){}
 let D = saved || JSON.parse(JSON.stringify(DEFAULTS));
+if(!D.globalTiers) D.globalTiers = JSON.parse(JSON.stringify(DEFAULTS.globalTiers));
+if(!Array.isArray(D.globalTiers.weaponAtk)) D.globalTiers.weaponAtk = JSON.parse(JSON.stringify(DEFAULTS.globalTiers.weaponAtk));
+if(!Array.isArray(D.globalTiers.weaponSpd)) D.globalTiers.weaponSpd = JSON.parse(JSON.stringify(DEFAULTS.globalTiers.weaponSpd));
 for(let s=1;s<=10;s++){
   if(!D.stages[s]) D.stages[s]=defaultStageSlots(s);
   if(!D.units[s])  D.units[s]=defaultUnits(s);
@@ -478,6 +503,14 @@ function getTierRange(tiers, ilvl){
   const t=getTier(ilvl);
   return tiers[`t${t}`]||[0,0];
 }
+function getGlobalTiers(slotId, weaponIdx) {
+  const gt = D.globalTiers || DEFAULTS.globalTiers;
+  const wi = (weaponIdx !== undefined ? weaponIdx : currentWeapon) || 0;
+  if (slotId === 'weapon')    return (gt.weaponAtk && gt.weaponAtk[wi]) || {t1:[5,12],t2:[12,22],t3:[22,38],t4:[38,60]};
+  if (slotId === 'weaponSpd') return (gt.weaponSpd && gt.weaponSpd[wi]) || {t1:[5,12],t2:[12,20],t3:[20,30],t4:[30,45]};
+  return gt[slotId] || {t1:[5,12],t2:[12,22],t3:[22,38],t4:[38,60]};
+}
+
 function getMid(tiers, ilvl, scale, grade){
   const [mn,mx]=getTierRange(tiers,ilvl);
   const s = grade ? (gradeScales[grade]||scale||0.02) : (scale||0.02);
@@ -496,11 +529,12 @@ function calcStageDPS(s) {
   slots.forEach((sl,i)=>{
     if(!sl.equipped) return;
     const slotDef = SLOTS[i];
-    const mid = getMid(sl.tiers, sl.ilvl, scale, sl.grade);
+    const tiers = getGlobalTiers(SLOTS[i].id);
+    const mid = getMid(tiers, sl.ilvl, scale, sl.grade);
     if(slotDef.statType==='attack') {
       flatATK += mid;
       // weapon also has ATK spd
-      const midSpd = getMid(SLOT_TIERS.weaponSpd, sl.ilvl, scale, sl.grade);
+      const midSpd = getMid(getGlobalTiers('weaponSpd'), sl.ilvl, scale, sl.grade);
       atkSpdPct += midSpd;
     }
     if(slotDef.statType==='hp')     hpBonus  += mid;
@@ -528,17 +562,18 @@ function renderSlotTable() {
   slots.forEach((sl,i)=>{
     const slotDef=SLOTS[i];
     const dis=!sl.equipped?'disabled':'';
-    const mid=getMid(sl.tiers,sl.ilvl,scale);
-    const [t1mn,t1mx]=sl.tiers.t1||[0,0];
-    const [t2mn,t2mx]=sl.tiers.t2||[0,0];
-    const [t3mn,t3mx]=sl.tiers.t3||[0,0];
-    const [t4mn,t4mx]=sl.tiers.t4||[0,0];
+    const gtiers = getGlobalTiers(slotDef.id);
+    const mid=getMid(gtiers,sl.ilvl,scale,sl.grade);
+    const [t1mn,t1mx]=gtiers.t1||[0,0];
+    const [t2mn,t2mx]=gtiers.t2||[0,0];
+    const [t3mn,t3mx]=gtiers.t3||[0,0];
+    const [t4mn,t4mx]=gtiers.t4||[0,0];
 
     let contrib='—',note='';
     const w=WEAPONS[currentWeapon];
     if(sl.equipped){
       if(slotDef.statType==='attack'){
-        const midSpd=getMid(SLOT_TIERS.weaponSpd,sl.ilvl,scale);
+        const midSpd=getMid(getGlobalTiers('weaponSpd'),sl.ilvl,scale,sl.grade);
         contrib=`+${mid.toFixed(1)} ATK / +${midSpd.toFixed(1)}% SPD`;
         note=`베이스 DPS: ${(w.baseAtk*w.baseSpd).toFixed(1)}`;
       }
@@ -551,7 +586,30 @@ function renderSlotTable() {
     }
 
     // tier inputs
-    const ti=(key,idx,def)=>`<input type="number" value="${def}" style="width:52px;font-size:12px;padding:3px 4px" onchange="D.stages[${s}][${i}].tiers.t${key}[${idx}]=+this.value;save();recalcAll()" ${dis?'disabled':''}>`;
+    const slotId = slotDef.id;
+    const wi = currentWeapon;
+    // T1~T4는 전역 설정 → 항상 수정 가능
+    const ti=(key,idx,def)=>`<input type="number" value="${def}" style="width:52px;font-size:12px;padding:3px 4px" onchange="
+      if(!D.globalTiers) D.globalTiers={};
+      const sid='${slotId}';
+      const wi=${wi};
+      const tkey='t'+${key};
+      if(sid==='weapon'){
+        if(!Array.isArray(D.globalTiers.weaponAtk)) D.globalTiers.weaponAtk=[...DEFAULTS.globalTiers.weaponAtk];
+        if(!D.globalTiers.weaponAtk[wi]) D.globalTiers.weaponAtk[wi]={};
+        if(!Array.isArray(D.globalTiers.weaponAtk[wi][tkey])) D.globalTiers.weaponAtk[wi][tkey]=[0,0];
+        D.globalTiers.weaponAtk[wi][tkey][${idx}]=+this.value;
+      } else if(sid==='weaponSpd'){
+        if(!Array.isArray(D.globalTiers.weaponSpd)) D.globalTiers.weaponSpd=[...DEFAULTS.globalTiers.weaponSpd];
+        if(!D.globalTiers.weaponSpd[wi]) D.globalTiers.weaponSpd[wi]={};
+        if(!Array.isArray(D.globalTiers.weaponSpd[wi][tkey])) D.globalTiers.weaponSpd[wi][tkey]=[0,0];
+        D.globalTiers.weaponSpd[wi][tkey][${idx}]=+this.value;
+      } else {
+        if(!D.globalTiers[sid]) D.globalTiers[sid]={};
+        if(!Array.isArray(D.globalTiers[sid][tkey])) D.globalTiers[sid][tkey]=[0,0];
+        D.globalTiers[sid][tkey][${idx}]=+this.value;
+      }
+      save();recalcAll()">`;
 
     html+=`<tr class="${dis}">
       <td><input type="checkbox" ${sl.equipped?'checked':''} onchange="D.stages[${s}][${i}].equipped=this.checked;save();recalcAll()"></td>
@@ -657,7 +715,7 @@ function renderGradeCompare() {
     const ilvl = stageILVL[s];
     // Weapon 슬롯 T1~T4 (현재 설정)
     const sl = D.stages[s][0]; // 첫번째 슬롯 = Weapon
-    const tiers = sl.tiers;
+    const tiers = getGlobalTiers('weapon');
 
     let row = `<tr style="background:${s===1?'var(--green-dim)':s===5?'var(--blue-dim)':s===10?'var(--red-dim)':'var(--bg)'}">`;
     row += `<td style="padding:5px 10px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;border-bottom:1px solid var(--border)">S${s} <small style="opacity:.5;font-size:9px">iLvl${ilvl}</small></td>`;
@@ -671,7 +729,7 @@ function renderGradeCompare() {
       ].flat();
       const atkMid = ((mn||5)+(mx||12))/2 * (1 + ilvl * gs);
       // ATKspd
-      const spdTiers = SLOT_TIERS.weaponSpd;
+      const spdTiers = getGlobalTiers('weaponSpd');
       const [smn,smx] = [
         ilvl>=60?spdTiers.t4:ilvl>=40?spdTiers.t3:ilvl>=20?spdTiers.t2:spdTiers.t1
       ].flat();
