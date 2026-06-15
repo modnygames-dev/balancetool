@@ -345,11 +345,16 @@ const GIST_TOKEN = localStorage.getItem('pp_gist_token') || '';
 const GIST_FILE = 'balancing_data.json';
 let saveTimer = null;
 
-function setToken() {
+async function setToken() {
   const t = prompt('GitHub Personal Access Token 입력 (gist 권한):', localStorage.getItem('pp_gist_token')||'');
   if (t !== null) {
     localStorage.setItem('pp_gist_token', t.trim());
     document.getElementById('tokenBtn').style.color = t.trim() ? 'var(--green)' : 'var(--muted)';
+    // 현재 데이터를 먼저 Gist에 업로드 후 reload
+    if (t.trim()) {
+      setSyncStatus('⟳ 현재 데이터 Gist에 저장 중...');
+      await saveToGist(D);
+    }
     location.reload();
   }
 }
@@ -761,7 +766,8 @@ function updateGradeScales(){
     setSyncStatus('⚠️ Token 없음 — 🔑 Token 설정 클릭', 'var(--red)');
   }
   const gistData = GIST_TOKEN ? await loadFromGist() : null;
-  if (gistData) {
+  // Gist 데이터가 실제 내용 있을 때만 사용 (빈 객체 {} 무시)
+  if (gistData && Object.keys(gistData).length > 2) {
     D = gistData;
     for(let s=1;s<=10;s++){
       if(!D.stages[s]) D.stages[s]=defaultStageSlots(s);
