@@ -184,7 +184,7 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
     <button class="wbtn" onclick="selectWeapon(3)" id="wb3">🟠 Tempest (Rapid)</button>
     <button class="wbtn" onclick="selectWeapon(4)" id="wb4">🔴 Titan (Heavy)</button>
     <span style="margin-left:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">BaseSpd</span>
-    <input type="number" id="baseSpd" value="2.2" step="0.1" style="width:65px" oninput="D.weaponSpds[currentWeapon]=+this.value;save();recalcAll()">
+    <input type="number" id="baseSpd" value="2.2" step="0.1" style="width:65px" oninput="if(!D.weaponSpds)D.weaponSpds=[...DEFAULTS.weaponSpds];D.weaponSpds[currentWeapon]=+this.value;save();recalcAll()">
     <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">Scale</span>
     <input type="number" id="ilbScale" value="0.02" step="0.005" style="width:65px" onchange="recalcAll()">
   </div>
