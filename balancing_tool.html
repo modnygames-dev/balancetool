@@ -301,11 +301,11 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
 <script>
 // ===================== 데이터 =====================
 const WEAPONS = [
-  {name:'Venom (DOT)',     baseAtk:41.5, baseSpd:2.2},
-  {name:'Ironpiercer',    baseAtk:99,   baseSpd:0.6},
-  {name:'Abyss (Aura)',   baseAtk:56.5, baseSpd:1.2},
-  {name:'Tempest (Rapid)',baseAtk:58.5, baseSpd:1.5},
-  {name:'Titan (Heavy)',  baseAtk:79,   baseSpd:0.9},
+  {name:'Venom (DOT)',     baseSpd:2.2},
+  {name:'Ironpiercer',    baseSpd:0.6},
+  {name:'Abyss (Aura)',   baseSpd:1.2},
+  {name:'Tempest (Rapid)',baseSpd:1.5},
+  {name:'Titan (Heavy)',  baseSpd:0.9},
 ];
 
 const SLOTS = [
@@ -532,8 +532,7 @@ function calcStageDPS(s) {
     const tiers = getGlobalTiers(SLOTS[i].id);
     const mid = getMid(tiers, sl.ilvl, scale, sl.grade);
     if(slotDef.statType==='attack') {
-      flatATK += mid;
-      // weapon also has ATK spd
+      flatATK += mid; // T1~T4 평균값만 (baseAtk 없음)
       const midSpd = getMid(getGlobalTiers('weaponSpd'), sl.ilvl, scale, sl.grade);
       atkSpdPct += midSpd;
     }
@@ -542,7 +541,7 @@ function calcStageDPS(s) {
     if(slotDef.statType==='critdmg') critDamage += mid;
   });
 
-  const finalATK = w.baseAtk + flatATK;
+  const finalATK = flatATK; // T1~T4 수치만
   const baseSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
   const finalSpd = baseSpd * (1 + atkSpdPct/100);
   const critMult = 1 + (critChance/100)*(critDamage/100);
@@ -577,7 +576,7 @@ function renderSlotTable() {
         const midSpd=getMid(getGlobalTiers('weaponSpd'),sl.ilvl,scale,sl.grade);
         contrib=`+${mid.toFixed(1)} ATK / +${midSpd.toFixed(1)}% SPD`;
         const bSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
-        note=`베이스 DPS: ${(w.baseAtk*bSpd).toFixed(1)} (공속 ${bSpd})`
+        note=`공속 ${bSpd}`
       }
       else if(slotDef.statType==='hp')     contrib=`+${mid.toFixed(0)} HP`;
       else if(slotDef.statType==='crit')   contrib=`+${mid.toFixed(1)}% CritChance`;
@@ -737,7 +736,7 @@ function renderGradeCompare() {
       ].flat();
       const spdMid = ((smn||5)+(smx||12))/2 * (1 + ilvl * gs);
       const bSpd2 = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
-      const dps = Math.round((w.baseAtk + atkMid) * bSpd2 * (1 + spdMid/100));
+      const dps = Math.round(atkMid * bSpd2 * (1 + spdMid/100));
 
       if (g === sl.grade) currentDPS = dps;
 
