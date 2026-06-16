@@ -183,7 +183,9 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
     <button class="wbtn" onclick="selectWeapon(2)" id="wb2">🟣 Abyss (Aura)</button>
     <button class="wbtn" onclick="selectWeapon(3)" id="wb3">🟠 Tempest (Rapid)</button>
     <button class="wbtn" onclick="selectWeapon(4)" id="wb4">🔴 Titan (Heavy)</button>
-    <span style="margin-left:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">Scale</span>
+    <span style="margin-left:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">BaseSpd</span>
+    <input type="number" id="baseSpd" value="2.2" step="0.1" style="width:65px" onchange="D.weaponSpds[currentWeapon]=+this.value;save();recalcAll()">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">Scale</span>
     <input type="number" id="ilbScale" value="0.02" step="0.005" style="width:65px" onchange="recalcAll()">
   </div>
 
@@ -415,6 +417,7 @@ const DEFAULTS = {
   weaponIdx: 0,
   scale: 0.02,
   baseHP: 100,
+  weaponSpds: [2.2, 0.6, 1.2, 1.5, 0.9], // 무기별 baseSpd
   stages: {},
   units: {},
   globalTiers: {
@@ -476,6 +479,7 @@ try { const h=location.hash.slice(1); if(h) saved=JSON.parse(decodeURIComponent(
 if(!saved) try { saved=JSON.parse(localStorage.getItem(SK)); } catch(e){}
 let D = saved || JSON.parse(JSON.stringify(DEFAULTS));
 if(!D.globalTiers) D.globalTiers = JSON.parse(JSON.stringify(DEFAULTS.globalTiers));
+if(!D.weaponSpds) D.weaponSpds = [...DEFAULTS.weaponSpds];
 if(!Array.isArray(D.globalTiers.weaponAtk)) D.globalTiers.weaponAtk = JSON.parse(JSON.stringify(DEFAULTS.globalTiers.weaponAtk));
 if(!Array.isArray(D.globalTiers.weaponSpd)) D.globalTiers.weaponSpd = JSON.parse(JSON.stringify(DEFAULTS.globalTiers.weaponSpd));
 for(let s=1;s<=10;s++){
@@ -543,7 +547,8 @@ function calcStageDPS(s) {
   });
 
   const finalATK = w.baseAtk + flatATK;
-  const finalSpd = w.baseSpd * (1 + atkSpdPct/100);
+  const baseSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
+  const finalSpd = baseSpd * (1 + atkSpdPct/100);
   const critMult = 1 + (critChance/100)*(critDamage/100);
   const dps = finalATK * finalSpd * critMult;
   const hp  = baseHP + hpBonus;
@@ -575,7 +580,8 @@ function renderSlotTable() {
       if(slotDef.statType==='attack'){
         const midSpd=getMid(getGlobalTiers('weaponSpd'),sl.ilvl,scale,sl.grade);
         contrib=`+${mid.toFixed(1)} ATK / +${midSpd.toFixed(1)}% SPD`;
-        note=`베이스 DPS: ${(w.baseAtk*w.baseSpd).toFixed(1)}`;
+        const bSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
+        note=`베이스 DPS: ${(w.baseAtk*bSpd).toFixed(1)} (공속 ${bSpd})`
       }
       else if(slotDef.statType==='hp')     contrib=`+${mid.toFixed(0)} HP`;
       else if(slotDef.statType==='crit')   contrib=`+${mid.toFixed(1)}% CritChance`;
@@ -734,7 +740,8 @@ function renderGradeCompare() {
         ilvl>=60?spdTiers.t4:ilvl>=40?spdTiers.t3:ilvl>=20?spdTiers.t2:spdTiers.t1
       ].flat();
       const spdMid = ((smn||5)+(smx||12))/2 * (1 + ilvl * gs);
-      const dps = Math.round((w.baseAtk + atkMid) * w.baseSpd * (1 + spdMid/100));
+      const bSpd2 = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
+      const dps = Math.round((w.baseAtk + atkMid) * bSpd2 * (1 + spdMid/100));
 
       if (g === sl.grade) currentDPS = dps;
 
@@ -762,6 +769,9 @@ function recalcAll(){
 function selectWeapon(i){
   currentWeapon=i; D.weaponIdx=i;
   document.querySelectorAll('[id^="wb"]').forEach((b,j)=>b.classList.toggle('active',i===j));
+  // baseSpd 입력칸 갱신
+  const bsEl = document.getElementById('baseSpd');
+  if(bsEl) bsEl.value = (D.weaponSpds && D.weaponSpds[i]) || WEAPONS[i].baseSpd;
   recalcAll();
 }
 
