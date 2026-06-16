@@ -259,7 +259,7 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
     <span class="ph-sub">유닛 HP/ATK 입력 → TTK 자동 계산 (플레이어 DPS/HP는 1단계에서 자동 반영)</span>
     <div class="ph-status" id="st2status">—</div>
   </div>
-  <div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap">
+  <div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap;align-items:center">
     <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
       일반 <input type="number" id="rn0" value="0.5" step="0.1" style="width:50px" onchange="calcTTK()"> ~ <input type="number" id="rn1" value="1.0" step="0.1" style="width:50px" onchange="calcTTK()"> 초
     </div>
@@ -269,6 +269,10 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
     <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
       맞이수 <input type="number" id="rh0" value="5" style="width:45px" onchange="calcTTK()"> ~ <input type="number" id="rh1" value="7" style="width:45px" onchange="calcTTK()"> 대
     </div>
+    <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
+      보스HP 배율 <input type="number" id="bossMult" value="20" style="width:50px" onchange="autoCalcUnits()">배
+    </div>
+    <button onclick="autoCalcUnits()" style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:4px 12px;border-radius:4px;cursor:pointer">⚡ 유닛 자동 계산</button>
   </div>
   <div class="tw">
     <table class="ttk">
@@ -334,6 +338,7 @@ const GRADES = ['없음','Common','Magic','Rare','Epic','Unique'];
 const GRADE_SCALE_DEFAULT = {'없음':0.02,'Common':0.01,'Magic':0.015,'Rare':0.02,'Epic':0.025,'Unique':0.03};
 let gradeScales = {...GRADE_SCALE_DEFAULT};
 const STAGE_EQUIP_OPTIONS = ['없음','Common','Magic','Rare','Epic','Unique'];
+const GRADE_DEFAULT_ILVL = {'없음':1,'Common':5,'Magic':12,'Rare':25,'Epic':40,'Unique':55};
 // 스테이지별 장비가정 기본값
 const STAGE_EQUIP_DEFAULT = {
   1:'없음',2:'Common',3:'Common',4:'Magic',5:'Magic',
@@ -480,6 +485,7 @@ function defaultUnits(s) {
 let saved = null;
 let D = saved || JSON.parse(JSON.stringify(DEFAULTS));
 if(!D.stageEquip) D.stageEquip = {1:'없음',2:'Common',3:'Common',4:'Magic',5:'Magic',6:'Rare',7:'Rare',8:'Rare',9:'Epic',10:'Unique'};
+if(!D.stageILVL) D.stageILVL = {};
 if(!D.globalTiers) D.globalTiers = JSON.parse(JSON.stringify(DEFAULTS.globalTiers));
 if(!D.weaponSpds) D.weaponSpds = [...DEFAULTS.weaponSpds];
 if(!Array.isArray(D.globalTiers.weaponAtk)) D.globalTiers.weaponAtk = JSON.parse(JSON.stringify(DEFAULTS.globalTiers.weaponAtk));
@@ -525,22 +531,24 @@ function getMid(tiers, ilvl, scale, grade){
 function calcStageDPSWithEquip(s, equip) {
   const gradeIdx = {'없음':0,'Common':1,'Magic':2,'Rare':3,'Epic':4,'Unique':5};
   const ei = gradeIdx[equip] || 0;
-  // 등급에 따라 착용 슬롯 수 결정
-  const slotCount = [0,1,2,3,5,7][ei] || 0; // 없음:0 Com:1 Mag:2 Rare:3 Epic:5 Unique:7
+  const slotCount = [0,1,2,3,5,7][ei] || 0;
   const scale = D.scale || 0.02;
   const w = WEAPONS[currentWeapon];
   const baseSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
   const baseHP = D.baseHP || 100;
+  // stageILVL 우선, 없으면 자동 추천값
+  const stageIlvl = (D.stageILVL && D.stageILVL[s]) || GRADE_DEFAULT_ILVL[equip] || 1;
   let flatATK=0, atkSpdPct=0, critChance=0, critDamage=0, hpBonus=0;
   const slots = D.stages[s];
   slots.forEach((sl,i)=>{
-    if(i >= slotCount) return; // 장비가정에 따라 슬롯 수 제한
+    if(i >= slotCount) return;
     const slotDef = SLOTS[i];
     const tiers = getGlobalTiers(slotDef.id);
-    const mid = getMid(tiers, sl.ilvl, scale, equip==='없음'?'Common':equip);
+    const grade = equip==='없음'?'Common':equip;
+    const mid = getMid(tiers, stageIlvl, scale, grade);
     if(slotDef.statType==='attack') {
       flatATK += mid;
-      const midSpd = getMid(getGlobalTiers('weaponSpd'), sl.ilvl, scale, equip==='없음'?'Common':equip);
+      const midSpd = getMid(getGlobalTiers('weaponSpd'), stageIlvl, scale, grade);
       atkSpdPct += midSpd;
     }
     if(slotDef.statType==='hp')      hpBonus   += mid;
@@ -695,6 +703,30 @@ function selectStage(s){
 }
 
 // ===================== 렌더: TTK 테이블 =====================
+function autoCalcUnits() {
+  const rn0=g('rn0'), rn1=g('rn1');
+  const rh0=g('rh0'), rh1=g('rh1');
+  const bossMult = g('bossMult') || 20;
+  const ttkMid = (rn0 + rn1) / 2;   // TTK 목표 중간값
+  const hitMid = (rh0 + rh1) / 2;   // 맞이수 목표 중간값
+
+  for(let s=1;s<=10;s++){
+    const equip = (D.stageEquip && D.stageEquip[s]) || STAGE_EQUIP_DEFAULT[s];
+    const {dps, hp} = calcStageDPSWithEquip(s, equip);
+
+    // 자동 계산
+    const normHP  = Math.round(dps * ttkMid);
+    const normATK = Math.round(hp / hitMid);
+    const bossHP  = Math.round(normHP * bossMult);
+
+    D.units[s].nh = normHP;
+    D.units[s].na = normATK;
+    D.units[s].bh = bossHP;
+  }
+  save();
+  calcTTK();
+}
+
 function calcTTK(){
   const rn0=g('rn0'),rn1=g('rn1'),rb0=g('rb0'),rb1=g('rb1'),rh0=g('rh0'),rh1=g('rh1');
   let okCount=0, html='';
@@ -715,11 +747,14 @@ function calcTTK(){
     const rc=s===1?'rs1':s===5?'rs5':s===10?'rs10':'rmid';
     html+=`<tr class="${rc}">
       <td class="lbl">S${s}</td>
-      <td style="padding:4px 6px;text-align:center">
-        <select style="background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 4px;width:72px"
-          onchange="if(!D.stageEquip)D.stageEquip={};D.stageEquip[${s}]=this.value;save();calcTTK()">
+      <td style="padding:4px 6px;text-align:center;display:flex;gap:4px;align-items:center">
+        <select style="background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 4px;width:68px"
+          onchange="if(!D.stageEquip)D.stageEquip={};D.stageEquip[${s}]=this.value;if(!D.stageILVL)D.stageILVL={};const autoIlvl=GRADE_DEFAULT_ILVL[this.value]||1;D.stageILVL[${s}]=autoIlvl;const ilEl=document.getElementById('ilvl_s${s}');if(ilEl)ilEl.value=autoIlvl;save();calcTTK()">
           ${equipOpts}
         </select>
+        <input type="number" id="ilvl_s${s}" value="${(D.stageILVL&&D.stageILVL[s])||GRADE_DEFAULT_ILVL[equip]||1}"
+          style="width:42px;background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:#a78bfa;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 4px;text-align:center"
+          onchange="if(!D.stageILVL)D.stageILVL={};D.stageILVL[${s}]=+this.value;save();calcTTK()">
       </td>
       <td class="cv ok">${dps}</td>
       <td class="cv ok">${hp}</td>
