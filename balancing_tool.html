@@ -333,7 +333,9 @@ const SLOT_TIERS = {
 const GRADES = ['없음','Common','Magic','Rare','Epic','Unique'];
 const GRADE_SCALE_DEFAULT = {'없음':0.02,'Common':0.01,'Magic':0.015,'Rare':0.02,'Epic':0.025,'Unique':0.03};
 let gradeScales = {...GRADE_SCALE_DEFAULT};
-const STAGE_EQUIP_LABEL = {
+const STAGE_EQUIP_OPTIONS = ['없음','Common','Magic','Rare','Epic','Unique'];
+// 스테이지별 장비가정 기본값
+const STAGE_EQUIP_DEFAULT = {
   1:'없음',2:'Common',3:'Common',4:'Magic',5:'Magic',
   6:'Rare',7:'Rare',8:'Rare',9:'Epic',10:'Unique'
 };
@@ -477,6 +479,7 @@ function defaultUnits(s) {
 
 let saved = null;
 let D = saved || JSON.parse(JSON.stringify(DEFAULTS));
+if(!D.stageEquip) D.stageEquip = {1:'없음',2:'Common',3:'Common',4:'Magic',5:'Magic',6:'Rare',7:'Rare',8:'Rare',9:'Epic',10:'Unique'};
 if(!D.globalTiers) D.globalTiers = JSON.parse(JSON.stringify(DEFAULTS.globalTiers));
 if(!D.weaponSpds) D.weaponSpds = [...DEFAULTS.weaponSpds];
 if(!Array.isArray(D.globalTiers.weaponAtk)) D.globalTiers.weaponAtk = JSON.parse(JSON.stringify(DEFAULTS.globalTiers.weaponAtk));
@@ -518,6 +521,40 @@ function getMid(tiers, ilvl, scale, grade){
 }
 
 // ===================== DPS 계산 =====================
+// 장비가정(equip)에 따라 착용/미착용 동적 결정
+function calcStageDPSWithEquip(s, equip) {
+  const gradeIdx = {'없음':0,'Common':1,'Magic':2,'Rare':3,'Epic':4,'Unique':5};
+  const ei = gradeIdx[equip] || 0;
+  // 등급에 따라 착용 슬롯 수 결정
+  const slotCount = [0,1,2,3,5,7][ei] || 0; // 없음:0 Com:1 Mag:2 Rare:3 Epic:5 Unique:7
+  const scale = D.scale || 0.02;
+  const w = WEAPONS[currentWeapon];
+  const baseSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
+  const baseHP = D.baseHP || 100;
+  let flatATK=0, atkSpdPct=0, critChance=0, critDamage=0, hpBonus=0;
+  const slots = D.stages[s];
+  slots.forEach((sl,i)=>{
+    if(i >= slotCount) return; // 장비가정에 따라 슬롯 수 제한
+    const slotDef = SLOTS[i];
+    const tiers = getGlobalTiers(slotDef.id);
+    const mid = getMid(tiers, sl.ilvl, scale, equip==='없음'?'Common':equip);
+    if(slotDef.statType==='attack') {
+      flatATK += mid;
+      const midSpd = getMid(getGlobalTiers('weaponSpd'), sl.ilvl, scale, equip==='없음'?'Common':equip);
+      atkSpdPct += midSpd;
+    }
+    if(slotDef.statType==='hp')      hpBonus   += mid;
+    if(slotDef.statType==='crit')    critChance += mid;
+    if(slotDef.statType==='critdmg') critDamage += mid;
+  });
+  const finalATK = flatATK;
+  const finalSpd = baseSpd * (1 + atkSpdPct/100);
+  const critMult = 1 + (critChance/100)*(critDamage/100);
+  const dps = Math.round(finalATK * finalSpd * critMult) || 1;
+  const hp  = Math.round(baseHP + hpBonus);
+  return {dps, hp};
+}
+
 function calcStageDPS(s) {
   const slots = D.stages[s];
   const scale = D.scale||0.02;
@@ -658,13 +695,27 @@ function selectStage(s){
 }
 
 // ===================== 렌더: TTK 테이블 =====================
+function buildEquipSelects() {
+  for(let s=1;s<=10;s++){
+    const sel = document.getElementById('equip_sel_'+s);
+    if(!sel) continue;
+    const cur = (D.stageEquip && D.stageEquip[s]) || STAGE_EQUIP_DEFAULT[s];
+    sel.innerHTML = STAGE_EQUIP_OPTIONS.map(o=>
+      '<option value="'+o+'"'+(cur===o?' selected':'')+'>'+o+'</option>'
+    ).join('');
+  }
+}
+
 function calcTTK(){
+  buildEquipSelects();
   const rn0=g('rn0'),rn1=g('rn1'),rb0=g('rb0'),rb1=g('rb1'),rh0=g('rh0'),rh1=g('rh1');
   let okCount=0, html='';
 
   for(let s=1;s<=10;s++){
     // DPS/HP 계산
-    const {dps,hp}=calcStageDPS(s);
+    // 장비가정에 따라 해당 스테이지 슬롯 등급 임시 적용
+    const equip = (D.stageEquip && D.stageEquip[s]) || STAGE_EQUIP_DEFAULT[s];
+    const {dps,hp}=calcStageDPSWithEquip(s, equip);
     const u=D.units[s];
     const tN=dps?u.nh/dps:null;
     const tB=dps?u.bh/dps:null;
@@ -674,7 +725,12 @@ function calcTTK(){
     const rc=s===1?'rs1':s===5?'rs5':s===10?'rs10':'rmid';
     html+=`<tr class="${rc}">
       <td class="lbl">S${s}</td>
-      <td class="cv" style="font-size:10px;color:var(--muted)">${STAGE_EQUIP_LABEL[s]}</td>
+      <td style="padding:4px 6px;text-align:center" id="equip_td_${s}">
+        <select style="background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 4px;width:72px" 
+          onchange="if(!D.stageEquip)D.stageEquip={};D.stageEquip[${s}]=this.value;save();calcTTK()"
+          id="equip_sel_${s}">
+        </select>
+      </td>
       <td class="cv ok">${dps}</td>
       <td class="cv ok">${hp}</td>
       <td><div class="cw"><input class="ti" type="number" value="${u.nh}" onchange="D.units[${s}].nh=+this.value;save();calcTTK()"></div></td>
