@@ -132,7 +132,7 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
     <span class="badge bg">일반 0.5~1초</span>
     <span class="badge br">보스 30~90초</span>
     <span class="badge bb">맞이수 5~7대</span>
-    <button id="copyBtn" onclick="copyURL()">🔗 URL 복사</button>
+    
     <button onclick="setToken()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer" id="tokenBtn">🔑 Token 설정</button>
     <span id="syncStatus" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);padding:4px 8px">—</span>
   </div>
@@ -406,6 +406,7 @@ async function saveToGist(data) {
 }
 
 function debounceSave(data) {
+  if(!GIST_TOKEN) return;
   if(saveTimer) clearTimeout(saveTimer);
   setSyncStatus('○ 저장 대기...');
   saveTimer = setTimeout(()=>saveToGist(data), 2000);
@@ -475,8 +476,6 @@ function defaultUnits(s) {
 }
 
 let saved = null;
-try { const h=location.hash.slice(1); if(h) saved=JSON.parse(decodeURIComponent(atob(h))); } catch(e){}
-if(!saved) try { saved=JSON.parse(localStorage.getItem(SK)); } catch(e){}
 let D = saved || JSON.parse(JSON.stringify(DEFAULTS));
 if(!D.globalTiers) D.globalTiers = JSON.parse(JSON.stringify(DEFAULTS.globalTiers));
 if(!D.weaponSpds) D.weaponSpds = [...DEFAULTS.weaponSpds];
@@ -491,9 +490,6 @@ let currentStage = 1;
 let currentWeapon = D.weaponIdx||0;
 
 function save(){
-  const str=JSON.stringify(D);
-  localStorage.setItem(SK,str);
-  try{history.replaceState(null,'','#'+btoa(encodeURIComponent(str)));}catch(e){}
   debounceSave(D);
 }
 
@@ -800,14 +796,7 @@ function renderCL(){
 function tog(i){chk.has(i)?chk.delete(i):chk.add(i);localStorage.setItem('pp_cl',JSON.stringify([...chk]));renderCL()}
 
 // URL 복사
-function copyURL(){
-  save();
-  navigator.clipboard.writeText(location.href).then(()=>{
-    const b=document.getElementById('copyBtn');
-    b.textContent='✅ 복사됨'; b.style.color='var(--green)';
-    setTimeout(()=>{b.textContent='🔗 URL 복사';b.style.color='var(--purple)';},2000);
-  });
-}
+
 
 // 등급별 Scale 업데이트
 function updateGradeScales(){
@@ -841,7 +830,7 @@ function updateGradeScales(){
       if(!D.stages[s]) D.stages[s]=defaultStageSlots(s);
       if(!D.units[s])  D.units[s]=defaultUnits(s);
     }
-    localStorage.setItem(SK, JSON.stringify(D));
+
   }
 
   document.getElementById('ilbScale').value=D.scale||0.02;
