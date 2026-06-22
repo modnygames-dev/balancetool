@@ -1149,56 +1149,15 @@ function calcStatRatio() {
 }
 
 // 아이템별 랜덤스탯 풀
+// 슬롯 타입별 랜덤스탯 풀 (아이템 공통)
 const STAT_POOL = {
-  Weapon: [
-    {name:'Venom Bow',     good:['Attack%','AttackSpeed%','CritChance%'],         medium:['CritDamage%'],              junk:['Defense_flat','HP_flat']},
-    {name:'Ironpiercer',   good:['Attack%','CritDamage%'],                        medium:['CritChance%','AttackSpeed%'],junk:['MoveSpeed%','MagicFind%']},
-    {name:'Abyss Bow',     good:['Attack%','CritDamage%','CritChance%'],          medium:['AttackSpeed%'],             junk:['Defense_flat','HP_flat']},
-    {name:'Tempest Bow',   good:['AttackSpeed%','Attack%','CritDamage%'],         medium:['CritChance%'],              junk:['Defense_flat','HP_flat']},
-    {name:'Titan Bow',     good:['Attack%','CritDamage%'],                        medium:['CritChance%'],              junk:['MoveSpeed%','AttackSpeed%']},
-  ],
-  Helmet: [
-    {name:'Iron Crown',    good:['CritDamage%','CritChance%'],                    medium:['Attack%'],                  junk:['Defense_flat','MagicFind%']},
-    {name:'Shadow Helm',   good:['MoveSpeed%','DodgeChance%'],                    medium:['HP%'],                      junk:['CritDamage%','Attack_flat']},
-    {name:'Storm Helm',    good:['AttackSpeed%','CritChance%','CritDamage%'],     medium:['Attack%'],                  junk:['Defense_flat','HP_flat']},
-    {name:'War Mask',      good:['HP%','Defense%'],                               medium:['DodgeChance%'],             junk:['CritDamage%','AttackSpeed%']},
-    {name:'Hunter Cap',    good:['AttackSpeed%','Attack%'],                       medium:['CritChance%','CritDamage%'],junk:['HP_flat','MagicFind%']},
-  ],
-  Armor: [
-    {name:'Knight Plate',  good:['Defense%','HP%'],                               medium:['DodgeChance%'],             junk:['Attack_flat','CritDamage%']},
-    {name:'Shadow Robe',   good:['HP%','DodgeChance%'],                           medium:['MoveSpeed%'],               junk:['CritChance%','Attack_flat']},
-    {name:'Berserker Mail',good:['Defense%','HP%'],                               medium:['Attack%','CritDamage%'],    junk:['MagicFind%']},
-    {name:'Fortress Plate',good:['Defense%','HP%'],                               medium:['DodgeChance%'],             junk:['Attack_flat','AttackSpeed%']},
-    {name:'Hunter Vest',   good:['DodgeChance%','MoveSpeed%'],                    medium:['HP%'],                      junk:['CritDamage%','MagicFind%']},
-  ],
-  Gloves: [
-    {name:'Fury Gauntlets', good:['CritDamage%','CritChance%'],                   medium:['Attack%'],                  junk:['Defense_flat','HP_flat']},
-    {name:'Swift Gloves',   good:['AttackSpeed%','CritChance%'],                  medium:['CritDamage%','Attack%'],    junk:['Defense_flat','MagicFind%']},
-    {name:'Phantom Gloves', good:['CritChance%','AttackSpeed%'],                  medium:['CritDamage%'],              junk:['HP_flat','Defense_flat']},
-    {name:'Iron Grip',      good:['Attack%','CritDamage%'],                       medium:['AttackSpeed%','CritChance%'],junk:['MoveSpeed%','MagicFind%']},
-    {name:'Rending Claws',  good:['Attack%','AttackSpeed%'],                      medium:['CritDamage%'],              junk:['HP_flat','Defense_flat']},
-  ],
-  Boots: [
-    {name:'Swift Boots',   good:['MoveSpeed%','AttackSpeed%'],                    medium:['DodgeChance%'],             junk:['CritDamage%','Defense_flat']},
-    {name:'Shadow Steps',  good:['DodgeChance%','MoveSpeed%'],                    medium:['HP%'],                      junk:['Attack_flat','CritDamage%']},
-    {name:'Thunder Boots', good:['Attack%','AttackSpeed%'],                       medium:['MoveSpeed%','CritDamage%'], junk:['Defense_flat','MagicFind%']},
-    {name:'Stalker Boots', good:['Attack%','Defense%'],                           medium:['HP%'],                      junk:['MoveSpeed%','CritDamage%']},
-    {name:'Wind Boots',    good:['MoveSpeed%','Attack%'],                         medium:['AttackSpeed%'],             junk:['Defense_flat','HP_flat']},
-  ],
-  Ring: [
-    {name:'Slaughter Ring', good:['AttackSpeed%','CritDamage%'],                  medium:['CritChance%','Attack%'],    junk:['MagicFind%','HP_flat']},
-    {name:'Overkill Ring',  good:['Attack%','CritDamage%'],                       medium:['CritChance%'],              junk:['MoveSpeed%','MagicFind%']},
-    {name:'Berserker Ring', good:['Attack%','AttackSpeed%'],                      medium:['CritDamage%'],              junk:['HP_flat','MagicFind%']},
-    {name:'Precision Ring', good:['CritChance%','CritDamage%'],                   medium:['AttackSpeed%'],             junk:['Defense_flat','MagicFind%']},
-    {name:'Momentum Ring',  good:['MoveSpeed%','Attack%'],                        medium:['CritDamage%','AttackSpeed%'],junk:['HP_flat','MagicFind%']},
-  ],
-  Necklace: [
-    {name:"Death's Toll",   good:['CritDamage%','Attack%'],                       medium:['CritChance%'],              junk:['Defense_flat','MagicFind%']},
-    {name:'Chain Pendant',  good:['Attack%','CritDamage%'],                       medium:['CritChance%'],              junk:['HP_flat','MagicFind%']},
-    {name:'Echo Stone',     good:['CritChance%','CritDamage%'],                   medium:['AttackSpeed%'],             junk:['Defense_flat','HP_flat']},
-    {name:'Void Locket',    good:['HP%','Attack%'],                               medium:['CritDamage%'],              junk:['MagicFind%','Defense_flat']},
-    {name:'Blood Pendant',  good:['HP%','Defense%'],                              medium:['Attack%'],                  junk:['CritDamage%','MagicFind%']},
-  ],
+  Weapon:   {good:['Attack%','AttackSpeed%','CritChance%','CritDamage%'],  medium:['MoveSpeed%'],               junk:['Defense_flat','HP_flat']},
+  Helmet:   {good:['CritDamage%','CritChance%','HP%','AttackSpeed%'],      medium:['MagicFind%'],               junk:['Attack_flat','Defense_flat']},
+  Armor:    {good:['HP%','Defense%','DodgeChance%'],                       medium:['MoveSpeed%'],               junk:['Attack_flat','CritDamage%']},
+  Gloves:   {good:['Attack%','CritDamage%','CritChance%','AttackSpeed%'],  medium:['MagicFind%'],               junk:['Defense_flat','HP_flat']},
+  Boots:    {good:['MoveSpeed%','DodgeChance%','Attack%'],                 medium:['AttackSpeed%'],             junk:['Defense_flat','HP_flat']},
+  Ring:     {good:['Attack%','CritDamage%','CritChance%','AttackSpeed%'],  medium:['MagicFind%'],               junk:['Defense_flat','HP_flat']},
+  Necklace: {good:['Attack%','CritDamage%','HP%','Defense%'],              medium:['MagicFind%'],               junk:['HP_flat','Defense_flat']},
 };
 
 const SLOT_KEYS = ['Weapon','Helmet','Armor','Gloves','Boots','Ring','Necklace'];
@@ -1223,38 +1182,35 @@ function showStatPool(tabIdx) {
   closePoolEdit();
   document.querySelectorAll('[id^="rp_tab"]').forEach((b,i)=>b.classList.toggle('active',i===tabIdx));
   const slot = SLOT_KEYS[tabIdx];
-  const items = STAT_POOL[slot]||[];
+  const pool = STAT_POOL[slot]||{good:[],medium:[],junk:[]};
   let html = '<table style="width:100%;border-collapse:collapse;font-size:11px">';
   html += '<thead><tr style="background:var(--bg3)">';
-  html += '<th style="padding:8px 12px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:2px solid var(--border);width:150px">아이템</th>';
+  html += '<th style="padding:8px 12px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:2px solid var(--border);width:100px">슬롯</th>';
   html += '<th style="padding:8px 12px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--green);border-bottom:2px solid var(--border)">★★★ 좋음</th>';
   html += '<th style="padding:8px 12px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--yellow);border-bottom:2px solid var(--border)">★★ 보통</th>';
   html += '<th style="padding:8px 12px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:2px solid var(--border)">★ 꽝</th>';
   html += '<th style="padding:8px 12px;border-bottom:2px solid var(--border);width:60px"></th>';
   html += '</tr></thead><tbody>';
-  items.forEach((item,i)=>{
-    const bg = i%2===0?'var(--bg)':'var(--bg2)';
-    html += `<tr style="background:${bg}">`;
-    html += `<td style="padding:8px 12px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;border-bottom:1px solid var(--border)">${item.name}</td>`;
-    html += `<td style="padding:8px 12px;border-bottom:1px solid var(--border)">${item.good.map(s=>badge(s,'good')).join('')}</td>`;
-    html += `<td style="padding:8px 12px;border-bottom:1px solid var(--border)">${item.medium.map(s=>badge(s,'medium')).join('')}</td>`;
-    html += `<td style="padding:8px 12px;border-bottom:1px solid var(--border)">${item.junk.map(s=>badge(s,'junk')).join('')}</td>`;
-    html += `<td style="padding:8px 12px;border-bottom:1px solid var(--border);text-align:center"><button onclick="openPoolEdit('${slot}',${i})" style="background:var(--blue-dim);border:1px solid var(--blue);color:var(--blue);font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer">✏️ 편집</button></td>`;
-    html += '</tr>';
-  });
+  html += `<tr style="background:var(--bg)">`;
+  html += `<td style="padding:10px 12px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--yellow)">${slot}</td>`;
+  html += `<td style="padding:10px 12px">${pool.good.map(s=>badge(s,'good')).join('')}</td>`;
+  html += `<td style="padding:10px 12px">${pool.medium.map(s=>badge(s,'medium')).join('')}</td>`;
+  html += `<td style="padding:10px 12px">${pool.junk.map(s=>badge(s,'junk')).join('')}</td>`;
+  html += `<td style="padding:10px 12px;text-align:center"><button onclick="openPoolEdit('${slot}')" style="background:var(--blue-dim);border:1px solid var(--blue);color:var(--blue);font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer">✏️ 편집</button></td>`;
+  html += '</tr>';
   html += '</tbody></table>';
   document.getElementById('statPoolTable').innerHTML = html;
 }
 
-function openPoolEdit(slot, idx) {
-  editingSlot = slot; editingIdx = idx;
-  const item = STAT_POOL[slot][idx];
-  document.getElementById('editItemName').textContent = item.name;
+function openPoolEdit(slot) {
+  editingSlot = slot; editingIdx = null;
+  const pool = STAT_POOL[slot]||{good:[],medium:[],junk:[]};
+  document.getElementById('editItemName').textContent = slot;
   document.getElementById('editPanel').style.display = 'block';
   ['good','medium','junk'].forEach(tier=>{
     const el = document.getElementById('edit'+tier.charAt(0).toUpperCase()+tier.slice(1));
     el.innerHTML = ALL_STATS.map(s=>{
-      const checked = item[tier].includes(s) ? 'checked' : '';
+      const checked = pool[tier].includes(s) ? 'checked' : '';
       const color = tier==='good'?'var(--green)':tier==='medium'?'var(--yellow)':'var(--muted)';
       return `<label style="display:flex;align-items:center;gap:5px;padding:3px 0;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;color:${color}">
         <input type="checkbox" ${checked} value="${s}" style="accent-color:${color}"> ${s}
@@ -1265,13 +1221,12 @@ function openPoolEdit(slot, idx) {
 
 function savePoolEdit() {
   if(editingSlot===null) return;
-  const item = STAT_POOL[editingSlot][editingIdx];
+  if(!STAT_POOL[editingSlot]) STAT_POOL[editingSlot]={good:[],medium:[],junk:[]};
   ['good','medium','junk'].forEach(tier=>{
     const el = document.getElementById('edit'+tier.charAt(0).toUpperCase()+tier.slice(1));
     const checks = el.querySelectorAll('input[type=checkbox]:checked');
-    item[tier] = Array.from(checks).map(c=>c.value);
+    STAT_POOL[editingSlot][tier] = Array.from(checks).map(c=>c.value);
   });
-  // Gist 저장
   debounceSave({...D, statPool: STAT_POOL});
   closePoolEdit();
   showStatPool(currentPoolTab);
