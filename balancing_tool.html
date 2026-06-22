@@ -1207,26 +1207,62 @@ function openPoolEdit(slot) {
   const pool = STAT_POOL[slot]||{good:[],medium:[],junk:[]};
   document.getElementById('editItemName').textContent = slot;
   document.getElementById('editPanel').style.display = 'block';
-  ['good','medium','junk'].forEach(tier=>{
-    const el = document.getElementById('edit'+tier.charAt(0).toUpperCase()+tier.slice(1));
-    el.innerHTML = ALL_STATS.map(s=>{
-      const checked = pool[tier].includes(s) ? 'checked' : '';
-      const color = tier==='good'?'var(--green)':tier==='medium'?'var(--yellow)':'var(--muted)';
-      return `<label style="display:flex;align-items:center;gap:5px;padding:3px 0;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;color:${color}">
-        <input type="checkbox" ${checked} value="${s}" style="accent-color:${color}"> ${s}
-      </label>`;
-    }).join('');
+
+  // 스탯별로 현재 tier 확인
+  function getTierOf(s) {
+    if(pool.good.includes(s))   return 'good';
+    if(pool.medium.includes(s)) return 'medium';
+    if(pool.junk.includes(s))   return 'junk';
+    return 'none';
+  }
+
+  // 스탯별 라디오 그룹으로 표시 (좋음/보통/꽝/없음 중 하나)
+  const tiers = ['good','medium','junk','none'];
+  const tierLabels = {'good':'★★★','medium':'★★','junk':'★','none':'—'};
+  const tierColors = {'good':'var(--green)','medium':'var(--yellow)','junk':'var(--muted)','none':'#333'};
+
+  // 편집 패널을 단일 테이블로 통합
+  let tableHtml = `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
+    <thead><tr style="background:var(--bg)">
+      <th style="padding:6px 10px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">스탯</th>
+      <th style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);border-bottom:1px solid var(--border)">★★★ 좋음</th>
+      <th style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--yellow);border-bottom:1px solid var(--border)">★★ 보통</th>
+      <th style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">★ 꽝</th>
+      <th style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:#444;border-bottom:1px solid var(--border)">— 없음</th>
+    </tr></thead><tbody>`;
+
+  ALL_STATS.forEach((s,i)=>{
+    const cur = getTierOf(s);
+    const bg = i%2===0?'var(--bg2)':'var(--bg)';
+    tableHtml += `<tr style="background:${bg}">
+      <td style="padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#fff;border-bottom:1px solid var(--border)">${s}</td>`;
+    ['good','medium','junk','none'].forEach(t=>{
+      const checked = cur===t ? 'checked' : '';
+      const accent = t==='good'?'#4ade80':t==='medium'?'#fbbf24':t==='junk'?'#888':'#444';
+      tableHtml += `<td style="padding:5px 10px;text-align:center;border-bottom:1px solid var(--border)">
+        <input type="radio" name="stat_${s.replace('%','pct').replace('_','x')}" value="${t}" ${checked} style="accent-color:${accent};width:14px;height:14px;cursor:pointer">
+      </td>`;
+    });
+    tableHtml += '</tr>';
   });
+  tableHtml += '</tbody></table>';
+
+  // 3컬럼 div 숨기고 테이블로 교체
+  document.getElementById('editGood').innerHTML = '';
+  document.getElementById('editMedium').innerHTML = '';
+  document.getElementById('editJunk').innerHTML = '';
+  document.getElementById('editGood').parentElement.parentElement.children[1].innerHTML = tableHtml;
 }
 
 function savePoolEdit() {
   if(editingSlot===null) return;
-  if(!STAT_POOL[editingSlot]) STAT_POOL[editingSlot]={good:[],medium:[],junk:[]};
-  ['good','medium','junk'].forEach(tier=>{
-    const el = document.getElementById('edit'+tier.charAt(0).toUpperCase()+tier.slice(1));
-    const checks = el.querySelectorAll('input[type=checkbox]:checked');
-    STAT_POOL[editingSlot][tier] = Array.from(checks).map(c=>c.value);
+  const result = {good:[], medium:[], junk:[]};
+  ALL_STATS.forEach(s=>{
+    const name = 'stat_'+s.replace('%','pct').replace('_','x');
+    const radios = document.querySelectorAll(`input[name="${name}"]`);
+    radios.forEach(r=>{ if(r.checked && r.value!=='none') result[r.value].push(s); });
   });
+  STAT_POOL[editingSlot] = result;
   debounceSave({...D, statPool: STAT_POOL});
   closePoolEdit();
   showStatPool(currentPoolTab);
