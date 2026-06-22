@@ -251,6 +251,72 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
   </div>
 </div>
 
+
+<!-- ===== STEP 1.5: 스탯 비율 연계 설계 ===== -->
+<div class="panel">
+  <div class="ph">
+    <div class="snum" style="background:var(--yellow-dim);color:var(--yellow);border:1px solid #4a2a0a">⚖</div>
+    <span class="ph-title">메인스탯 ↔ 랜덤스탯 비율 설계</span>
+    <span class="ph-sub">목표 DPS 기준으로 메인/랜덤 수치 자동 역산</span>
+    <div class="ph-status" id="ratioStatus">—</div>
+  </div>
+
+  <div class="guide-box yellow">
+    <strong>메인스탯 비율을 낮추면 랜덤스탯 기여가 커져 파밍 동기가 높아집니다.</strong>
+    메인스탯 30~40% / 랜덤스탯 60~70% 권장 (디아블로2 방식)
+  </div>
+
+  <!-- 비율 설정 -->
+  <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
+      메인스탯 기여 비율
+      <input type="number" id="mainRatio" value="35" min="10" max="90" style="width:55px" oninput="calcStatRatio()"> %
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
+      랜덤스탯 기여: <span id="randRatio" style="color:var(--green);font-weight:700">65</span>%
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
+      랜덤스탯 개수 (등급별)
+      <select id="subStatCount" style="width:80px" onchange="calcStatRatio()">
+        <option value="1">Magic (1개)</option>
+        <option value="2">Rare (2개)</option>
+        <option value="3" selected>Epic/Unique (3개)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 결과 테이블 -->
+  <div style="overflow-x:auto">
+    <table class="ttk">
+      <thead>
+        <tr>
+          <th>Stage</th>
+          <th>장비가정</th>
+          <th>목표DPS</th>
+          <th>메인스탯<br>기여목표</th>
+          <th>무기ATK<br>필요값</th>
+          <th>랜덤스탯<br>기여목표</th>
+          <th>슬롯당<br>기여</th>
+          <th>Attack%<br>필요값</th>
+          <th>CritDmg%<br>참고</th>
+        </tr>
+      </thead>
+      <tbody id="ratioTbl"></tbody>
+    </table>
+  </div>
+
+  <div style="padding:10px 16px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div style="background:var(--bg3);border-radius:4px;padding:10px 12px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px">권장 메인스탯 T1~T4 (Weapon ATK flat)</div>
+      <div id="mainStatRecommend" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--yellow)">—</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:4px;padding:10px 12px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px">권장 랜덤스탯 T1~T4 (Attack% 기준)</div>
+      <div id="randStatRecommend" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--green)">—</div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== STEP 2: 스테이지 밸런싱 ===== -->
 <div class="panel">
   <div class="ph">
@@ -282,11 +348,107 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
           <th>플레이어<br>DPS</th><th>플레이어<br>HP</th>
           <th class="yc">일반HP</th><th class="yc">일반ATK</th>
           <th class="yc">보스HP</th>
-          <th>TTK<br>일반</th><th>TTK<br>보스</th><th>맞이수</th><th>판정</th>
+          <th>TTK<br>일반</th><th>TTK<br>보스</th><th>맞이수</th>
+          <th class="yc">골드/처치</th><th class="yc">처치수</th><th class="yc">보스골드</th>
         </tr>
       </thead>
       <tbody id="ttkTbl"></tbody>
     </table>
+  </div>
+</div>
+
+
+<!-- ===== STEP 4: 경제 밸런싱 ===== -->
+<div class="panel">
+  <div class="ph">
+    <div class="snum s4c">4</div>
+    <span class="ph-title">경제 밸런싱</span>
+    <span class="ph-sub">골드/조각 수입·지출 시뮬레이터</span>
+    <div class="ph-status" id="st4status">—</div>
+  </div>
+
+  <div class="guide-box yellow">
+    <strong>이 단계에서 할 일</strong>
+    하루 플레이 기준으로 골드/조각이 흑자인지 확인합니다.<br>
+    <code>Unique 교환 2~4주</code> 를 목표로 수치를 조정하세요.
+  </div>
+
+  <!-- 기본 가정 입력 -->
+  <div style="padding:8px 16px 4px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">기본 가정 — 노란색 수정</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0">
+
+    <div style="padding:12px 16px;border-right:1px solid var(--border)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase">플레이</div>
+      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">하루 플레이 횟수</span>
+        <input type="number" id="ec_plays" value="20" style="width:65px" oninput="calcEco()"></div>
+      <input type="hidden" id="ec_mobs" value="0">
+    </div>
+
+    <div style="padding:12px 16px;border-right:1px solid var(--border)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase">골드 드랍</div>
+      <div style="font-size:10px;color:var(--green);font-family:'JetBrains Mono',monospace;line-height:1.6">
+        2단계 스테이지 데이터<br>자동 연동<br>
+        <span style="color:var(--muted)">(골드/처치 × 처치수 + 보스골드)</span>
+      </div>
+      <div id="ec_stageGoldPreview" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--yellow);margin-top:6px"></div>
+    </div>
+
+    <div style="padding:12px 16px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase">지출 / 조각</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px">골드 지출</div>
+      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">리포지 일간 횟수</span>
+        <input type="number" id="ec_reforge" value="5" style="width:65px" oninput="calcEco()"></div>
+      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">리포지 평균 비용</span>
+        <input type="number" id="ec_reforgeCost" value="400" style="width:65px" oninput="calcEco()"></div>
+      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">스탯롤 일간 횟수</span>
+        <input type="number" id="ec_statroll" value="3" style="width:65px" oninput="calcEco()"></div>
+      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">스탯롤 평균 비용</span>
+        <input type="number" id="ec_statrollCost" value="200" style="width:65px" oninput="calcEco()"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:6px">조각 수입</div>
+      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">소각 일간 횟수</span>
+        <input type="number" id="ec_salvage" value="15" style="width:65px" oninput="calcEco()"></div>
+      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">소각 평균 조각 획득</span>
+        <input type="number" id="ec_salvageShard" value="8" style="width:65px" oninput="calcEco()"></div>
+      <input type="hidden" id="ec_gamble" value="0">
+      <input type="hidden" id="ec_gambleGold" value="0">
+      <input type="hidden" id="ec_gambleShard" value="0">
+      <input type="hidden" id="ec_shopCost" value="0">
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div style="border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr)">
+    <div style="padding:14px 16px;border-right:1px solid var(--border)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">일간 골드 수입</div>
+      <div id="ec_incomeVal" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--green)">—</div>
+    </div>
+    <div style="padding:14px 16px;border-right:1px solid var(--border)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">일간 골드 지출</div>
+      <div id="ec_expenseVal" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--red)">—</div>
+    </div>
+    <div style="padding:14px 16px;border-right:1px solid var(--border)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">골드 순수익</div>
+      <div id="ec_netVal" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700">—</div>
+      <div id="ec_netLabel" style="font-size:10px;color:var(--muted)"></div>
+    </div>
+    <div style="padding:14px 16px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">일간 조각 순수익</div>
+      <div id="ec_daysVal" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--yellow)">—</div>
+      <div id="ec_daysLabel" style="font-size:10px;color:var(--muted)"></div>
+    </div>
+  </div>
+
+  <!-- 조각 흐름 -->
+  <div style="border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">조각 흐름</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px">
+      수입 <span id="ec_shardIn" style="color:var(--green);font-weight:700">—</span>
+      &nbsp;/&nbsp;
+      지출(소비처 없음) <span id="ec_shardOut" style="color:var(--muted);font-weight:700">0</span>
+      &nbsp;→&nbsp;
+      순 조각 <span id="ec_shardNet" style="font-weight:700">—</span>
+    </div>
+    <div id="ec_verdict" style="font-size:14px">—</div>
   </div>
 </div>
 
@@ -431,25 +593,27 @@ const DEFAULTS = {
   globalTiers: {
     // 무기별 ATK/SPD 분리 (Venom/Ironpiercer/Abyss/Tempest/Titan)
     weaponAtk: [
-      {t1:[5,12],  t2:[12,22], t3:[22,38], t4:[38,60]},  // Venom (빠른연사, ATK 낮음)
-      {t1:[12,22], t2:[22,38], t3:[38,60], t4:[60,85]},  // Ironpiercer (강타, ATK 높음)
-      {t1:[8,16],  t2:[16,28], t3:[28,45], t4:[45,65]},  // Abyss (중간)
-      {t1:[5,12],  t2:[12,22], t3:[22,38], t4:[38,60]},  // Tempest (빠른연사)
-      {t1:[10,20], t2:[20,35], t3:[35,55], t4:[55,80]},  // Titan (강타, ATK 높음)
+      // flat ATK → ILB 적용
+      {t1:[5,10],   t2:[13,22],  t3:[23,38],  t4:[39,55],  isPercent:false}, // Venom
+      {t1:[55,60],  t2:[70,88],  t3:[89,110], t4:[111,135],isPercent:false}, // Ironpiercer
+      {t1:[20,25],  t2:[35,48],  t3:[49,65],  t4:[66,85],  isPercent:false}, // Abyss
+      {t1:[5,9],    t2:[15,25],  t3:[26,40],  t4:[41,55],  isPercent:false}, // Tempest
+      {t1:[23,28],  t2:[50,63],  t3:[64,80],  t4:[81,100], isPercent:false}, // Titan
     ],
     weaponSpd: [
-      {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60]},  // Venom (공속 높음)
-      {t1:[2,6],   t2:[6,12],  t3:[12,20], t4:[20,30]},  // Ironpiercer (공속 낮음)
-      {t1:[4,10],  t2:[10,18], t3:[18,28], t4:[28,40]},  // Abyss (중간)
-      {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60]},  // Tempest (공속 높음)
-      {t1:[2,6],   t2:[6,12],  t3:[12,20], t4:[20,30]},  // Titan (공속 낮음)
+      // % → ILB 미적용
+      {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60], isPercent:true}, // Venom
+      {t1:[2,6],   t2:[6,12],  t3:[12,20], t4:[20,30], isPercent:true}, // Ironpiercer
+      {t1:[4,10],  t2:[10,18], t3:[18,28], t4:[28,40], isPercent:true}, // Abyss
+      {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60], isPercent:true}, // Tempest
+      {t1:[2,6],   t2:[6,12],  t3:[12,20], t4:[20,30], isPercent:true}, // Titan
     ],
-    helmet:    {t1:[20,40],  t2:[40,70],  t3:[70,110], t4:[110,160]},
-    armor:     {t1:[8,18],   t2:[18,32],  t3:[32,50],  t4:[50,75]},
-    gloves:    {t1:[2,5],    t2:[5,10],   t3:[10,16],  t4:[16,22]},
-    boots:     {t1:[3,7],    t2:[7,12],   t3:[12,18],  t4:[18,25]},
-    ring:      {t1:[5,15],   t2:[15,28],  t3:[28,45],  t4:[45,65]},
-    necklace:  {t1:[5,12],   t2:[12,22],  t3:[22,35],  t4:[35,50]},
+    helmet:    {t1:[35,82],  t2:[83,164], t3:[165,246],t4:[247,328],isPercent:false}, // HP flat
+    armor:     {t1:[10,28],  t2:[29,56],  t3:[57,90],  t4:[91,130], isPercent:false}, // DEF flat
+    gloves:    {t1:[5,14],   t2:[13,22],  t3:[21,30],  t4:[30,40],  isPercent:true},  // CritChance%
+    boots:     {t1:[6,14],   t2:[15,24],  t3:[25,34],  t4:[35,44],  isPercent:true},  // MoveSpeed%
+    ring:      {t1:[22,50],  t2:[50,88],  t3:[88,120], t4:[120,155],isPercent:true},  // CritDamage%
+    necklace:  {t1:[6,14],   t2:[15,25],  t3:[26,38],  t4:[39,52],  isPercent:true},  // MagicFind%
   }
 };
 
@@ -479,7 +643,13 @@ function defaultUnits(s) {
   const lerp=(a,b,t)=>Math.round(a+(b-a)*t);
   const t = s<=5?(s-1)/4:(s-5)/5;
   const lo=s<=5?b1:b5, hi=s<=5?b5:b10;
-  return {nh:lerp(lo.nh,hi.nh,t), na:lerp(lo.na,hi.na,t), bh:lerp(lo.bh,hi.bh,t), ba:lerp(lo.ba,hi.ba,t)};
+  return {
+    nh:lerp(lo.nh,hi.nh,t), na:lerp(lo.na,hi.na,t),
+    bh:lerp(lo.bh,hi.bh,t), ba:lerp(lo.ba,hi.ba,t),
+    goldPerMob: 3 + s*2,   // S1=5, S10=23 기본값
+    mobCount: 20 + s*2,    // S1=22, S10=40 기본값
+    bossGold: 20 + s*5,    // S1=25, S10=70 기본값
+  };
 }
 
 let saved = null;
@@ -522,7 +692,9 @@ function getGlobalTiers(slotId, weaponIdx) {
 
 function getMid(tiers, ilvl, scale, grade){
   const [mn,mx]=getTierRange(tiers,ilvl);
-  const s = grade ? (gradeScales[grade]||scale||0.02) : (scale||0.02);
+  // % 스탯은 ILB 미적용 (T1~T4 범위만으로 성장)
+  const isPercent = tiers.isPercent === true;
+  const s = isPercent ? 0 : (grade ? (gradeScales[grade]||scale||0.02) : (scale||0.02));
   return ((mn+mx)/2)*(1+ilvl*s);
 }
 
@@ -725,6 +897,7 @@ function autoCalcUnits() {
   }
   save();
   calcTTK();
+  calcEco();
 }
 
 function calcTTK(){
@@ -764,7 +937,9 @@ function calcTTK(){
       <td class="cv ${clsV(tN,rn0,rn1)}">${fmt(tN)}초</td>
       <td class="cv ${clsV(tB,rb0,rb1)}">${fmt(tB)}초</td>
       <td class="cv ${clsV(hN,rh0,rh1)}">${fmt(hN)}대</td>
-      <td class="vd">${ok?'✅':'⚠️'}</td>
+      <td><div class="cw"><input class="ti" type="number" value="${D.units[s].goldPerMob||5}" style="width:55px" onchange="if(!D.units[${s}].goldPerMob)D.units[${s}].goldPerMob=0;D.units[${s}].goldPerMob=+this.value;save();calcEco()"></div></td>
+      <td><div class="cw"><input class="ti" type="number" value="${D.units[s].mobCount||25}" style="width:55px" onchange="if(!D.units[${s}].mobCount)D.units[${s}].mobCount=0;D.units[${s}].mobCount=+this.value;save();calcEco()"></div></td>
+      <td><div class="cw"><input class="ti" type="number" value="${D.units[s].bossGold||30}" style="width:55px" onchange="if(!D.units[${s}].bossGold)D.units[${s}].bossGold=0;D.units[${s}].bossGold=+this.value;save();calcEco()"></div></td>
     </tr>`;
   }
   document.getElementById('ttkTbl').innerHTML=html;
@@ -839,6 +1014,7 @@ function recalcAll(){
   renderSlotTable();
   renderGradeCompare();
   calcTTK();
+  calcStatRatio();
   save();
 }
 
@@ -852,6 +1028,147 @@ function selectWeapon(i){
 }
 
 // ===================== 체크리스트 =====================
+function calcStatRatio() {
+  const mainRatio = +document.getElementById('mainRatio').value || 35;
+  const randRatio = 100 - mainRatio;
+  document.getElementById('randRatio').textContent = randRatio;
+
+  const subCount = +document.getElementById('subStatCount').value || 3;
+  const w = WEAPONS[currentWeapon];
+  const baseSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
+  const scale = D.scale || 0.02;
+
+  let html = '';
+  let mainTargets = [], randTargets = [];
+
+  for(let s=1;s<=10;s++){
+    const equip = (D.stageEquip && D.stageEquip[s]) || STAGE_EQUIP_DEFAULT[s];
+    const {dps} = calcStageDPSWithEquip(s, equip);
+    const ilvl = (D.stageILVL && D.stageILVL[s]) || GRADE_DEFAULT_ILVL[equip] || 1;
+    const gradeScale = gradeScales[equip==='없음'?'Common':equip] || 0.02;
+
+    const mainTarget = Math.round(dps * mainRatio / 100);
+    const randTarget = Math.round(dps * randRatio / 100);
+
+    // 무기 ATK 역산: mainTarget = atkMid × baseSpd × (1+ilvl×scale)
+    // atkMid = mainTarget / baseSpd / (1+ilvl×gradeScale)
+    const ilbMult = 1 + ilvl * gradeScale;
+    const atkRequired = baseSpd > 0 ? Math.round(mainTarget / baseSpd / ilbMult) : 0;
+
+    // 랜덤 Attack% 역산: randTarget = baseDPS × (atkPct/100) × slotCount × subCount
+    // atkPct = randTarget / (baseDPS × slotCount × subCount) × 100
+    const slotCount = Math.max(1, ['없음','Common','Magic','Rare','Epic','Unique'].indexOf(equip));
+    const baseDPS = atkRequired * baseSpd * ilbMult;
+    const atkPctRequired = baseDPS > 0 && slotCount > 0
+      ? (randTarget / (baseDPS * slotCount) / subCount * 100).toFixed(1)
+      : '—';
+    const critPctRef = baseDPS > 0 && slotCount > 0
+      ? ((randTarget / (baseDPS * slotCount) / subCount * 100) * 0.7).toFixed(1)
+      : '—';
+
+    mainTargets.push({s, ilvl, atkRequired});
+    randTargets.push({s, atkPctRequired});
+
+    const rc = s===1?'rs1':s===5?'rs5':s===10?'rs10':'rmid';
+    html += `<tr class="${rc}">
+      <td class="lbl">S${s}</td>
+      <td class="cv" style="font-size:10px;color:var(--muted)">${equip}</td>
+      <td class="cv">${dps}</td>
+      <td class="cv ok">${mainTarget}</td>
+      <td class="cv" style="color:var(--yellow)">${atkRequired}</td>
+      <td class="cv ok">${randTarget}</td>
+      <td class="cv" style="color:var(--green)">${Math.round(randTarget/Math.max(1,slotCount))}</td>
+      <td class="cv" style="color:var(--green)">${atkPctRequired}%</td>
+      <td class="cv" style="color:var(--muted)">${critPctRef}%</td>
+    </tr>`;
+  }
+  document.getElementById('ratioTbl').innerHTML = html;
+
+  // 권장 T1~T4 계산 (S1/S5/S10 기준)
+  const keyStages = [1,5,10];
+  const mainRecs = keyStages.map(s=>{
+    const m = mainTargets.find(x=>x.s===s);
+    return m ? `S${s}(iLvl${m.ilvl}): ~${m.atkRequired}` : '';
+  });
+  const randRecs = keyStages.map(s=>{
+    const r = randTargets.find(x=>x.s===s);
+    return r ? `S${s}: ~${r.atkPctRequired}%` : '';
+  });
+
+  document.getElementById('mainStatRecommend').innerHTML = mainRecs.join('<br>');
+  document.getElementById('randStatRecommend').innerHTML = randRecs.join('<br>');
+  document.getElementById('ratioStatus').textContent = `${mainRatio}% / ${randRatio}%`;
+}
+
+function calcEco() {
+  const plays        = +document.getElementById('ec_plays').value || 0;
+
+  // 스테이지 데이터에서 골드 수입 자동 계산
+  // 플레이 횟수를 스테이지 수로 분배 (균등)
+  let stageGoldPerPlay = 0;
+  for(let s=1;s<=10;s++){
+    const u = D.units[s]||{};
+    const goldPerMob = u.goldPerMob || 5;
+    const mobCount   = u.mobCount   || 25;
+    const bossGold2  = u.bossGold   || 30;
+    stageGoldPerPlay += (goldPerMob * mobCount + bossGold2) / 10; // 10스테이지 평균
+  }
+  const autoIncome = Math.round(stageGoldPerPlay * plays);
+
+  // 하위 호환용 수동 입력값 (숨김 처리지만 유지)
+  const mobs         = 0;
+  const mobGold      = 0;
+  const bossGold     = 0;
+  const reforge      = +document.getElementById('ec_reforge').value || 0;
+  const reforgeCost  = +document.getElementById('ec_reforgeCost').value || 0;
+  const gamble       = +document.getElementById('ec_gamble').value || 0;
+  const gambleGold   = +document.getElementById('ec_gambleGold').value || 0;
+  const gambleShard  = +document.getElementById('ec_gambleShard').value || 0;
+  const salvage      = +document.getElementById('ec_salvage').value || 0;
+  const salvageShard = +document.getElementById('ec_salvageShard').value || 0;
+  const shopCost     = +document.getElementById('ec_shopCost').value || 0;
+
+  const income  = autoIncome;
+  const statroll     = +document.getElementById('ec_statroll').value || 0;
+  const statrollCost = +document.getElementById('ec_statrollCost').value || 0;
+  const expense = reforge * reforgeCost + statroll * statrollCost;
+  const net     = income - expense;
+  const shardIn  = salvage * salvageShard;
+  const shardOut = 0; // 겜블/교환소 없음
+  const shardNet = shardIn - shardOut;
+  const days     = shardNet; // 일간 순 조각
+
+  document.getElementById('ec_incomeVal').textContent  = income.toLocaleString();
+  document.getElementById('ec_expenseVal').textContent = expense.toLocaleString();
+  document.getElementById('ec_netVal').textContent     = (net >= 0 ? '+' : '') + net.toLocaleString();
+  document.getElementById('ec_netVal').style.color     = net >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('ec_netLabel').textContent   = net >= 0 ? '✅ 흑자' : '⚠️ 적자';
+  document.getElementById('ec_shardIn').textContent    = shardIn;
+  document.getElementById('ec_shardOut').textContent   = shardOut;
+  document.getElementById('ec_shardNet').textContent   = (shardNet >= 0 ? '+' : '') + shardNet;
+  document.getElementById('ec_shardNet').style.color   = shardNet >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const dEl = document.getElementById('ec_daysVal');
+  const lEl = document.getElementById('ec_daysLabel');
+  dEl.textContent = (days >= 0 ? '+' : '') + days + ' 조각/일';
+  dEl.style.color = days >= 0 ? 'var(--green)' : 'var(--red)';
+  lEl.textContent = days >= 0 ? '✅ 흑자' : '⚠️ 적자 — 소각 늘리기';
+
+  document.getElementById('ec_verdict').textContent = (net >= 0 && shardNet >= 0 && isFinite(days)) ? '✅' : '⚠️';
+  document.getElementById('st4status').textContent  = (net >= 0 && shardNet >= 0) ? '✅' : '⚠️';
+  // 스테이지별 골드 미리보기
+  const prev = document.getElementById('ec_stageGoldPreview');
+  if(prev) {
+    let previewLines = [];
+    for(let s=1;s<=10;s++){
+      const u=D.units[s]||{};
+      const g=(u.goldPerMob||5)*(u.mobCount||25)+(u.bossGold||30);
+      previewLines.push(`S${s}: ${g}골드/회`);
+    }
+    prev.innerHTML = previewLines.join('<br>');
+  }
+}
+
 const CL=[
   {s:'1단계',t:'전투 코어',g:'움직이는 것 자체가 재밌다',p:'now'},
   {s:'2단계',t:'스테이지 밸런싱',g:'TTK 목표 달성',p:'now'},
@@ -929,6 +1246,8 @@ function updateGradeScales(){
   renderGradeCompare();
   calcTTK();
   renderCL();
+calcEco();
+calcStatRatio();
 })();
 </script>
 </body>
