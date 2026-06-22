@@ -1153,9 +1153,9 @@ function calcStatRatio() {
 const STAT_POOL = {
   Weapon:   {good:['Attack%','AttackSpeed%','CritChance%','CritDamage%'],  medium:['MoveSpeed%'],               junk:['Defense_flat','HP_flat']},
   Helmet:   {good:['CritDamage%','CritChance%','HP%','AttackSpeed%'],      medium:['MagicFind%'],               junk:['Attack_flat','Defense_flat']},
-  Armor:    {good:['HP%','Defense%','DodgeChance%'],                       medium:['MoveSpeed%'],               junk:['Attack_flat','CritDamage%']},
+  Armor:    {good:['HP%','Defense%'],                       medium:['MoveSpeed%'],               junk:['Attack_flat','CritDamage%']},
   Gloves:   {good:['Attack%','CritDamage%','CritChance%','AttackSpeed%'],  medium:['MagicFind%'],               junk:['Defense_flat','HP_flat']},
-  Boots:    {good:['MoveSpeed%','DodgeChance%','Attack%'],                 medium:['AttackSpeed%'],             junk:['Defense_flat','HP_flat']},
+  Boots:    {good:['MoveSpeed%','Attack%'],                 medium:['AttackSpeed%'],             junk:['Defense_flat','HP_flat']},
   Ring:     {good:['Attack%','CritDamage%','CritChance%','AttackSpeed%'],  medium:['MagicFind%'],               junk:['Defense_flat','HP_flat']},
   Necklace: {good:['Attack%','CritDamage%','HP%','Defense%'],              medium:['MagicFind%'],               junk:['HP_flat','Defense_flat']},
 };
@@ -1171,7 +1171,7 @@ function badge(stat, type) {
 
 const ALL_STATS = [
   'Attack%','Defense%','HP%','CritChance%','CritDamage%',
-  'AttackSpeed%','MoveSpeed%','DodgeChance%','MagicFind%',
+  'AttackSpeed%','MoveSpeed%','MagicFind%',
   'Attack_flat','Defense_flat','HP_flat','PickupRange'
 ];
 
