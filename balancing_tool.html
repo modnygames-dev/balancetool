@@ -147,7 +147,7 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
     </div>
     <div style="padding:5px 12px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px">
       <span style="font-size:10px;color:#60d4fa;font-family:'JetBrains Mono',monospace">Magic</span>
-      <input type="number" id="gs1" value="0.015" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
+      <input type="number" id="gs1" value="0.013" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
     </div>
     <div style="padding:5px 12px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px">
       <span style="font-size:10px;color:#fbbf24;font-family:'JetBrains Mono',monospace">Rare</span>
@@ -515,7 +515,7 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
 <script>
 // ===================== 데이터 =====================
 const WEAPONS = [
-  {name:'Venom (DOT)',     baseSpd:2.2},
+  {name:'Venom (DOT)',     baseSpd:2.0},
   {name:'Ironpiercer',    baseSpd:0.6},
   {name:'Abyss (Aura)',   baseSpd:1.2},
   {name:'Tempest (Rapid)',baseSpd:1.5},
@@ -545,10 +545,17 @@ const SLOT_TIERS = {
 };
 
 const GRADES = ['없음','Common','Magic','Rare','Epic','Unique'];
-const GRADE_SCALE_DEFAULT = {'없음':0.02,'Common':0.01,'Magic':0.015,'Rare':0.02,'Epic':0.025,'Unique':0.03};
+const GRADE_SCALE_DEFAULT = {'없음':0.01,'Common':0.01,'Magic':0.013,'Rare':0.017,'Epic':0.02,'Unique':0.025}; // ItemGrade.json 기준
 let gradeScales = {...GRADE_SCALE_DEFAULT};
 const STAGE_EQUIP_OPTIONS = ['없음','Common','Magic','Rare','Epic','Unique'];
-const GRADE_DEFAULT_ILVL = {'없음':1,'Common':5,'Magic':12,'Rare':25,'Epic':40,'Unique':55};
+const GRADE_DEFAULT_ILVL = {
+  '없음':1,
+  'Common':8,   // S2~S3
+  'Magic':20,   // S4~S5 (T2 진입)
+  'Rare':33,    // S6~S8
+  'Epic':42,    // S9
+  'Unique':55   // S10
+};
 // 스테이지별 장비가정 기본값
 const STAGE_EQUIP_DEFAULT = {
   1:'없음',2:'Common',3:'Common',4:'Magic',5:'Magic',
@@ -635,7 +642,7 @@ const DEFAULTS = {
   weaponIdx: 0,
   scale: 0.02,
   baseHP: 100,
-  weaponSpds: [2.2, 0.6, 1.2, 1.5, 0.9], // 무기별 baseSpd
+  weaponSpds: [2.0, 0.6, 1.2, 1.5, 0.9], // 무기별 baseSpd
   stages: {},
   units: {},
   globalTiers: {
@@ -650,14 +657,14 @@ const DEFAULTS = {
     ],
     weaponSpd: [
       // % → ILB 미적용
-      {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60], isPercent:true}, // Venom
+      {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60], isPercent:true}, // Venom (2.0)
       {t1:[2,6],   t2:[6,12],  t3:[12,20], t4:[20,30], isPercent:true}, // Ironpiercer
       {t1:[4,10],  t2:[10,18], t3:[18,28], t4:[28,40], isPercent:true}, // Abyss
       {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60], isPercent:true}, // Tempest
       {t1:[2,6],   t2:[6,12],  t3:[12,20], t4:[20,30], isPercent:true}, // Titan
     ],
-    helmet:    {t1:[35,82],  t2:[83,164], t3:[165,246],t4:[247,328],isPercent:false}, // HP flat
-    armor:     {t1:[10,28],  t2:[29,56],  t3:[57,90],  t4:[91,130], isPercent:false}, // DEF flat
+    helmet:    {t1:[50,120], t2:[120,250],t3:[250,450], t4:[450,700], isPercent:false}, // HP flat
+    armor:     {t1:[15,35],  t2:[36,70],  t3:[71,120],  t4:[121,180],isPercent:false}, // DEF flat
     gloves:    {t1:[5,14],   t2:[13,22],  t3:[21,30],  t4:[30,40],  isPercent:true},  // CritChance%
     boots:     {t1:[6,14],   t2:[15,24],  t3:[25,34],  t4:[35,44],  isPercent:true},  // MoveSpeed%
     ring:      {t1:[22,50],  t2:[50,88],  t3:[88,120], t4:[120,155],isPercent:true},  // CritDamage%
@@ -702,8 +709,11 @@ function defaultUnits(s) {
 
 let saved = null;
 let D = saved || JSON.parse(JSON.stringify(DEFAULTS));
+if(D.randRanges) RAND_RANGES = {...DEFAULT_RAND_RANGES, ...D.randRanges};
 if(!D.stageEquip) D.stageEquip = {1:'없음',2:'Common',3:'Common',4:'Magic',5:'Magic',6:'Rare',7:'Rare',8:'Rare',9:'Epic',10:'Unique'};
-if(!D.stageILVL) D.stageILVL = {};
+if(!D.stageILVL) D.stageILVL = {
+    1:1, 2:8, 3:8, 4:20, 5:25, 6:30, 7:33, 8:38, 9:42, 10:55
+  };
 if(!D.globalTiers) D.globalTiers = JSON.parse(JSON.stringify(DEFAULTS.globalTiers));
 if(!D.weaponSpds) D.weaponSpds = [...DEFAULTS.weaponSpds];
 if(!Array.isArray(D.globalTiers.weaponAtk)) D.globalTiers.weaponAtk = JSON.parse(JSON.stringify(DEFAULTS.globalTiers.weaponAtk));
@@ -751,7 +761,7 @@ function getMid(tiers, ilvl, scale, grade){
 function calcStageDPSWithEquip(s, equip) {
   const gradeIdx = {'없음':0,'Common':1,'Magic':2,'Rare':3,'Epic':4,'Unique':5};
   const ei = gradeIdx[equip] || 0;
-  const slotCount = [0,1,2,3,5,7][ei] || 0;
+  const slotCount = [1,1,2,3,5,7][ei] || 1; // '없음'도 무기 슬롯 1개는 항상 착용
   const scale = D.scale || 0.02;
   const w = WEAPONS[currentWeapon];
   const baseSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
@@ -923,22 +933,25 @@ function selectStage(s){
 }
 
 // ===================== 렌더: TTK 테이블 =====================
+// 목표 유닛 HP (BM 고려 설계값)
+const TARGET_NORM_HP = {
+  1:20, 2:25, 3:35, 4:100, 5:160,
+  6:350, 7:550, 8:800, 9:1800, 10:3500
+};
+const TARGET_BOSS_MULT = 20; // 보스 HP = 일반 HP × 20배
+
 function autoCalcUnits() {
-  const rn0=g('rn0'), rn1=g('rn1');
   const rh0=g('rh0'), rh1=g('rh1');
-  const bossMult = g('bossMult') || 20;
-  const ttkMid = (rn0 + rn1) / 2;   // TTK 목표 중간값
-  const hitMid = (rh0 + rh1) / 2;   // 맞이수 목표 중간값
+  const bossMult = g('bossMult') || TARGET_BOSS_MULT;
+  const hitMid = (rh0 + rh1) / 2;
+  const baseHP = D.baseHP || 100;
 
   for(let s=1;s<=10;s++){
-    const equip = (D.stageEquip && D.stageEquip[s]) || STAGE_EQUIP_DEFAULT[s];
-    const {dps, hp} = calcStageDPSWithEquip(s, equip);
-
-    // 자동 계산
-    const normHP  = Math.round(dps * ttkMid);
-    const normATK = Math.round(hp / hitMid);
+    const normHP  = TARGET_NORM_HP[s];
     const bossHP  = Math.round(normHP * bossMult);
+    const normATK = Math.round(baseHP / hitMid);
 
+    if(!D.units[s]) D.units[s] = {};
     D.units[s].nh = normHP;
     D.units[s].na = normATK;
     D.units[s].bh = bossHP;
@@ -1175,6 +1188,24 @@ const ALL_STATS = [
   'Attack_flat','Defense_flat','HP_flat','PickupRange'
 ];
 
+// 랜덤스탯 기본 T1~T4 범위 (수정 가능)
+const DEFAULT_RAND_RANGES = {
+  'Attack%':      {t1:[20,40],  t2:[41,65],  t3:[66,90],  t4:[91,120], isPercent:true},
+  'Defense%':     {t1:[10,22],  t2:[23,38],  t3:[39,55],  t4:[56,75],  isPercent:true},
+  'HP%':          {t1:[5,12],   t2:[13,22],  t3:[23,33],  t4:[34,45],  isPercent:true},
+  'CritChance%':  {t1:[3,8],    t2:[9,14],   t3:[15,20],  t4:[21,27],  isPercent:true},
+  'CritDamage%':  {t1:[15,35],  t2:[36,60],  t3:[61,85],  t4:[86,115], isPercent:true},
+  'AttackSpeed%': {t1:[6,14],   t2:[15,22],  t3:[23,30],  t4:[31,40],  isPercent:true},
+  'MoveSpeed%':   {t1:[4,10],   t2:[11,17],  t3:[18,24],  t4:[25,32],  isPercent:true},
+  'MagicFind%':   {t1:[5,12],   t2:[13,22],  t3:[23,33],  t4:[34,45],  isPercent:true},
+  'Attack_flat':  {t1:[2,6],    t2:[7,12],   t3:[13,18],  t4:[19,25],  isPercent:false},
+  'Defense_flat': {t1:[2,6],    t2:[7,12],   t3:[13,18],  t4:[19,25],  isPercent:false},
+  'HP_flat':      {t1:[10,25],  t2:[26,45],  t3:[46,68],  t4:[69,95],  isPercent:false},
+  'PickupRange':  {t1:[0.2,0.5],t2:[0.5,0.9],t3:[0.9,1.3],t4:[1.3,1.8],isPercent:false},
+};
+// 런타임 수정 가능한 복사본
+let RAND_RANGES = JSON.parse(JSON.stringify(DEFAULT_RAND_RANGES));
+
 let editingSlot = null, editingIdx = null;
 
 function showStatPool(tabIdx) {
@@ -1199,7 +1230,120 @@ function showStatPool(tabIdx) {
   html += `<td style="padding:10px 12px;text-align:center"><button onclick="openPoolEdit('${slot}')" style="background:var(--blue-dim);border:1px solid var(--blue);color:var(--blue);font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer">✏️ 편집</button></td>`;
   html += '</tr>';
   html += '</tbody></table>';
+  // 집계 표 추가
+  html += renderStatAggregate(slot);
   document.getElementById('statPoolTable').innerHTML = html;
+}
+
+function getTierMid(stat, tier) {
+  const r = RAND_RANGES[stat];
+  if(!r) return 0;
+  const [mn,mx] = r[tier];
+  return (mn+mx)/2;
+}
+
+function renderStatAggregate(slot) {
+  const pool = STAT_POOL[slot]||{good:[],medium:[],junk:[]};
+  const tiers = ['t1','t2','t3','t4'];
+  const tierLabels = ['T1 (iLvl1~19)','T2 (iLvl20~39)','T3 (iLvl40~59)','T4 (iLvl60)'];
+  const grades = [{label:'Magic',  count:1},{label:'Rare',count:2},{label:'Epic/Unique',count:3}];
+
+  // 슬롯 메인스탯 티어 값
+  const mainTiersMap = {
+    Weapon:   getGlobalTiers('weapon',currentWeapon),
+    Helmet:   getGlobalTiers('helmet'),
+    Armor:    getGlobalTiers('armor'),
+    Gloves:   getGlobalTiers('gloves'),
+    Boots:    getGlobalTiers('boots'),
+    Ring:     getGlobalTiers('ring'),
+    Necklace: getGlobalTiers('necklace'),
+  };
+  const mainTiers = mainTiersMap[slot] || {t1:[0,0],t2:[0,0],t3:[0,0],t4:[0,0]};
+
+  let html = '<div style="border-top:2px solid var(--border);padding:12px 16px">';
+  html += "<div style='font-family:JetBrains Mono,monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px'>티어별 스탯 집계 (메인 + 랜덤 평균)</div>";
+  html += '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html += '<thead><tr style="background:var(--bg3)">';
+  html += '<th style="padding:6px 10px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">등급</th>';
+  tiers.forEach((t,i)=> html+=`<th style="padding:6px 10px;text-align:center;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">${tierLabels[i]}</th>`);
+  html += '</tr></thead><tbody>';
+
+  grades.forEach((g,gi)=>{
+    const bg = gi%2===0?'var(--bg)':'var(--bg2)';
+    html += `<tr style="background:${bg}">`;
+    html += `<td style="padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--yellow);border-bottom:1px solid var(--border)">${g.label}</td>`;
+
+    tiers.forEach(t=>{
+      const [mn,mx] = mainTiers[t]||[0,0];
+      const mainMid = (mn+mx)/2;
+
+      // 좋음 스탯 상위 N개 합산
+      const goodMids = pool.good
+        .map(s=>getTierMid(s,t))
+        .sort((a,b)=>b-a)
+        .slice(0,g.count);
+      const randSum = goodMids.reduce((a,b)=>a+b,0);
+      const total = mainMid + randSum;
+
+      html += `<td style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;border-bottom:1px solid var(--border)">
+        <span style="color:var(--yellow)">${mainMid.toFixed(1)}</span>
+        <span style="color:var(--muted)"> + </span>
+        <span style="color:var(--green)">${randSum.toFixed(1)}</span>
+        <span style="color:var(--muted)"> = </span>
+        <span style="color:#fff;font-weight:700">${total.toFixed(1)}</span>
+      </td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+
+  // 랜덤스탯 T1~T4 수치 설정 테이블
+  html += "<div style='font-family:JetBrains Mono,monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px'>랜덤스탯 수치 설정 (Min ~ Max)</div>";
+  html += '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html += '<thead><tr style="background:var(--bg3)">';
+  html += '<th style="padding:5px 8px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">스탯</th>';
+  html += '<th style="padding:5px 8px;text-align:center;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">등급</th>';
+  tiers.forEach((t,i)=>html+=`<th style="padding:5px 8px;text-align:center;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">${tierLabels[i]}</th>`);
+  html += '</tr></thead><tbody>';
+
+  const visibleStats = [...pool.good, ...pool.medium, ...pool.junk];
+  visibleStats.forEach((stat,i)=>{
+    const tier_val = pool.good.includes(stat)?'good':pool.medium.includes(stat)?'medium':'junk';
+    const color = tier_val==='good'?'var(--green)':tier_val==='medium'?'var(--yellow)':'var(--muted)';
+    const bg = i%2===0?'var(--bg)':'var(--bg2)';
+    const statId = stat.replace('%','pct').replace('_','x');
+    html += `<tr style="background:${bg}">`;
+    html += `<td style="padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:${color};border-bottom:1px solid var(--border)">${stat}</td>`;
+    html += `<td style="padding:5px 8px;text-align:center;font-size:10px;color:${color};border-bottom:1px solid var(--border)">${tier_val==='good'?'★★★':tier_val==='medium'?'★★':'★'}</td>`;
+    tiers.forEach(t=>{
+      const r = RAND_RANGES[stat]||{t1:[0,0],t2:[0,0],t3:[0,0],t4:[0,0]};
+      const [mn,mx] = r[t];
+      const suf = RAND_RANGES[stat]?.isPercent?'%':'';
+      html += `<td style="padding:5px 8px;text-align:center;border-bottom:1px solid var(--border)">
+        <input type="number" value="${mn}" style="width:38px;font-size:10px" onchange="updateRandRange('${stat}','${t}',0,+this.value);renderStatAggregate('${slot}')">
+        <span style="color:var(--muted);font-size:9px">~</span>
+        <input type="number" value="${mx}" style="width:38px;font-size:10px" onchange="updateRandRange('${stat}','${t}',1,+this.value);renderStatAggregate('${slot}')">
+        <span style="color:var(--muted);font-size:9px">${suf}</span>
+      </td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function updateRandRange(stat, tier, idx, val) {
+  if(!RAND_RANGES[stat]) RAND_RANGES[stat]={...DEFAULT_RAND_RANGES[stat]};
+  RAND_RANGES[stat][tier][idx] = val;
+  debounceSave({...D, randRanges: RAND_RANGES});
+}
+
+// 집계 다시 렌더 (슬롯 전환 없이)
+function rerenderAggregate(slot) {
+  const el = document.getElementById('statPoolTable');
+  if(!el) return;
+  // 집계 부분만 교체 (전체 재렌더)
+  showStatPool(currentPoolTab);
 }
 
 function openPoolEdit(slot) {
@@ -1273,6 +1417,54 @@ function closePoolEdit() {
   editingSlot = null; editingIdx = null;
 }
 
+
+function saveToFile() {
+  const filename = 'pew_pew_balancing_' + new Date().toISOString().slice(0,10) + '.json';
+  const blob = new Blob([JSON.stringify(D, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function loadFromFile(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const loaded = JSON.parse(e.target.result);
+      // 기존 D에 병합 (없는 키는 기본값 유지)
+      Object.assign(D, loaded);
+      // weaponSpds 복원
+      if(!D.weaponSpds) D.weaponSpds = [...DEFAULTS.weaponSpds];
+      // stageEquip 복원
+      if(!D.stageEquip) D.stageEquip = {...STAGE_EQUIP_DEFAULT};
+      // stageILVL 복원
+      if(!D.stageILVL) D.stageILVL = {1:1,2:8,3:8,4:20,5:25,6:30,7:33,8:38,9:42,10:55};
+      // randRanges 복원
+      if(D.randRanges) RAND_RANGES = {...DEFAULT_RAND_RANGES, ...D.randRanges};
+      // statPool 복원
+      if(D.statPool) Object.assign(STAT_POOL, D.statPool);
+      // UI 갱신
+      recalcAll();
+      calcStatRatio();
+      showStatPool(currentPoolTab);
+      calcEco();
+      // 무기 탭 업데이트
+      selectWeapon(D.weaponIdx||0);
+      // 스케일 업데이트
+      const scaleEl = document.getElementById('ilbScale');
+      if(scaleEl) scaleEl.value = D.scale||0.02;
+      alert('✅ 로드 완료: ' + file.name);
+    } catch(err) {
+      alert('❌ 파일 형식 오류: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = ''; // 같은 파일 재선택 가능하게
+}
 
 function calcEco() {
   const plays        = +document.getElementById('ec_plays').value || 0;
