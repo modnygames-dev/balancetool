@@ -1439,31 +1439,39 @@ function loadFromFile(event) {
   reader.onload = e => {
     try {
       const loaded = JSON.parse(e.target.result);
-      // 기존 D에 병합 (없는 키는 기본값 유지)
+      // 기존 D에 병합
       Object.assign(D, loaded);
-      // weaponSpds 복원
+      // 필수 필드 초기화 (없는 경우 기본값)
       if(!D.weaponSpds) D.weaponSpds = [...DEFAULTS.weaponSpds];
-      // stageEquip 복원
       if(!D.stageEquip) D.stageEquip = {...STAGE_EQUIP_DEFAULT};
-      // stageILVL 복원
-      if(!D.stageILVL) D.stageILVL = {1:1,2:8,3:8,4:20,5:25,6:30,7:33,8:38,9:42,10:55};
-      // randRanges 복원
+      if(!D.stageILVL)  D.stageILVL  = {1:1,2:8,3:8,4:20,5:25,6:30,7:33,8:38,9:42,10:55};
+      if(!D.globalTiers) D.globalTiers = JSON.parse(JSON.stringify(DEFAULTS.globalTiers));
+      if(!D.stages) D.stages = {};
+      if(!D.units)  D.units  = {};
+      // stages / units 각 스테이지 초기화
+      for(let s=1;s<=10;s++){
+        if(!D.stages[s]) D.stages[s] = defaultStageSlots(s);
+        if(!D.units[s])  D.units[s]  = defaultUnits(s);
+      }
+      // randRanges / statPool 복원
       if(D.randRanges) RAND_RANGES = {...DEFAULT_RAND_RANGES, ...D.randRanges};
-      // statPool 복원
-      if(D.statPool) Object.assign(STAT_POOL, D.statPool);
-      // UI 갱신
+      if(D.statPool)   Object.assign(STAT_POOL, D.statPool);
+      // 스케일 UI 업데이트
+      const scaleEl = document.getElementById('ilbScale');
+      if(scaleEl) scaleEl.value = D.scale||0.02;
+      // 무기 선택 복원
+      currentWeapon = D.weaponIdx||0;
+      document.querySelectorAll('[id^="wb"]').forEach((b,j)=>b.classList.toggle('active',currentWeapon===j));
+      const bsEl = document.getElementById('baseSpd');
+      if(bsEl) bsEl.value = (D.weaponSpds&&D.weaponSpds[currentWeapon])||WEAPONS[currentWeapon].baseSpd;
+      // UI 전체 갱신
       recalcAll();
       calcStatRatio();
       showStatPool(currentPoolTab);
       calcEco();
-      // 무기 탭 업데이트
-      selectWeapon(D.weaponIdx||0);
-      // 스케일 업데이트
-      const scaleEl = document.getElementById('ilbScale');
-      if(scaleEl) scaleEl.value = D.scale||0.02;
       alert('✅ 로드 완료: ' + file.name);
     } catch(err) {
-      alert('❌ 파일 형식 오류: ' + err.message);
+      alert('❌ 파일 형식 오류: ' + err.message + '\n' + err.stack);
     }
   };
   reader.readAsText(file);
