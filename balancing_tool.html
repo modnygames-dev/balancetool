@@ -133,6 +133,10 @@ tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lb
     <span class="badge br">보스 30~90초</span>
     <span class="badge bb">맞이수 5~7대</span>
     
+    <button onclick="saveToFile()" style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:4px 10px;border-radius:4px;cursor:pointer">💾 저장</button>
+    <label style="background:var(--yellow-dim);border:1px solid var(--yellow);color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:4px 10px;border-radius:4px;cursor:pointer">
+      📂 로드<input type="file" accept=".json" onchange="loadFromFile(event)" style="display:none">
+    </label>
     <button onclick="setToken()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer" id="tokenBtn">🔑 Token 설정</button>
     <span id="syncStatus" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);padding:4px 8px">—</span>
   </div>
