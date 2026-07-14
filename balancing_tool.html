@@ -3,1640 +3,318 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pew Pew — Balancing Tool</title>
+<title>밸런싱 시뮬레이터 — 서바이버 × D2 드랍</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
 :root{
-  --bg:#0d0f14;--bg2:#13161d;--bg3:#1a1e27;--border:#2a2e3a;
-  --text:#c8d0e0;--muted:#5a6070;
-  --green:#4ade80;--green-dim:#0d2a18;
-  --red:#f87171;--red-dim:#2a0d0d;
-  --yellow:#fbbf24;--yellow-dim:#2a1f08;
-  --blue:#60a5fa;--blue-dim:#0d1a2a;
-  --purple:#a78bfa;--purple-dim:#1a0d2a;
-  --accent:#7c3aed;
+  --bg:#16181d; --panel:#1e2128; --panel2:#23272f; --line:#2c313a;
+  --text:#d6d9de; --muted:#8b919c; --dim:#5c6270;
+  --g1:#c8c8c8; --g2:#6b93ff; --g3:#ffd24d; --g4:#c7833f;
+  --ok:#58c47a; --warn:#ff7a5c; --accent:#ffd24d;
+  --mono:ui-monospace,'JetBrains Mono','Cascadia Code',Consolas,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px}
-
-.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
-.header h1{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:#fff}
-.header .sub{color:var(--muted);font-size:10px;font-family:'JetBrains Mono',monospace}
-.hright{margin-left:auto;display:flex;gap:8px;align-items:center}
-.badge{padding:3px 8px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600}
-.bg{background:var(--green-dim);color:var(--green);border:1px solid #1a4a28}
-.br{background:var(--red-dim);color:var(--red);border:1px solid #4a1a1a}
-.bb{background:var(--blue-dim);color:var(--blue);border:1px solid #1a2a4a}
-
-.wrap{max-width:1300px;margin:0 auto;padding:20px;display:grid;gap:20px}
-
-/* PANEL */
-.panel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.ph{background:var(--bg3);border-bottom:1px solid var(--border);padding:9px 16px;display:flex;align-items:center;gap:10px}
-.ph-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;letter-spacing:.04em}
-.ph-sub{font-size:10px;color:var(--muted);margin-left:4px}
-.ph-status{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px}
-
-/* STEP NUM */
-.snum{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0}
-.s1c{background:var(--green-dim);color:var(--green);border:1px solid #1a4a28}
-.s2c{background:var(--blue-dim);color:var(--blue);border:1px solid #1a2a4a}
-.s3c{background:var(--yellow-dim);color:var(--yellow);border:1px solid #4a2a0a}
-.s4c{background:var(--purple-dim);color:var(--purple);border:1px solid #2a1a4a}
-
-/* GUIDE */
-.guide{border-left:3px solid;padding:9px 13px;margin:12px 16px;border-radius:0 4px 4px 0;font-size:11px;line-height:1.7;background:var(--bg3)}
-.guide.green{border-color:var(--green);color:#a0d8b0}
-.guide.blue{border-color:var(--blue);color:#a0c4d8}
-.guide strong{color:#fff;display:block;margin-bottom:3px;font-size:12px}
-.guide code{font-family:'JetBrains Mono',monospace;background:#0d0f14;padding:1px 5px;border-radius:3px;font-size:10px}
-
-/* INPUT */
-input[type=number],select{background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:3px 5px;text-align:center;outline:none;transition:border-color .15s}
-input[type=number]:focus,select:focus{border-color:var(--accent)}
-select{color:var(--text);font-weight:400}
-input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:var(--accent)}
-
-/* WEAPON BTN */
-.wbtn{background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:5px 12px;cursor:pointer;transition:all .15s}
-.wbtn:hover{border-color:var(--accent);color:#fff}
-.wbtn.active{border-color:var(--yellow);color:var(--yellow);background:var(--yellow-dim)}
-
-/* STAGE TABS */
-.stage-tabs{display:flex;gap:0;border-bottom:1px solid var(--border)}
-.stab{padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:all .15s}
-.stab:hover{color:var(--text)}
-.stab.active{color:#fff;border-bottom-color:var(--accent)}
-.stab.s1a{border-bottom-color:var(--green);color:var(--green)}
-.stab.s5a{border-bottom-color:var(--blue);color:var(--blue)}
-.stab.s10a{border-bottom-color:var(--red);color:var(--red)}
-
-/* SLOT TABLE */
-.slot-table{width:100%;border-collapse:collapse;font-size:11px}
-.slot-table th{padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--muted);background:var(--bg3);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-.slot-table td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px}
-.slot-table td.sname{text-align:left;font-weight:600;color:#fff;padding-left:14px}
-.slot-table tr.disabled td{opacity:.35}
-.slot-table tr.total-row{background:var(--bg3)}
-.slot-table tr.total-row td{font-weight:700;color:#fff;border-top:2px solid var(--border)}
-.contrib{font-size:11px}
-.ok{color:var(--green)} .warn{color:var(--red)} .edge{color:var(--yellow)} .na{color:var(--muted)}
-.dps-box{display:flex;gap:20px;padding:12px 16px;background:var(--bg3);border-top:1px solid var(--border)}
-.dps-item{display:flex;flex-direction:column;gap:2px}
-.dps-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.dps-value{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--yellow)}
-.dps-sub{font-size:10px;color:var(--muted)}
-
-/* TTK TABLE */
-.tw{overflow-x:auto}
-table.ttk{width:100%;border-collapse:collapse;font-size:11px}
-table.ttk thead tr{background:var(--bg3)}
-table.ttk th{padding:7px 8px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;border-bottom:2px solid var(--border);white-space:nowrap}
-table.ttk th.yc{color:var(--yellow)}
-table.ttk td{padding:0;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:11px}
-table.ttk td.lbl{padding:6px 10px;font-weight:700;font-size:12px}
-.cw{padding:4px 6px}
-input.ti{background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:4px 6px;width:72px;text-align:center;outline:none}
-input.ti:focus{border-color:var(--accent)}
-.cv{padding:6px 8px;text-align:center;font-weight:700}
-tr.rs1{background:#0a1a10} tr.rs5{background:#0a1020} tr.rs10{background:#1a0a0a} tr.rmid{background:var(--bg)}
-tr.rs1 td.lbl{color:var(--green)} tr.rs5 td.lbl{color:var(--blue)} tr.rs10 td.lbl{color:var(--red)}
-.vd{font-size:14px;text-align:center;padding:6px}
-
-/* CHECKLIST */
-.cl{display:grid;grid-template-columns:repeat(2,1fr)}
-.ci{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);cursor:pointer;transition:background .1s}
-.ci:hover{background:var(--bg3)} .ci:nth-child(2n){border-right:none}
-.cb{width:16px;height:16px;border:1px solid var(--border);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;margin-top:1px}
-.ci.done .cb{background:var(--green-dim);border-color:var(--green);color:var(--green)}
-.cs{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--accent);font-weight:600;margin-bottom:2px}
-.ct{font-weight:700;color:#fff;font-size:12px;margin-bottom:1px}
-.cg{font-size:10px;color:var(--muted)}
-.ci.done .ct{color:var(--muted);text-decoration:line-through}
-.pr{display:inline-flex;padding:1px 5px;border-radius:3px;font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600}
-.pn{background:var(--red-dim);color:var(--red);border:1px solid #5a2a2a}
-.pl{background:var(--bg3);color:var(--muted);border:1px solid var(--border)}
-
-/* URL COPY BTN */
-#copyBtn{background:var(--purple-dim);border:1px solid var(--accent);color:var(--purple);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:4px 12px;border-radius:4px;cursor:pointer}
+body{background:var(--bg);color:var(--text);font-family:"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:14px;line-height:1.5}
+.wrap{display:grid;grid-template-columns:300px 1fr;gap:0;min-height:100vh}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+header{grid-column:1/-1;padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header h1{font-size:17px;font-weight:700;letter-spacing:-.2px}
+header .sub{color:var(--muted);font-size:12.5px}
+header .pipe{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+/* ---------- 파라미터 패널 ---------- */
+aside{border-right:1px solid var(--line);padding:16px 18px 40px;background:var(--panel)}
+@media(max-width:900px){aside{border-right:none;border-bottom:1px solid var(--line)}}
+.grp{margin-bottom:20px}
+.grp h2{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.prow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2.5px 0}
+.prow label{font-size:12.5px;color:var(--text);flex:1;cursor:help}
+.prow input{width:74px;background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--accent);font-family:var(--mono);font-size:12.5px;padding:3px 7px;text-align:right}
+.prow input:focus{outline:none;border-color:var(--accent)}
+.gradeTbl{width:100%;border-collapse:collapse;font-size:12px}
+.gradeTbl td{padding:3px 4px}
+.gradeTbl input{width:58px;background:var(--bg);border:1px solid var(--line);border-radius:4px;font-family:var(--mono);font-size:12px;padding:2px 5px;text-align:right;color:var(--text)}
+.gname{font-weight:700}
+.g1{color:var(--g1)}.g2{color:var(--g2)}.g3{color:var(--g3)}.g4{color:var(--g4)}
+.sumline{font-family:var(--mono);font-size:11.5px;margin-top:4px}
+/* ---------- 결과 ---------- */
+main{padding:18px 22px 60px;min-width:0}
+.verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:22px}
+.vcard{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--dim);border-radius:6px;padding:11px 14px}
+.vcard .k{font-size:11.5px;color:var(--muted);margin-bottom:3px}
+.vcard .v{font-family:var(--mono);font-size:19px;font-weight:700}
+.vcard .j{font-size:12px;margin-top:3px}
+.vcard.ok{border-left-color:var(--ok)} .vcard.ok .j{color:var(--ok)}
+.vcard.warn{border-left-color:var(--warn)} .vcard.warn .j{color:var(--warn)}
+section{margin-bottom:30px}
+.shead{display:flex;align-items:baseline;gap:10px;margin-bottom:9px}
+.shead h2{font-size:14px;font-weight:700}
+.shead .note{color:var(--muted);font-size:12px}
+button.copy{margin-left:auto;background:var(--panel2);border:1px solid var(--line);color:var(--muted);border-radius:4px;font-size:11.5px;padding:3px 10px;cursor:pointer}
+button.copy:hover{color:var(--text);border-color:var(--dim)}
+table.data{width:100%;border-collapse:collapse;font-size:12.5px;font-family:var(--mono)}
+table.data th{font-family:inherit;font-size:11px;color:var(--muted);font-weight:600;text-align:right;padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.data td{text-align:right;padding:4px 8px;border-bottom:1px solid #22262e;white-space:nowrap}
+table.data th:first-child,table.data td:first-child{text-align:left}
+tr.wall td{background:rgba(255,210,77,.05)}
+td.warnc{color:var(--warn)} td.okc{color:var(--ok)}
+.chips{display:flex;gap:3px}
+.chip{width:22px;height:20px;border:1px solid var(--line);border-radius:3px;background:var(--bg);cursor:pointer;font-size:10.5px;line-height:18px;text-align:center;color:var(--dim);font-family:var(--mono)}
+.chip.on1{border-color:var(--g1);color:var(--g1);background:rgba(200,200,200,.08)}
+.chip.on2{border-color:var(--g2);color:var(--g2);background:rgba(107,147,255,.1)}
+.chip.on3{border-color:var(--g3);color:var(--g3);background:rgba(255,210,77,.1)}
+.chip.on4{border-color:var(--g4);color:var(--g4);background:rgba(199,131,63,.12)}
+svg{display:block;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.legend{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin-top:6px}
+.legend b{font-weight:600}
+.fine{color:var(--dim);font-size:11.5px;margin-top:8px;line-height:1.7}
+details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom:8px}
+.toast{position:fixed;bottom:18px;right:18px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px 14px;font-size:12.5px;opacity:0;transition:opacity .2s}
+.toast.show{opacity:1}
 </style>
 </head>
 <body>
-
-<div class="header">
-  <div>
-    <h1>⚔ PEW PEW — BALANCING TOOL <span style="font-size:10px;color:var(--muted);font-weight:400">v1.3</span></h1>
-    <div class="sub">아이템 가정 → 예상 DPS/HP → 스테이지 밸런싱</div>
-  </div>
-  <div class="hright">
-    <span class="badge bg">일반 0.5~1초</span>
-    <span class="badge br">보스 30~90초</span>
-    <span class="badge bb">맞이수 5~7대</span>
-    
-    <button onclick="saveToFile()" style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:4px 10px;border-radius:4px;cursor:pointer">💾 저장</button>
-    <label style="background:var(--yellow-dim);border:1px solid var(--yellow);color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:4px 10px;border-radius:4px;cursor:pointer">
-      📂 로드<input type="file" accept=".json" onchange="loadFromFile(event)" style="display:none">
-    </label>
-    <button onclick="setToken()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border-radius:4px;cursor:pointer" id="tokenBtn">🔑 Token 설정</button>
-    <span id="syncStatus" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);padding:4px 8px">—</span>
-  </div>
-</div>
-
-<div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:0;flex-wrap:wrap">
-  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);margin-right:14px;text-transform:uppercase;letter-spacing:.06em">등급별 ILB Scale</span>
-  <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:4px;overflow:hidden">
-    <div style="padding:5px 12px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px">
-      <span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace">Common</span>
-      <input type="number" id="gs0" value="0.01" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
-    </div>
-    <div style="padding:5px 12px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px">
-      <span style="font-size:10px;color:#60d4fa;font-family:'JetBrains Mono',monospace">Magic</span>
-      <input type="number" id="gs1" value="0.013" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
-    </div>
-    <div style="padding:5px 12px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px">
-      <span style="font-size:10px;color:#fbbf24;font-family:'JetBrains Mono',monospace">Rare</span>
-      <input type="number" id="gs2" value="0.02" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
-    </div>
-    <div style="padding:5px 12px;background:var(--bg3);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px">
-      <span style="font-size:10px;color:#c084fc;font-family:'JetBrains Mono',monospace">Epic</span>
-      <input type="number" id="gs3" value="0.025" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
-    </div>
-    <div style="padding:5px 12px;background:var(--bg3);display:flex;align-items:center;gap:6px">
-      <span style="font-size:10px;color:#f97316;font-family:'JetBrains Mono',monospace">Unique</span>
-      <input type="number" id="gs4" value="0.03" step="0.005" style="width:58px;font-size:11px" onchange="updateGradeScales()">
-    </div>
-  </div>
-  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-left:14px">FinalValue = Random(TierMin, TierMax) × (1 + iLvl × GradeScale)</span>
-</div>
 <div class="wrap">
+<header>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v7</span></h1>
+  <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
+  <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
+</header>
 
-<!-- ===== STEP 1: 아이템 가정 ===== -->
-<div class="panel">
-  <div class="ph">
-    <div class="snum s1c">1</div>
-    <span class="ph-title">아이템 가정</span>
-    <span class="ph-sub">무기 선택 + 슬롯별 장비 설정 → 예상 DPS/HP 자동 계산</span>
-    <div class="ph-status" id="st1status">—</div>
-  </div>
+<aside id="params"></aside>
 
-  <!-- 무기 선택 -->
-  <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">무기</span>
-    <button class="wbtn active" onclick="selectWeapon(0)" id="wb0">🟢 Venom (DOT)</button>
-    <button class="wbtn" onclick="selectWeapon(1)" id="wb1">🔵 Ironpiercer (Pierce)</button>
-    <button class="wbtn" onclick="selectWeapon(2)" id="wb2">🟣 Abyss (Aura)</button>
-    <button class="wbtn" onclick="selectWeapon(3)" id="wb3">🟠 Tempest (Rapid)</button>
-    <button class="wbtn" onclick="selectWeapon(4)" id="wb4">🔴 Titan (Heavy)</button>
-    <span style="margin-left:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">BaseSpd</span>
-    <input type="number" id="baseSpd" value="2.2" step="0.1" style="width:65px" oninput="if(!D.weaponSpds)D.weaponSpds=[...DEFAULTS.weaponSpds];D.weaponSpds[currentWeapon]=+this.value;save();recalcAll()">
-    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">Scale</span>
-    <input type="number" id="ilbScale" value="0.02" step="0.005" style="width:65px" onchange="recalcAll()">
-  </div>
+<main>
+  <div class="verdicts" id="verdicts"></div>
 
-  <!-- 스테이지 탭 -->
-  <div class="stage-tabs" id="stageTabs"></div>
+  <section>
+    <div class="shead"><h2>장비드랍 경제 (메타 진행)</h2><span class="note">요구 등급 클릭으로 변경 — 등급 상승 지점이 곧 벽</span><button class="copy" data-t="drop">엑셀 복사</button></div>
+    <div style="overflow-x:auto"><table class="data" id="dropTbl"></table></div>
+  </section>
 
-  <!-- 슬롯 테이블 -->
-  <div style="overflow-x:auto">
-    <table class="slot-table">
-      <thead>
-        <tr>
-          <th style="width:30px">착용</th>
-          <th style="text-align:left;padding-left:14px">슬롯</th>
-          <th>등급</th>
-          <th>iLvl</th>
-          <th>T1 Min~Max</th>
-          <th>T2 Min~Max</th>
-          <th>T3 Min~Max</th>
-          <th>T4 Min~Max</th>
-          <th>스탯 기여</th>
-          <th>비고</th>
-        </tr>
-      </thead>
-      <tbody id="slotTbl"></tbody>
-    </table>
-  </div>
+  <section>
+    <div class="shead"><h2>누적 도달 시간</h2><span class="note">꺾이는 지점 = 벽</span></div>
+    <svg id="cumChart" width="100%" height="190" viewBox="0 0 720 190" preserveAspectRatio="none"></svg>
+  </section>
 
-  <!-- DPS/HP 요약 -->
-  <div class="dps-box" id="dpsSummary">
-    <div class="dps-item">
-      <div class="dps-label">예상 DPS</div>
-      <div class="dps-value" id="calcDPS">—</div>
-      <div class="dps-sub" id="calcDPSSub">—</div>
-    </div>
-    <div class="dps-item">
-      <div class="dps-label">예상 HP</div>
-      <div class="dps-value" id="calcHP">—</div>
-      <div class="dps-sub" id="calcHPSub">—</div>
-    </div>
-    <div class="dps-item">
-      <div class="dps-label">CritChance</div>
-      <div class="dps-value" id="calcCrit" style="font-size:14px">—</div>
-    </div>
-    <div class="dps-item">
-      <div class="dps-label">CritDamage</div>
-      <div class="dps-value" id="calcCritDmg" style="font-size:14px">—</div>
-    </div>
-  </div>
+  <section>
+    <div class="shead"><h2>인런 시뮬레이션 (기준 스테이지 <span id="selStg"></span>)</h2><span class="note">30초 스텝 · 스폰 곡선 vs 장비+레벨 DPS</span><button class="copy" data-t="inrun">엑셀 복사</button></div>
+    <svg id="irChart" width="100%" height="170" viewBox="0 0 720 170" preserveAspectRatio="none"></svg>
+    <div class="legend"><span><b style="color:var(--g2)">──</b> 스폰율(마리/분)</span><span><b style="color:var(--g3)">──</b> 실효 킬속도</span><span><b style="color:var(--warn)">│</b> 붕괴</span><span><b style="color:var(--ok)">│</b> 보스 등장</span></div>
+    <details style="margin-top:10px"><summary>스텝 테이블 펼치기</summary>
+      <div style="overflow-x:auto"><table class="data" id="irTbl"></table></div>
+    </details>
+  </section>
 
-  <!-- 등급별 DPS 비교 -->
-  <div style="border-top:1px solid var(--border);padding:10px 16px">
-    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">
-      스테이지별 등급 자동 DPS 비교 (Weapon 기준, 현재 T1~T4 범위 적용)
-    </div>
-    <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead>
-          <tr id="gradeCompareHdr"></tr>
-        </thead>
-        <tbody id="gradeCompareTbl"></tbody>
-      </table>
-    </div>
-  </div>
+  <p class="fine">
+    ※ 기대값 모델 — D2식 RNG는 분산이 커서 상·하위 10% 유저의 도달 시간이 2~3배 벌어질 수 있음 → 천장(pity) 권장: 표의 필요 런 × 1.5를 확정 드랍 N값의 출발점으로.<br>
+    ※ 골드는 진행 병목이 아닌 강화·옵션 재롤 싱크. 강화는 총 DPS의 (1+강화 기여율) 확정 쿠션으로 합산됨.<br>
+    ※ 엑셀 복사 버튼은 탭 구분 텍스트를 복사 — 시트에 바로 붙여넣기 가능.
+  </p>
+</main>
 </div>
-
-
-<!-- ===== STEP 1.5: 스탯 비율 연계 설계 ===== -->
-<div class="panel">
-  <div class="ph">
-    <div class="snum" style="background:var(--yellow-dim);color:var(--yellow);border:1px solid #4a2a0a">⚖</div>
-    <span class="ph-title">메인스탯 ↔ 랜덤스탯 비율 설계</span>
-    <span class="ph-sub">목표 DPS 기준으로 메인/랜덤 수치 자동 역산</span>
-    <div class="ph-status" id="ratioStatus">—</div>
-  </div>
-
-  <div class="guide-box yellow">
-    <strong>메인스탯 비율을 낮추면 랜덤스탯 기여가 커져 파밍 동기가 높아집니다.</strong>
-    메인스탯 30~40% / 랜덤스탯 60~70% 권장 (디아블로2 방식)
-  </div>
-
-  <!-- 비율 설정 -->
-  <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:20px;align-items:center;flex-wrap:wrap">
-    <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
-      메인스탯 기여 비율
-      <input type="number" id="mainRatio" value="35" min="10" max="90" style="width:55px" oninput="calcStatRatio()"> %
-    </div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
-      랜덤스탯 기여: <span id="randRatio" style="color:var(--green);font-weight:700">65</span>%
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
-      랜덤스탯 개수 (등급별)
-      <select id="subStatCount" style="width:80px" onchange="calcStatRatio()">
-        <option value="1">Magic (1개)</option>
-        <option value="2">Rare (2개)</option>
-        <option value="3" selected>Epic/Unique (3개)</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- 결과 테이블 -->
-  <div style="overflow-x:auto">
-    <table class="ttk">
-      <thead>
-        <tr>
-          <th>Stage</th>
-          <th>장비가정</th>
-          <th>목표DPS</th>
-          <th>메인스탯<br>기여목표</th>
-          <th>무기ATK<br>필요값</th>
-          <th>랜덤스탯<br>기여목표</th>
-          <th>슬롯당<br>기여</th>
-          <th>Attack%<br>필요값</th>
-          <th>CritDmg%<br>참고</th>
-        </tr>
-      </thead>
-      <tbody id="ratioTbl"></tbody>
-    </table>
-  </div>
-
-  <div style="padding:10px 16px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:16px">
-    <div style="background:var(--bg3);border-radius:4px;padding:10px 12px">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px">권장 메인스탯 T1~T4 (Weapon ATK flat)</div>
-      <div id="mainStatRecommend" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--yellow)">—</div>
-    </div>
-    <div style="background:var(--bg3);border-radius:4px;padding:10px 12px">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px">권장 랜덤스탯 T1~T4 (Attack% 기준)</div>
-      <div id="randStatRecommend" style="font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;color:var(--green)">—</div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== STEP 2: 스테이지 밸런싱 ===== -->
-<div class="panel">
-  <div class="ph">
-    <div class="snum s2c">2</div>
-    <span class="ph-title">스테이지 밸런싱</span>
-    <span class="ph-sub">유닛 HP/ATK 입력 → TTK 자동 계산 (플레이어 DPS/HP는 1단계에서 자동 반영)</span>
-    <div class="ph-status" id="st2status">—</div>
-  </div>
-  <div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-    <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
-      일반 <input type="number" id="rn0" value="0.5" step="0.1" style="width:50px" onchange="calcTTK()"> ~ <input type="number" id="rn1" value="1.0" step="0.1" style="width:50px" onchange="calcTTK()"> 초
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
-      보스 <input type="number" id="rb0" value="30" style="width:50px" onchange="calcTTK()"> ~ <input type="number" id="rb1" value="90" style="width:50px" onchange="calcTTK()"> 초
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
-      맞이수 <input type="number" id="rh0" value="5" style="width:45px" onchange="calcTTK()"> ~ <input type="number" id="rh1" value="7" style="width:45px" onchange="calcTTK()"> 대
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">
-      보스HP 배율 <input type="number" id="bossMult" value="20" style="width:50px" onchange="autoCalcUnits()">배
-    </div>
-    <button onclick="autoCalcUnits()" style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:4px 12px;border-radius:4px;cursor:pointer">⚡ 유닛 자동 계산</button>
-  </div>
-  <div class="tw">
-    <table class="ttk">
-      <thead>
-        <tr>
-          <th>Stage</th><th>장비가정</th>
-          <th>플레이어<br>DPS</th><th>플레이어<br>HP</th>
-          <th class="yc">일반HP</th><th class="yc">일반ATK</th>
-          <th class="yc">보스HP</th>
-          <th>TTK<br>일반</th><th>TTK<br>보스</th><th>맞이수</th>
-          <th class="yc">골드/처치</th><th class="yc">처치수</th><th class="yc">보스골드</th>
-        </tr>
-      </thead>
-      <tbody id="ttkTbl"></tbody>
-    </table>
-  </div>
-</div>
-
-
-<!-- ===== STEP 4: 경제 밸런싱 ===== -->
-<div class="panel">
-  <div class="ph">
-    <div class="snum s4c">4</div>
-    <span class="ph-title">경제 밸런싱</span>
-    <span class="ph-sub">골드/조각 수입·지출 시뮬레이터</span>
-    <div class="ph-status" id="st4status">—</div>
-  </div>
-
-  <div class="guide-box yellow">
-    <strong>이 단계에서 할 일</strong>
-    하루 플레이 기준으로 골드/조각이 흑자인지 확인합니다.<br>
-    <code>Unique 교환 2~4주</code> 를 목표로 수치를 조정하세요.
-  </div>
-
-  <!-- 기본 가정 입력 -->
-  <div style="padding:8px 16px 4px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)">기본 가정 — 노란색 수정</div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0">
-
-    <div style="padding:12px 16px;border-right:1px solid var(--border)">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase">플레이</div>
-      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">하루 플레이 횟수</span>
-        <input type="number" id="ec_plays" value="20" style="width:65px" oninput="calcEco()"></div>
-      <input type="hidden" id="ec_mobs" value="0">
-    </div>
-
-    <div style="padding:12px 16px;border-right:1px solid var(--border)">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase">골드 드랍</div>
-      <div style="font-size:10px;color:var(--green);font-family:'JetBrains Mono',monospace;line-height:1.6">
-        2단계 스테이지 데이터<br>자동 연동<br>
-        <span style="color:var(--muted)">(골드/처치 × 처치수 + 보스골드)</span>
-      </div>
-      <div id="ec_stageGoldPreview" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--yellow);margin-top:6px"></div>
-    </div>
-
-    <div style="padding:12px 16px">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase">지출 / 조각</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:6px">골드 지출</div>
-      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">리포지 일간 횟수</span>
-        <input type="number" id="ec_reforge" value="5" style="width:65px" oninput="calcEco()"></div>
-      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">리포지 평균 비용</span>
-        <input type="number" id="ec_reforgeCost" value="400" style="width:65px" oninput="calcEco()"></div>
-      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">스탯롤 일간 횟수</span>
-        <input type="number" id="ec_statroll" value="3" style="width:65px" oninput="calcEco()"></div>
-      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">스탯롤 평균 비용</span>
-        <input type="number" id="ec_statrollCost" value="200" style="width:65px" oninput="calcEco()"></div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:6px">조각 수입</div>
-      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">소각 일간 횟수</span>
-        <input type="number" id="ec_salvage" value="15" style="width:65px" oninput="calcEco()"></div>
-      <div class="ir"><span style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;width:140px">소각 평균 조각 획득</span>
-        <input type="number" id="ec_salvageShard" value="8" style="width:65px" oninput="calcEco()"></div>
-      <input type="hidden" id="ec_gamble" value="0">
-      <input type="hidden" id="ec_gambleGold" value="0">
-      <input type="hidden" id="ec_gambleShard" value="0">
-      <input type="hidden" id="ec_shopCost" value="0">
-    </div>
-  </div>
-
-  <!-- 결과 -->
-  <div style="border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(4,1fr)">
-    <div style="padding:14px 16px;border-right:1px solid var(--border)">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">일간 골드 수입</div>
-      <div id="ec_incomeVal" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--green)">—</div>
-    </div>
-    <div style="padding:14px 16px;border-right:1px solid var(--border)">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">일간 골드 지출</div>
-      <div id="ec_expenseVal" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--red)">—</div>
-    </div>
-    <div style="padding:14px 16px;border-right:1px solid var(--border)">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">골드 순수익</div>
-      <div id="ec_netVal" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700">—</div>
-      <div id="ec_netLabel" style="font-size:10px;color:var(--muted)"></div>
-    </div>
-    <div style="padding:14px 16px">
-      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">일간 조각 순수익</div>
-      <div id="ec_daysVal" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;color:var(--yellow)">—</div>
-      <div id="ec_daysLabel" style="font-size:10px;color:var(--muted)"></div>
-    </div>
-  </div>
-
-  <!-- 조각 흐름 -->
-  <div style="border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:24px;align-items:center;flex-wrap:wrap">
-    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted)">조각 흐름</div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:11px">
-      수입 <span id="ec_shardIn" style="color:var(--green);font-weight:700">—</span>
-      &nbsp;/&nbsp;
-      지출(소비처 없음) <span id="ec_shardOut" style="color:var(--muted);font-weight:700">0</span>
-      &nbsp;→&nbsp;
-      순 조각 <span id="ec_shardNet" style="font-weight:700">—</span>
-    </div>
-    <div id="ec_verdict" style="font-size:14px">—</div>
-  </div>
-</div>
-
-
-<!-- ===== 랜덤스탯 풀 레퍼런스 ===== -->
-<div class="panel">
-  <div class="ph">
-    <div class="snum" style="background:var(--purple-dim);color:var(--purple);border:1px solid #2a1a4a">📋</div>
-    <span class="ph-title">아이템별 랜덤스탯 풀</span>
-    <span class="ph-sub">★★★ 좋음 / ★★ 보통 / ★ 꽝 (% = 좋음 / flat = 꽝)</span>
-  </div>
-
-  <!-- 슬롯 탭 -->
-  <div style="display:flex;gap:0;border-bottom:1px solid var(--border)">
-    <button class="wbtn active" id="rp_tab0" onclick="showStatPool(0)" style="border-radius:0;border-right:1px solid var(--border)">Weapon</button>
-    <button class="wbtn" id="rp_tab1" onclick="showStatPool(1)" style="border-radius:0;border-right:1px solid var(--border)">Helmet</button>
-    <button class="wbtn" id="rp_tab2" onclick="showStatPool(2)" style="border-radius:0;border-right:1px solid var(--border)">Armor</button>
-    <button class="wbtn" id="rp_tab3" onclick="showStatPool(3)" style="border-radius:0;border-right:1px solid var(--border)">Gloves</button>
-    <button class="wbtn" id="rp_tab4" onclick="showStatPool(4)" style="border-radius:0;border-right:1px solid var(--border)">Boots</button>
-    <button class="wbtn" id="rp_tab5" onclick="showStatPool(5)" style="border-radius:0;border-right:1px solid var(--border)">Ring</button>
-    <button class="wbtn" id="rp_tab6" onclick="showStatPool(6)" style="border-radius:0">Necklace</button>
-  </div>
-
-  <div id="statPoolTable" style="overflow-x:auto"></div>
-
-  <!-- 편집 패널 -->
-  <div id="editPanel" style="display:none;border-top:1px solid var(--border);padding:14px 16px;background:var(--bg3)">
-    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#fff;margin-bottom:10px">
-      ✏️ <span id="editItemName">—</span> 랜덤스탯 편집
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-      <div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);margin-bottom:5px">★★★ 좋음</div>
-        <div id="editGood"></div>
-      </div>
-      <div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--yellow);margin-bottom:5px">★★ 보통</div>
-        <div id="editMedium"></div>
-      </div>
-      <div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:5px">★ 꽝</div>
-        <div id="editJunk"></div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="savePoolEdit()" style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 14px;border-radius:4px;cursor:pointer">✅ 저장</button>
-      <button onclick="closePoolEdit()" style="background:var(--bg);border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 14px;border-radius:4px;cursor:pointer">취소</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== STEP 3: 이후 작업 ===== -->
-<div class="panel">
-  <div class="ph">
-    <div class="snum s4c">3</div>
-    <span class="ph-title">이후 작업</span>
-    <span class="ph-sub">레벨업 템포 → 스킬 → Archetype → 랜덤옵션 → 경제 → 드랍률</span>
-  </div>
-  <div class="cl" id="cl"></div>
-</div>
-
-</div><!-- /wrap -->
+<div class="toast" id="toast">복사됨</div>
 
 <script>
-// ===================== 데이터 =====================
-const WEAPONS = [
-  {name:'Venom (DOT)',     baseSpd:2.0},
-  {name:'Ironpiercer',    baseSpd:0.6},
-  {name:'Abyss (Aura)',   baseSpd:1.2},
-  {name:'Tempest (Rapid)',baseSpd:1.5},
-  {name:'Titan (Heavy)',  baseSpd:0.9},
+// ---------------- 파라미터 정의 (v6 기본값) ----------------
+const PDEF = [
+ {g:"전투 구조"},
+ {k:"quota", n:"킬 쿼터", v:300, d:"이 수만큼 처치하면 보스 등장"},
+ {k:"ttk_b", n:"보스 TTK(초)", v:45, d:"적정 파워 시 보스 처치 시간"},
+ {k:"ttk_n", n:"일반몹 TTK(초)", v:1, d:"몹 HP 역산 계수"},
+ {k:"ovh", n:"런 오버헤드(분)", v:0.5, d:"이동/젬 수집/연출"},
+ {k:"spawn", n:"스폰율 폴백(마리/분)", v:60, d:"인런 미도달 시 런 시간 폴백용"},
+ {g:"인런 성장"},
+ {k:"sel", n:"기준 스테이지 (1~10)", v:5, d:"인런 시뮬의 장비 파워를 가져올 스테이지", int:1},
+ {k:"aoe", n:"동시 타격 계수", v:3, d:"광역기 평균 동시 히트"},
+ {k:"sp0", n:"초기 스폰율", v:30, d:"런 시작 마리/분"},
+ {k:"rs", n:"스폰 성장(30초당)", v:1.12, d:"웨이브 압박 곡선"},
+ {k:"rm", n:"몹HP 성장(30초당)", v:1.15, d:"런 내 몹 강화"},
+ {k:"X0", n:"레벨1 필요 XP", v:50, d:""},
+ {k:"rx", n:"레벨 XP 성장률", v:1.4, d:""},
+ {k:"gem", n:"킬당 젬 XP", v:5, d:""},
+ {k:"col", n:"젬 수집률", v:0.85, d:"수동 수집 — 놓치는 젬 반영"},
+ {k:"dlv", n:"레벨당 DPS 배율", v:1.15, d:"레벨업 1회 평균 전투력"},
+ {g:"D2 드랍 경제"},
+ {k:"P0d", n:"기준 DPS (P0)", v:10, d:"스케일 기준점"},
+ {k:"ilv", n:"아이템레벨 성장", v:1.15, d:"스테이지당 드랍 기본 파워"},
+ {k:"dpk", n:"킬당 드랍률", v:0.011, d:"전투 중 드랍"},
+ {k:"bd", n:"보스 확정 드랍", v:2, d:""},
+ {k:"rd", n:"드랍 성장률", v:1.3, d:"스테이지당 드랍 수 배율"},
+ {k:"a", n:"옵션 합격률", v:0.5, d:"랜덤 옵션 상위 a%만 업그레이드 인정"},
+ {k:"w", n:"슬롯 유효율", v:0.7, d:"낭비 드랍 반영"},
+ {k:"u", n:"스테이지당 업그레이드 슬롯", v:3, d:"갈아야 하는 슬롯 수"},
+ {k:"wu", n:"벽당 추가 슬롯", v:2, d:""},
+ {k:"wint", n:"벽 간격", v:5, d:"N스테이지마다 벽", int:1},
+ {k:"enh", n:"강화 기여율", v:0.15, d:"골드 강화 확정 쿠션"},
+ {g:"페이싱 목표"},
+ {k:"daily", n:"일일 플레이(분)", v:60, d:"플레이 시간 → 캘린더 일 환산"},
+ {k:"tmid", n:"s5 목표(일)", v:1, d:""},
+ {k:"tend", n:"s10 목표(일)", v:7, d:""},
 ];
+const P = {};
+let gprob = [0.58, 0.30, 0.095, 0.025];
+let gmult = [1.0, 1.3, 1.7, 2.2];
+const gname = ["일반","매직","레어","유니크"];
+let req = [1,1,2,2,3,3,3,3,3,4];
 
-const SLOTS = [
-  {id:'weapon', name:'Weapon',   stat:'ATK+ATKspd', statType:'attack',  baseHP:0,  baseATK:0},
-  {id:'helmet', name:'Helmet',   stat:'HP',         statType:'hp',      baseHP:0},
-  {id:'armor',  name:'Armor',    stat:'DEF',        statType:'def',     baseHP:0},
-  {id:'gloves', name:'Gloves',   stat:'CritChance%',statType:'crit',    baseHP:0},
-  {id:'boots',  name:'Boots',    stat:'MoveSpeed%', statType:'move',    baseHP:0},
-  {id:'ring',   name:'Ring',     stat:'CritDamage%',statType:'critdmg', baseHP:0},
-  {id:'necklace',name:'Necklace',stat:'MagicFind%', statType:'magic',   baseHP:0},
-];
+// ---------------- 파라미터 UI ----------------
+const aside = document.getElementById("params");
+let html = "";
+for (const p of PDEF) {
+  if (p.g) { html += `${html?'</div>':''}<div class="grp"><h2>${p.g}</h2>`; continue; }
+  P[p.k] = p.v;
+  html += `<div class="prow"><label title="${p.d}">${p.n}</label><input id="p_${p.k}" value="${p.v}" ${p.int?'step="1"':''}></div>`;
+}
+html += `</div><div class="grp"><h2>등급 테이블</h2><table class="gradeTbl">
+<tr><td></td><td style="color:var(--dim);font-size:10.5px">드랍 확률</td><td style="color:var(--dim);font-size:10.5px">파워 배율</td></tr>`;
+for (let i=0;i<4;i++) html += `<tr><td class="gname g${i+1}">${gname[i]}</td><td><input id="gp_${i}" value="${gprob[i]}"></td><td><input id="gm_${i}" value="${gmult[i]}"></td></tr>`;
+html += `</table><div class="sumline" id="gsum"></div></div>`;
+aside.innerHTML = html;
+aside.querySelectorAll("input").forEach(inp => inp.addEventListener("input", readAndCalc));
 
-// 슬롯별 기본 T1~T4
-const SLOT_TIERS = {
-  weapon:   {t1:[5,12],   t2:[12,22],  t3:[22,38],  t4:[38,60]},  // ATK flat
-  weaponSpd:{t1:[5,12],   t2:[12,20],  t3:[20,30],  t4:[30,45]},  // ATKspd %
-  helmet:   {t1:[20,40],  t2:[40,70],  t3:[70,110], t4:[110,160]},
-  armor:    {t1:[8,18],   t2:[18,32],  t3:[32,50],  t4:[50,75]},
-  gloves:   {t1:[2,5],    t2:[5,10],   t3:[10,16],  t4:[16,22]},
-  boots:    {t1:[3,7],    t2:[7,12],   t3:[12,18],  t4:[18,25]},
-  ring:     {t1:[5,15],   t2:[15,28],  t3:[28,45],  t4:[45,65]},
-  necklace: {t1:[5,12],   t2:[12,22],  t3:[22,35],  t4:[35,50]},
-};
-
-const GRADES = ['없음','Common','Magic','Rare','Epic','Unique'];
-const GRADE_SCALE_DEFAULT = {'없음':0.01,'Common':0.01,'Magic':0.013,'Rare':0.017,'Epic':0.02,'Unique':0.025}; // ItemGrade.json 기준
-let gradeScales = {...GRADE_SCALE_DEFAULT};
-const STAGE_EQUIP_OPTIONS = ['없음','Common','Magic','Rare','Epic','Unique'];
-const GRADE_DEFAULT_ILVL = {
-  '없음':1,
-  'Common':8,   // S2~S3
-  'Magic':20,   // S4~S5 (T2 진입)
-  'Rare':33,    // S6~S8
-  'Epic':42,    // S9
-  'Unique':55   // S10
-};
-// 스테이지별 장비가정 기본값
-const STAGE_EQUIP_DEFAULT = {
-  1:'없음',2:'Common',3:'Common',4:'Magic',5:'Magic',
-  6:'Rare',7:'Rare',8:'Rare',9:'Epic',10:'Unique'
-};
-
-const STAGE_ILVL_DEFAULT = {1:1,2:5,3:9,4:14,5:18,6:22,7:28,8:34,9:42,10:50};
-
-// ===================== 상태 =====================
-// ===== GIST 동기화 =====
-const GIST_ID = '17d3a083e16841b8372dc0c567c482b5';
-const GIST_TOKEN = localStorage.getItem('pp_gist_token') || '';
-const GIST_FILE = 'balancing_data.json';
-let saveTimer = null;
-
-async function setToken() {
-  const t = prompt('GitHub Personal Access Token 입력 (gist 권한):', localStorage.getItem('pp_gist_token')||'');
-  if (t !== null) {
-    localStorage.setItem('pp_gist_token', t.trim());
-    document.getElementById('tokenBtn').style.color = t.trim() ? 'var(--green)' : 'var(--muted)';
-    // 현재 데이터를 먼저 Gist에 업로드 후 reload
-    if (t.trim()) {
-      setSyncStatus('⟳ 현재 데이터 Gist에 저장 중...');
-      await saveToGist(D);
-    }
-    location.reload();
+function readAndCalc(){
+  for (const p of PDEF) if (p.k) {
+    const v = parseFloat(document.getElementById("p_"+p.k).value);
+    if (isFinite(v)) P[p.k] = v;
   }
-}
-
-function setSyncStatus(msg, color='var(--muted)') {
-  const el = document.getElementById('syncStatus');
-  if(el) { el.textContent = msg; el.style.color = color; }
-}
-
-async function loadFromGist() {
-  setSyncStatus('⟳ 불러오는 중...');
-  try {
-    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-      headers: { 'Authorization': `token ${GIST_TOKEN}` }
-    });
-    const json = await res.json();
-    const raw = json.files?.[GIST_FILE]?.content;
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      setSyncStatus('✅ 로드 완료', 'var(--green)');
-      return parsed;
-    }
-  } catch(e) {
-    setSyncStatus('⚠️ 로드 실패', 'var(--red)');
+  for (let i=0;i<4;i++){
+    const gp = parseFloat(document.getElementById("gp_"+i).value);
+    const gm = parseFloat(document.getElementById("gm_"+i).value);
+    if (isFinite(gp)) gprob[i] = gp;
+    if (isFinite(gm)) gmult[i] = gm;
   }
-  return null;
+  calc();
 }
 
-async function saveToGist(data) {
-  setSyncStatus('⟳ 저장 중...');
-  try {
-    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `token ${GIST_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        files: { [GIST_FILE]: { content: JSON.stringify(data) } }
-      })
-    });
-    setSyncStatus('✅ 저장됨', 'var(--green)');
-    setTimeout(()=>setSyncStatus('—'), 3000);
-  } catch(e) {
-    setSyncStatus('⚠️ 저장 실패', 'var(--red)');
+// ---------------- 계산 파이프라인 (v6 배선과 동일) ----------------
+let R = {};
+function calc(){
+  const sum = gprob.reduce((a,b)=>a+b,0);
+  document.getElementById("gsum").innerHTML =
+    `합계 ${(sum*100).toFixed(1)}% ${Math.abs(sum-1)<0.001?'<span style="color:var(--ok)">OK</span>':'<span style="color:var(--warn)">⚠ 100% 아님</span>'}`;
+  const cum = [0,0,0,0];
+  for (let i=0;i<4;i++) for (let j=i;j<4;j++) cum[i]+=gprob[j];
+
+  // ① 장비 파워 (D2 드랍 + 강화 쿠션) — 정본
+  const dps = [];
+  for (let s=1;s<=10;s++) dps[s] = P.P0d * Math.pow(P.ilv,s) * gmult[req[s-1]-1] * (1+P.enh);
+
+  // ② 인런 시뮬 (기준 스테이지)
+  const sel = Math.min(10, Math.max(1, Math.round(P.sel)));
+  const base = dps[sel], hp0 = base * P.ttk_n;
+  const steps = []; let ck=0, cx=0, boss=null, coll=null;
+  for (let k=1;k<=20;k++){
+    const sp = P.sp0*Math.pow(P.rs,k-1), mh = hp0*Math.pow(P.rm,k-1);
+    const lvl = k===1?0:Math.floor(Math.log(cx*(P.rx-1)/P.X0+1)/Math.log(P.rx));
+    const d = base*Math.pow(P.dlv,lvl), fr = d/mh*60*P.aoe, eff = Math.min(sp,fr);
+    const kills = eff*0.5, pk = ck; ck += kills; cx += kills*P.gem*P.col;
+    if (coll===null && fr<sp) coll = k*0.5;
+    if (boss===null && ck>=P.quota && pk<P.quota) boss = {t:k*0.5, lvl};
+    steps.push({t:k*0.5, sp, mh, lvl, d, fr, eff, ck:Math.round(ck), cx:Math.round(cx)});
   }
-}
+  // ③ 런 시간 = 인런 파생 (폴백: 쿼터/스폰율)
+  const runT = (boss?boss.t:P.quota/P.spawn) + P.ttk_b/60 + P.ovh;
 
-function debounceSave(data) {
-  if(!GIST_TOKEN) return;
-  if(saveTimer) clearTimeout(saveTimer);
-  setSyncStatus('○ 저장 대기...');
-  saveTimer = setTimeout(()=>saveToGist(data), 2000);
-}
-// ===== GIST 동기화 끝 =====
-
-const SK = 'pp_bal4';
-const DEFAULTS = {
-  weaponIdx: 0,
-  scale: 0.02,
-  baseHP: 100,
-  weaponSpds: [2.0, 0.6, 1.2, 1.5, 0.9], // 무기별 baseSpd
-  stages: {},
-  units: {},
-  globalTiers: {
-    // 무기별 ATK/SPD 분리 (Venom/Ironpiercer/Abyss/Tempest/Titan)
-    weaponAtk: [
-      // flat ATK → ILB 적용
-      {t1:[5,10],   t2:[13,22],  t3:[23,38],  t4:[39,55],  isPercent:false}, // Venom
-      {t1:[55,60],  t2:[70,88],  t3:[89,110], t4:[111,135],isPercent:false}, // Ironpiercer
-      {t1:[20,25],  t2:[35,48],  t3:[49,65],  t4:[66,85],  isPercent:false}, // Abyss
-      {t1:[5,9],    t2:[15,25],  t3:[26,40],  t4:[41,55],  isPercent:false}, // Tempest
-      {t1:[23,28],  t2:[50,63],  t3:[64,80],  t4:[81,100], isPercent:false}, // Titan
-    ],
-    weaponSpd: [
-      // % → ILB 미적용
-      {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60], isPercent:true}, // Venom (2.0)
-      {t1:[2,6],   t2:[6,12],  t3:[12,20], t4:[20,30], isPercent:true}, // Ironpiercer
-      {t1:[4,10],  t2:[10,18], t3:[18,28], t4:[28,40], isPercent:true}, // Abyss
-      {t1:[8,18],  t2:[18,30], t3:[30,45], t4:[45,60], isPercent:true}, // Tempest
-      {t1:[2,6],   t2:[6,12],  t3:[12,20], t4:[20,30], isPercent:true}, // Titan
-    ],
-    helmet:    {t1:[50,120], t2:[120,250],t3:[250,450], t4:[450,700], isPercent:false}, // HP flat
-    armor:     {t1:[15,35],  t2:[36,70],  t3:[71,120],  t4:[121,180],isPercent:false}, // DEF flat
-    gloves:    {t1:[5,14],   t2:[13,22],  t3:[21,30],  t4:[30,40],  isPercent:true},  // CritChance%
-    boots:     {t1:[6,14],   t2:[15,24],  t3:[25,34],  t4:[35,44],  isPercent:true},  // MoveSpeed%
-    ring:      {t1:[22,50],  t2:[50,88],  t3:[88,120], t4:[120,155],isPercent:true},  // CritDamage%
-    necklace:  {t1:[6,14],   t2:[15,25],  t3:[26,38],  t4:[39,52],  isPercent:true},  // MagicFind%
+  // ④ 드랍 경제 → 파밍 런 → 누적 일수
+  const rows = []; let cmin = 0;
+  for (let s=1;s<=10;s++){
+    const g = req[s-1], pReq = cum[g-1], pUp = pReq*P.a*P.w;
+    const isWall = s % Math.round(P.wint) === 0;
+    const need = P.u + (isWall?P.wu:0);
+    const drops = (P.quota*P.dpk+P.bd) * Math.pow(P.rd, s===1?0:s-2);
+    const effd = drops*pUp, runs = Math.ceil(need/effd);
+    cmin += runs*runT + runT;
+    rows.push({s, g, pReq, pUp, need, drops, effd, runs, dps:dps[s], bhp:dps[s]*P.ttk_b,
+               cmin, ch:cmin/60, cd:cmin/P.daily, isWall});
   }
-};
-
-// 스테이지 기본 슬롯 설정
-function defaultStageSlots(s) {
-  const ilvl = STAGE_ILVL_DEFAULT[s];
-  const equipped = {1:[true,false,false,false,false,false,false],
-                    2:[true,false,false,false,false,false,false],
-                    3:[true,true,false,false,false,false,false],
-                    4:[true,true,false,false,false,false,false],
-                    5:[true,true,true,false,false,false,false],
-                    6:[true,true,true,false,false,false,false],
-                    7:[true,true,true,true,false,false,false],
-                    8:[true,true,true,true,true,false,false],
-                    9:[true,true,true,true,true,true,false],
-                    10:[true,true,true,true,true,true,true]};
-  return SLOTS.map((sl,i) => ({
-    equipped: equipped[s][i],
-    grade: 'Magic',
-    ilvl: ilvl,
-  }));
+  R = {rows, steps, boss, coll, runT, sel,
+       inVerd: boss===null ? {ok:false, t:"⚠ 쿼터 미달 — 스폰/DPS 상향"} :
+               coll===null || coll>boss.t ? {ok:true, t:"OK: 보스가 붕괴보다 먼저"} :
+               {ok:false, t:"⚠ 붕괴가 보스보다 먼저"}};
+  render();
 }
 
-function defaultUnits(s) {
-  const base = {1:{nh:230,na:10,bh:4600,ba:18}, 5:{nh:570,na:22,bh:11400,ba:38}, 10:{nh:1510,na:40,bh:30200,ba:75}};
-  const b1=base[1], b5=base[5], b10=base[10];
-  const lerp=(a,b,t)=>Math.round(a+(b-a)*t);
-  const t = s<=5?(s-1)/4:(s-5)/5;
-  const lo=s<=5?b1:b5, hi=s<=5?b5:b10;
-  return {
-    nh:lerp(lo.nh,hi.nh,t), na:lerp(lo.na,hi.na,t),
-    bh:lerp(lo.bh,hi.bh,t), ba:lerp(lo.ba,hi.ba,t),
-    goldPerMob: 3 + s*2,   // S1=5, S10=23 기본값
-    mobCount: 20 + s*2,    // S1=22, S10=40 기본값
-    bossGold: 20 + s*5,    // S1=25, S10=70 기본값
-  };
+// ---------------- 렌더 ----------------
+const F = (x,d=1)=>x.toLocaleString("ko-KR",{maximumFractionDigits:d,minimumFractionDigits:0});
+function judge(v,t){ return v<=t*0.5 ? {ok:false,t:"⚠ 너무 빠름 (조기 소진)"} : v<=t ? {ok:true,t:"OK"} : {ok:false,t:"⚠ 너무 느림 (이탈 위험)"}; }
+
+function render(){
+  const r5=R.rows[4], r10=R.rows[9];
+  const j5=judge(r5.cd,P.tmid), j10=judge(r10.cd,P.tend);
+  document.getElementById("verdicts").innerHTML = [
+    vcard("s5 도달", F(r5.cd,2)+"일", j5, `목표 ≤ ${P.tmid}일`),
+    vcard("s10 도달", F(r10.cd,2)+"일", j10, `목표 ≤ ${P.tend}일`),
+    vcard("런 시간", F(R.runT,2)+"분", {ok:R.runT<=7,t:R.runT<=7?"세션 목표 내":"⚠ 세션 과장"}, R.boss?`보스 ${R.boss.t}분 + 전투/오버헤드`:"인런 폴백값"),
+    vcard("인런 판정", R.boss?`L${R.boss.lvl} · ${R.boss.t}분`:"미도달", R.inVerd, R.coll?`붕괴 ${R.coll}분`:"붕괴 없음"),
+  ].join("");
+
+  // 드랍 테이블
+  let h = `<tr><th>스테이지</th><th>요구 등급</th><th>등급↑ 확률</th><th>업글 확률/드랍</th><th>필요 슬롯</th><th>드랍/런</th><th>유효/런</th><th>파밍 런</th><th>누적(h)</th><th>누적(일)</th><th>DPS(장비)</th><th>보스 HP</th></tr>`;
+  for (const r of R.rows){
+    h += `<tr class="${r.isWall?'wall':''}"><td>s${r.s}${r.isWall?' 벽':''}</td>
+    <td><div class="chips">${[1,2,3,4].map(g=>`<span class="chip ${r.g===g?'on'+g:''}" data-s="${r.s}" data-g="${g}">${g}</span>`).join("")}</div></td>
+    <td>${(r.pReq*100).toFixed(1)}%</td><td>${(r.pUp*100).toFixed(2)}%</td><td>${r.need}</td>
+    <td>${F(r.drops,1)}</td><td>${F(r.effd,2)}</td><td><b>${r.runs}</b></td>
+    <td>${F(r.ch,1)}</td><td>${F(r.cd,2)}</td><td>${F(r.dps,1)}</td><td>${F(r.bhp,0)}</td></tr>`;
+  }
+  document.getElementById("dropTbl").innerHTML = h;
+  document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ req[c.dataset.s-1]=+c.dataset.g; calc(); });
+  document.getElementById("selStg").textContent = R.sel;
+
+  // 인런 테이블
+  let ih = `<tr><th>t(분)</th><th>스폰율</th><th>몹 HP</th><th>레벨</th><th>DPS</th><th>DPS 킬속도</th><th>실효</th><th>누적 킬</th><th>병목</th></tr>`;
+  for (const s of R.steps){
+    const b = s.fr<s.sp;
+    ih += `<tr><td>${s.t}</td><td>${F(s.sp,1)}</td><td>${F(s.mh,1)}</td><td>L${s.lvl}</td><td>${F(s.d,1)}</td><td>${F(s.fr,1)}</td><td>${F(s.eff,1)}</td><td>${s.ck}${R.boss&&s.t===R.boss.t?' ★':''}</td><td class="${b?'warnc':'okc'}">${b?'DPS 제한':'스폰 제한'}</td></tr>`;
+  }
+  document.getElementById("irTbl").innerHTML = ih;
+  drawCum(); drawIR();
+}
+function vcard(k,v,j,sub){ return `<div class="vcard ${j.ok?'ok':'warn'}"><div class="k">${k} <span style="color:var(--dim)">· ${sub}</span></div><div class="v">${v}</div><div class="j">${j.t}</div></div>`; }
+
+// ---------------- 차트 (SVG) ----------------
+function line(pts,color,w=2){ return `<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="${color}" stroke-width="${w}"/>`; }
+function drawCum(){
+  const W=720,H=190,L=46,B=24,T=12;
+  const max = Math.max(...R.rows.map(r=>r.ch))*1.08;
+  const x = s=>L+(s-1)/9*(W-L-14), y = v=>H-B-(v/max)*(H-B-T);
+  let s = "";
+  for (let i=0;i<=4;i++){ const v=max/4*i; s+=`<line x1="${L}" x2="${W-14}" y1="${y(v)}" y2="${y(v)}" stroke="#262a32"/><text x="${L-6}" y="${y(v)+4}" fill="#5c6270" font-size="10" text-anchor="end" font-family="var(--mono)">${v.toFixed(0)}h</text>`; }
+  for (const r of R.rows){ s+=`<text x="${x(r.s)}" y="${H-8}" fill="#5c6270" font-size="10" text-anchor="middle">s${r.s}</text>`;
+    if (r.isWall) s+=`<line x1="${x(r.s)}" x2="${x(r.s)}" y1="${T}" y2="${H-B}" stroke="rgba(255,210,77,.15)"/>`; }
+  s += line(R.rows.map(r=>[x(r.s),y(r.ch)]),"var(--g3)");
+  s += R.rows.map(r=>`<circle cx="${x(r.s)}" cy="${y(r.ch)}" r="3" fill="var(--g3)"/>`).join("");
+  document.getElementById("cumChart").innerHTML = s;
+}
+function drawIR(){
+  const W=720,H=170,L=46,B=22,T=12;
+  const max = Math.max(...R.steps.map(s=>Math.max(s.sp,s.eff)))*1.08;
+  const x = t=>L+(t-0.5)/9.5*(W-L-14), y = v=>H-B-(v/max)*(H-B-T);
+  let s = "";
+  for (let i=0;i<=3;i++){ const v=max/3*i; s+=`<line x1="${L}" x2="${W-14}" y1="${y(v)}" y2="${y(v)}" stroke="#262a32"/><text x="${L-6}" y="${y(v)+4}" fill="#5c6270" font-size="10" text-anchor="end">${v.toFixed(0)}</text>`; }
+  [2,4,6,8,10].forEach(t=>s+=`<text x="${x(t)}" y="${H-6}" fill="#5c6270" font-size="10" text-anchor="middle">${t}분</text>`);
+  if (R.coll) s+=`<line x1="${x(R.coll)}" x2="${x(R.coll)}" y1="${T}" y2="${H-B}" stroke="var(--warn)" stroke-dasharray="3 3"/>`;
+  if (R.boss) s+=`<line x1="${x(R.boss.t)}" x2="${x(R.boss.t)}" y1="${T}" y2="${H-B}" stroke="var(--ok)" stroke-dasharray="3 3"/>`;
+  s += line(R.steps.map(p=>[x(p.t),y(p.sp)]),"var(--g2)");
+  s += line(R.steps.map(p=>[x(p.t),y(p.eff)]),"var(--g3)");
+  document.getElementById("irChart").innerHTML = s;
 }
 
-let saved = null;
-let D = saved || JSON.parse(JSON.stringify(DEFAULTS));
-if(D.randRanges) RAND_RANGES = {...DEFAULT_RAND_RANGES, ...D.randRanges};
-if(!D.stageEquip) D.stageEquip = {1:'없음',2:'Common',3:'Common',4:'Magic',5:'Magic',6:'Rare',7:'Rare',8:'Rare',9:'Epic',10:'Unique'};
-if(!D.stageILVL) D.stageILVL = {
-    1:1, 2:8, 3:8, 4:20, 5:25, 6:30, 7:33, 8:38, 9:42, 10:55
-  };
-if(!D.globalTiers) D.globalTiers = JSON.parse(JSON.stringify(DEFAULTS.globalTiers));
-if(!D.weaponSpds) D.weaponSpds = [...DEFAULTS.weaponSpds];
-if(!Array.isArray(D.globalTiers.weaponAtk)) D.globalTiers.weaponAtk = JSON.parse(JSON.stringify(DEFAULTS.globalTiers.weaponAtk));
-if(!Array.isArray(D.globalTiers.weaponSpd)) D.globalTiers.weaponSpd = JSON.parse(JSON.stringify(DEFAULTS.globalTiers.weaponSpd));
-for(let s=1;s<=10;s++){
-  if(!D.stages[s]) D.stages[s]=defaultStageSlots(s);
-  if(!D.units[s])  D.units[s]=defaultUnits(s);
-}
-
-let currentStage = 1;
-let currentWeapon = D.weaponIdx||0;
-
-function save(){
-  debounceSave(D);
-}
-
-// ===================== 유틸 =====================
-function g(id){return +document.getElementById(id)?.value||0}
-function fmt(v,d=1){return(!v||!isFinite(v))?'-':v.toFixed(d)}
-function clsV(v,mn,mx){if(!v||!isFinite(v))return 'na';if(v>=mn&&v<=mx)return 'ok';if(v<mn*.7||v>mx*1.5)return 'warn';return 'edge'}
-
-function getTier(ilvl){return ilvl>=60?4:ilvl>=40?3:ilvl>=20?2:1}
-function getTierRange(tiers, ilvl){
-  const t=getTier(ilvl);
-  return tiers[`t${t}`]||[0,0];
-}
-function getGlobalTiers(slotId, weaponIdx) {
-  const gt = D.globalTiers || DEFAULTS.globalTiers;
-  const wi = (weaponIdx !== undefined ? weaponIdx : currentWeapon) || 0;
-  if (slotId === 'weapon')    return (gt.weaponAtk && gt.weaponAtk[wi]) || {t1:[5,12],t2:[12,22],t3:[22,38],t4:[38,60]};
-  if (slotId === 'weaponSpd') return (gt.weaponSpd && gt.weaponSpd[wi]) || {t1:[5,12],t2:[12,20],t3:[20,30],t4:[30,45]};
-  return gt[slotId] || {t1:[5,12],t2:[12,22],t3:[22,38],t4:[38,60]};
-}
-
-function getMid(tiers, ilvl, scale, grade){
-  const [mn,mx]=getTierRange(tiers,ilvl);
-  // % 스탯은 ILB 미적용 (T1~T4 범위만으로 성장)
-  const isPercent = tiers.isPercent === true;
-  const s = isPercent ? 0 : (grade ? (gradeScales[grade]||scale||0.02) : (scale||0.02));
-  return ((mn+mx)/2)*(1+ilvl*s);
-}
-
-// ===================== DPS 계산 =====================
-// 장비가정(equip)에 따라 착용/미착용 동적 결정
-function calcStageDPSWithEquip(s, equip) {
-  const gradeIdx = {'없음':0,'Common':1,'Magic':2,'Rare':3,'Epic':4,'Unique':5};
-  const ei = gradeIdx[equip] || 0;
-  const slotCount = [1,1,2,3,5,7][ei] || 1; // '없음'도 무기 슬롯 1개는 항상 착용
-  const scale = D.scale || 0.02;
-  const w = WEAPONS[currentWeapon];
-  const baseSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
-  const baseHP = D.baseHP || 100;
-  // stageILVL 우선, 없으면 자동 추천값
-  const stageIlvl = (D.stageILVL && D.stageILVL[s]) || GRADE_DEFAULT_ILVL[equip] || 1;
-  let flatATK=0, atkSpdPct=0, critChance=0, critDamage=0, hpBonus=0;
-  const slots = D.stages[s];
-  slots.forEach((sl,i)=>{
-    if(i >= slotCount) return;
-    const slotDef = SLOTS[i];
-    const tiers = getGlobalTiers(slotDef.id);
-    const grade = equip==='없음'?'Common':equip;
-    const mid = getMid(tiers, stageIlvl, scale, grade);
-    if(slotDef.statType==='attack') {
-      flatATK += mid;
-      const midSpd = getMid(getGlobalTiers('weaponSpd'), stageIlvl, scale, grade);
-      atkSpdPct += midSpd;
-    }
-    if(slotDef.statType==='hp')      hpBonus   += mid;
-    if(slotDef.statType==='crit')    critChance += mid;
-    if(slotDef.statType==='critdmg') critDamage += mid;
+// ---------------- 엑셀 복사 (TSV) ----------------
+document.querySelectorAll("button.copy").forEach(b=>b.onclick=()=>{
+  let t = "";
+  if (b.dataset.t==="drop"){
+    t = "스테이지\t요구등급\t등급이상확률\t업그레이드확률/드랍\t필요슬롯\t드랍/런\t유효드랍/런\t필요파밍런\t누적(시간)\t누적(일)\t기대DPS(장비)\t보스HP\n";
+    t += R.rows.map(r=>[r.s,gname[r.g-1],r.pReq,r.pUp,r.need,r.drops,r.effd,r.runs,r.ch,r.cd,r.dps,r.bhp].join("\t")).join("\n");
+  } else {
+    t = "시간(분)\t스폰율\t몹HP\t레벨\tDPS\tDPS킬속도\t실효킬속도\t누적킬\n";
+    t += R.steps.map(s=>[s.t,s.sp,s.mh,s.lvl,s.d,s.fr,s.eff,s.ck].join("\t")).join("\n");
+  }
+  navigator.clipboard.writeText(t).then(()=>{
+    const el = document.getElementById("toast");
+    el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),1200);
   });
-  const finalATK = flatATK;
-  const finalSpd = baseSpd * (1 + atkSpdPct/100);
-  const critMult = 1 + (critChance/100)*(critDamage/100);
-  const dps = Math.round(finalATK * finalSpd * critMult) || 1;
-  const hp  = Math.round(baseHP + hpBonus);
-  return {dps, hp};
-}
+});
 
-function calcStageDPS(s) {
-  const slots = D.stages[s];
-  const scale = D.scale||0.02;
-  const w = WEAPONS[currentWeapon];
-  const baseHP = D.baseHP||100;
-
-  let flatATK=0, atkSpdPct=0, critChance=0, critDamage=0, hpBonus=0;
-
-  slots.forEach((sl,i)=>{
-    if(!sl.equipped) return;
-    const slotDef = SLOTS[i];
-    const tiers = getGlobalTiers(SLOTS[i].id);
-    const mid = getMid(tiers, sl.ilvl, scale, sl.grade);
-    if(slotDef.statType==='attack') {
-      flatATK += mid; // T1~T4 평균값만 (baseAtk 없음)
-      const midSpd = getMid(getGlobalTiers('weaponSpd'), sl.ilvl, scale, sl.grade);
-      atkSpdPct += midSpd;
-    }
-    if(slotDef.statType==='hp')     hpBonus  += mid;
-    if(slotDef.statType==='crit')   critChance += mid;
-    if(slotDef.statType==='critdmg') critDamage += mid;
-  });
-
-  const finalATK = flatATK; // T1~T4 수치만
-  const baseSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
-  const finalSpd = baseSpd * (1 + atkSpdPct/100);
-  const critMult = 1 + (critChance/100)*(critDamage/100);
-  const dps = finalATK * finalSpd * critMult;
-  const hp  = baseHP + hpBonus;
-
-  return {dps: Math.round(dps), hp: Math.round(hp), flatATK, atkSpdPct, critChance, critDamage, finalSpd};
-}
-
-// ===================== 렌더: 슬롯 테이블 =====================
-function renderSlotTable() {
-  const s = currentStage;
-  const slots = D.stages[s];
-  const scale = D.scale||0.02;
-  const {dps,hp,flatATK,atkSpdPct,critChance,critDamage,finalSpd} = calcStageDPS(s);
-
-  let html='';
-  slots.forEach((sl,i)=>{
-    const slotDef=SLOTS[i];
-    const dis=!sl.equipped?'disabled':'';
-    const gtiers = getGlobalTiers(slotDef.id);
-    const mid=getMid(gtiers,sl.ilvl,scale,sl.grade);
-    const [t1mn,t1mx]=gtiers.t1||[0,0];
-    const [t2mn,t2mx]=gtiers.t2||[0,0];
-    const [t3mn,t3mx]=gtiers.t3||[0,0];
-    const [t4mn,t4mx]=gtiers.t4||[0,0];
-
-    let contrib='—',note='';
-    const w=WEAPONS[currentWeapon];
-    if(sl.equipped){
-      if(slotDef.statType==='attack'){
-        const midSpd=getMid(getGlobalTiers('weaponSpd'),sl.ilvl,scale,sl.grade);
-        contrib=`+${mid.toFixed(1)} ATK / +${midSpd.toFixed(1)}% SPD`;
-        const bSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
-        note=`공속 ${bSpd}`
-      }
-      else if(slotDef.statType==='hp')     contrib=`+${mid.toFixed(0)} HP`;
-      else if(slotDef.statType==='crit')   contrib=`+${mid.toFixed(1)}% CritChance`;
-      else if(slotDef.statType==='critdmg') contrib=`+${mid.toFixed(1)}% CritDamage`;
-      else if(slotDef.statType==='def')    contrib=`+${mid.toFixed(1)} DEF`;
-      else if(slotDef.statType==='move')   contrib=`+${mid.toFixed(1)}% Speed`;
-      else if(slotDef.statType==='magic')  contrib=`+${mid.toFixed(1)}% MagicFind`;
-    }
-
-    // tier inputs
-    const slotId = slotDef.id;
-    const wi = currentWeapon;
-    // T1~T4는 전역 설정 → 항상 수정 가능
-    const ti=(key,idx,def)=>`<input type="number" value="${def}" style="width:52px;font-size:12px;padding:3px 4px" onchange="
-      if(!D.globalTiers) D.globalTiers={};
-      const sid='${slotId}';
-      const wi=${wi};
-      const tkey='t'+${key};
-      if(sid==='weapon'){
-        if(!Array.isArray(D.globalTiers.weaponAtk)) D.globalTiers.weaponAtk=[...DEFAULTS.globalTiers.weaponAtk];
-        if(!D.globalTiers.weaponAtk[wi]) D.globalTiers.weaponAtk[wi]={};
-        if(!Array.isArray(D.globalTiers.weaponAtk[wi][tkey])) D.globalTiers.weaponAtk[wi][tkey]=[0,0];
-        D.globalTiers.weaponAtk[wi][tkey][${idx}]=+this.value;
-      } else if(sid==='weaponSpd'){
-        if(!Array.isArray(D.globalTiers.weaponSpd)) D.globalTiers.weaponSpd=[...DEFAULTS.globalTiers.weaponSpd];
-        if(!D.globalTiers.weaponSpd[wi]) D.globalTiers.weaponSpd[wi]={};
-        if(!Array.isArray(D.globalTiers.weaponSpd[wi][tkey])) D.globalTiers.weaponSpd[wi][tkey]=[0,0];
-        D.globalTiers.weaponSpd[wi][tkey][${idx}]=+this.value;
-      } else {
-        if(!D.globalTiers[sid]) D.globalTiers[sid]={};
-        if(!Array.isArray(D.globalTiers[sid][tkey])) D.globalTiers[sid][tkey]=[0,0];
-        D.globalTiers[sid][tkey][${idx}]=+this.value;
-      }
-      save();recalcAll()">`;
-
-    html+=`<tr class="${dis}">
-      <td><input type="checkbox" ${sl.equipped?'checked':''} onchange="D.stages[${s}][${i}].equipped=this.checked;save();recalcAll()"></td>
-      <td class="sname">${slotDef.name} <small style="color:var(--muted);font-size:9px">${slotDef.stat}</small></td>
-      <td><select style="width:78px;font-size:11px" onchange="D.stages[${s}][${i}].grade=this.value;save()" ${dis?'disabled':''}>
-        ${GRADES.map(g=>`<option ${sl.grade===g?'selected':''}>${g}</option>`).join('')}
-      </select></td>
-      <td><input type="number" value="${sl.ilvl}" style="width:56px;font-size:12px" onchange="D.stages[${s}][${i}].ilvl=+this.value;save();recalcAll()" ${dis?'disabled':''}></td>
-      <td class="contrib">${ti(1,0,t1mn)}~${ti(1,1,t1mx)}</td>
-      <td class="contrib">${ti(2,0,t2mn)}~${ti(2,1,t2mx)}</td>
-      <td class="contrib">${ti(3,0,t3mn)}~${ti(3,1,t3mx)}</td>
-      <td class="contrib">${ti(4,0,t4mn)}~${ti(4,1,t4mx)}</td>
-      <td class="contrib ${sl.equipped?'ok':'na'}" style="min-width:180px;font-size:12px">${contrib}</td>
-      <td class="contrib" style="color:var(--muted)">${note}</td>
-    </tr>`;
-  });
-
-  document.getElementById('slotTbl').innerHTML=html;
-
-  // 요약
-  document.getElementById('calcDPS').textContent=dps;
-  document.getElementById('calcDPSSub').textContent=`ATK+${flatATK.toFixed(1)} | SPD+${atkSpdPct.toFixed(1)}%`;
-  document.getElementById('calcHP').textContent=hp;
-  document.getElementById('calcHPSub').textContent=`베이스 ${D.baseHP||100} + ${(hp-(D.baseHP||100)).toFixed(0)}`;
-  document.getElementById('calcCrit').textContent=critChance.toFixed(1)+'%';
-  document.getElementById('calcCritDmg').textContent=critDamage.toFixed(1)+'%';
-
-  // player stats 업데이트
-  D.stages[s]._dps=dps; D.stages[s]._hp=hp;
-}
-
-// ===================== 렌더: 스테이지 탭 =====================
-function renderTabs(){
-  const tabs=Array.from({length:10},(_,i)=>i+1).map(s=>{
-    const cls=s===currentStage?(s===1?'active s1a':s===5?'active s5a':s===10?'active s10a':'active'):'';
-    return `<div class="stab ${cls}" onclick="selectStage(${s})">S${s}</div>`;
-  }).join('');
-  document.getElementById('stageTabs').innerHTML=tabs;
-}
-
-function selectStage(s){
-  currentStage=s;
-  renderTabs();
-  renderSlotTable();
-}
-
-// ===================== 렌더: TTK 테이블 =====================
-// 목표 유닛 HP (BM 고려 설계값)
-const TARGET_NORM_HP = {
-  1:20, 2:25, 3:35, 4:100, 5:160,
-  6:350, 7:550, 8:800, 9:1800, 10:3500
-};
-const TARGET_BOSS_MULT = 20; // 보스 HP = 일반 HP × 20배
-
-function autoCalcUnits() {
-  const rh0=g('rh0'), rh1=g('rh1');
-  const bossMult = g('bossMult') || TARGET_BOSS_MULT;
-  const hitMid = (rh0 + rh1) / 2;
-  const baseHP = D.baseHP || 100;
-
-  for(let s=1;s<=10;s++){
-    const normHP  = TARGET_NORM_HP[s];
-    const bossHP  = Math.round(normHP * bossMult);
-    const normATK = Math.round(baseHP / hitMid);
-
-    if(!D.units[s]) D.units[s] = {};
-    D.units[s].nh = normHP;
-    D.units[s].na = normATK;
-    D.units[s].bh = bossHP;
-  }
-  save();
-  calcTTK();
-  calcEco();
-}
-
-function calcTTK(){
-  const rn0=g('rn0'),rn1=g('rn1'),rb0=g('rb0'),rb1=g('rb1'),rh0=g('rh0'),rh1=g('rh1');
-  let okCount=0, html='';
-
-  for(let s=1;s<=10;s++){
-    const equip = (D.stageEquip && D.stageEquip[s]) || STAGE_EQUIP_DEFAULT[s];
-    // 드롭다운 옵션 HTML 생성
-    const equipOpts = STAGE_EQUIP_OPTIONS.map(o=>
-      '<option value="'+o+'"'+(equip===o?' selected':'')+'>'+o+'</option>'
-    ).join('');
-    const {dps,hp}=calcStageDPSWithEquip(s, equip);
-    const u=D.units[s];
-    const tN=dps?u.nh/dps:null;
-    const tB=dps?u.bh/dps:null;
-    const hN=u.na?hp/u.na:null;
-    const ok=tN&&tN>=rn0&&tN<=rn1&&tB&&tB>=rb0&&tB<=rb1&&hN&&hN>=rh0&&hN<=rh1;
-    if(ok&&[1,5,10].includes(s)) okCount++;
-    const rc=s===1?'rs1':s===5?'rs5':s===10?'rs10':'rmid';
-    html+=`<tr class="${rc}">
-      <td class="lbl">S${s}</td>
-      <td style="padding:4px 6px;text-align:center;display:flex;gap:4px;align-items:center">
-        <select style="background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:var(--yellow);font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 4px;width:68px"
-          onchange="if(!D.stageEquip)D.stageEquip={};D.stageEquip[${s}]=this.value;if(!D.stageILVL)D.stageILVL={};const autoIlvl=GRADE_DEFAULT_ILVL[this.value]||1;D.stageILVL[${s}]=autoIlvl;const ilEl=document.getElementById('ilvl_s${s}');if(ilEl)ilEl.value=autoIlvl;save();calcTTK()">
-          ${equipOpts}
-        </select>
-        <input type="number" id="ilvl_s${s}" value="${(D.stageILVL&&D.stageILVL[s])||GRADE_DEFAULT_ILVL[equip]||1}"
-          style="width:42px;background:#1a1e27;border:1px solid #2a3040;border-radius:3px;color:#a78bfa;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 4px;text-align:center"
-          onchange="if(!D.stageILVL)D.stageILVL={};D.stageILVL[${s}]=+this.value;save();calcTTK()">
-      </td>
-      <td class="cv ok">${dps}</td>
-      <td class="cv ok">${hp}</td>
-      <td><div class="cw"><input class="ti" type="number" value="${u.nh}" onchange="D.units[${s}].nh=+this.value;save();calcTTK()"></div></td>
-      <td><div class="cw"><input class="ti" type="number" value="${u.na}" onchange="D.units[${s}].na=+this.value;save();calcTTK()"></div></td>
-      <td><div class="cw"><input class="ti" type="number" value="${u.bh}" onchange="D.units[${s}].bh=+this.value;save();calcTTK()"></div></td>
-      <td class="cv ${clsV(tN,rn0,rn1)}">${fmt(tN)}초</td>
-      <td class="cv ${clsV(tB,rb0,rb1)}">${fmt(tB)}초</td>
-      <td class="cv ${clsV(hN,rh0,rh1)}">${fmt(hN)}대</td>
-      <td><div class="cw"><input class="ti" type="number" value="${D.units[s].goldPerMob||5}" style="width:55px" onchange="if(!D.units[${s}].goldPerMob)D.units[${s}].goldPerMob=0;D.units[${s}].goldPerMob=+this.value;save();calcEco()"></div></td>
-      <td><div class="cw"><input class="ti" type="number" value="${D.units[s].mobCount||25}" style="width:55px" onchange="if(!D.units[${s}].mobCount)D.units[${s}].mobCount=0;D.units[${s}].mobCount=+this.value;save();calcEco()"></div></td>
-      <td><div class="cw"><input class="ti" type="number" value="${D.units[s].bossGold||30}" style="width:55px" onchange="if(!D.units[${s}].bossGold)D.units[${s}].bossGold=0;D.units[${s}].bossGold=+this.value;save();calcEco()"></div></td>
-    </tr>`;
-  }
-  document.getElementById('ttkTbl').innerHTML=html;
-  document.getElementById('st2status').textContent=okCount===3?'✅':okCount+'/3';
-}
-
-function renderGradeCompare() {
-  const w = WEAPONS[currentWeapon];
-  const scale = D.scale || 0.02;
-  const grades = ['Common','Magic','Rare','Epic','Unique'];
-  const gradeColors = {
-    'Common':'var(--muted)', 'Magic':'#60d4fa',
-    'Rare':'var(--yellow)', 'Epic':'var(--purple)', 'Unique':'#f97316'
-  };
-
-  // 헤더
-  let hdr = '<th style="text-align:left;padding:5px 10px;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">Stage</th>';
-  grades.forEach(g => {
-    hdr += `<th style="text-align:center;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:${gradeColors[g]};border-bottom:1px solid var(--border)">${g}</th>`;
-  });
-  hdr += '<th style="text-align:center;padding:5px 10px;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">현재 설정</th>';
-  document.getElementById('gradeCompareHdr').innerHTML = hdr;
-
-  // 스테이지별 행
-  let rows = '';
-  const keyStages = [1,3,5,7,10];
-  const stageILVL = {1:1, 3:9, 5:18, 7:28, 10:50};
-
-  keyStages.forEach(s => {
-    const ilvl = stageILVL[s];
-    // Weapon 슬롯 T1~T4 (현재 설정)
-    const sl = D.stages[s][0]; // 첫번째 슬롯 = Weapon
-    const tiers = getGlobalTiers('weapon');
-
-    let row = `<tr style="background:${s===1?'var(--green-dim)':s===5?'var(--blue-dim)':s===10?'var(--red-dim)':'var(--bg)'}">`;
-    row += `<td style="padding:5px 10px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#fff;border-bottom:1px solid var(--border)">S${s} <small style="opacity:.5;font-size:9px">iLvl${ilvl}</small></td>`;
-
-    let currentDPS = null;
-
-    grades.forEach(g => {
-      const gs = gradeScales[g] || 0.02;
-      const [mn,mx] = [
-        ilvl>=60?tiers.t4:ilvl>=40?tiers.t3:ilvl>=20?tiers.t2:tiers.t1
-      ].flat();
-      const atkMid = ((mn||5)+(mx||12))/2 * (1 + ilvl * gs);
-      // ATKspd
-      const spdTiers = getGlobalTiers('weaponSpd');
-      const [smn,smx] = [
-        ilvl>=60?spdTiers.t4:ilvl>=40?spdTiers.t3:ilvl>=20?spdTiers.t2:spdTiers.t1
-      ].flat();
-      const spdMid = ((smn||5)+(smx||12))/2 * (1 + ilvl * gs);
-      const bSpd2 = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
-      const dps = Math.round(atkMid * bSpd2 * (1 + spdMid/100));
-
-      if (g === sl.grade) currentDPS = dps;
-
-      row += `<td style="text-align:center;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-weight:600;color:${gradeColors[g]};border-bottom:1px solid var(--border)">${dps}</td>`;
-    });
-
-    // 현재 설정 DPS
-    const cur = calcStageDPS(s);
-    row += `<td style="text-align:center;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--yellow);border-bottom:1px solid var(--border)">${cur.dps}</td>`;
-    row += '</tr>';
-    rows += row;
-  });
-
-  document.getElementById('gradeCompareTbl').innerHTML = rows;
-}
-
-function recalcAll(){
-  D.scale=g('ilbScale')||0.02;
-  renderSlotTable();
-  renderGradeCompare();
-  calcTTK();
-  calcStatRatio();
-  save();
-}
-
-function selectWeapon(i){
-  currentWeapon=i; D.weaponIdx=i;
-  document.querySelectorAll('[id^="wb"]').forEach((b,j)=>b.classList.toggle('active',i===j));
-  // baseSpd 입력칸 갱신
-  const bsEl = document.getElementById('baseSpd');
-  if(bsEl) bsEl.value = (D.weaponSpds && D.weaponSpds[i]) || WEAPONS[i].baseSpd;
-  recalcAll();
-}
-
-// ===================== 체크리스트 =====================
-function calcStatRatio() {
-  const mainRatio = +document.getElementById('mainRatio').value || 35;
-  const randRatio = 100 - mainRatio;
-  document.getElementById('randRatio').textContent = randRatio;
-
-  const subCount = +document.getElementById('subStatCount').value || 3;
-  const w = WEAPONS[currentWeapon];
-  const baseSpd = (D.weaponSpds && D.weaponSpds[currentWeapon]) || w.baseSpd;
-  const scale = D.scale || 0.02;
-
-  let html = '';
-  let mainTargets = [], randTargets = [];
-
-  for(let s=1;s<=10;s++){
-    const equip = (D.stageEquip && D.stageEquip[s]) || STAGE_EQUIP_DEFAULT[s];
-    const {dps} = calcStageDPSWithEquip(s, equip);
-    const ilvl = (D.stageILVL && D.stageILVL[s]) || GRADE_DEFAULT_ILVL[equip] || 1;
-    const gradeScale = gradeScales[equip==='없음'?'Common':equip] || 0.02;
-
-    const mainTarget = Math.round(dps * mainRatio / 100);
-    const randTarget = Math.round(dps * randRatio / 100);
-
-    // 무기 ATK 역산: mainTarget = atkMid × baseSpd × (1+ilvl×scale)
-    // atkMid = mainTarget / baseSpd / (1+ilvl×gradeScale)
-    const ilbMult = 1 + ilvl * gradeScale;
-    const atkRequired = baseSpd > 0 ? Math.round(mainTarget / baseSpd / ilbMult) : 0;
-
-    // 랜덤 Attack% 역산: randTarget = baseDPS × (atkPct/100) × slotCount × subCount
-    // atkPct = randTarget / (baseDPS × slotCount × subCount) × 100
-    const slotCount = Math.max(1, ['없음','Common','Magic','Rare','Epic','Unique'].indexOf(equip));
-    const baseDPS = atkRequired * baseSpd * ilbMult;
-    const atkPctRequired = baseDPS > 0 && slotCount > 0
-      ? (randTarget / (baseDPS * slotCount) / subCount * 100).toFixed(1)
-      : '—';
-    const critPctRef = baseDPS > 0 && slotCount > 0
-      ? ((randTarget / (baseDPS * slotCount) / subCount * 100) * 0.7).toFixed(1)
-      : '—';
-
-    mainTargets.push({s, ilvl, atkRequired});
-    randTargets.push({s, atkPctRequired});
-
-    const rc = s===1?'rs1':s===5?'rs5':s===10?'rs10':'rmid';
-    html += `<tr class="${rc}">
-      <td class="lbl">S${s}</td>
-      <td class="cv" style="font-size:10px;color:var(--muted)">${equip}</td>
-      <td class="cv">${dps}</td>
-      <td class="cv ok">${mainTarget}</td>
-      <td class="cv" style="color:var(--yellow)">${atkRequired}</td>
-      <td class="cv ok">${randTarget}</td>
-      <td class="cv" style="color:var(--green)">${Math.round(randTarget/Math.max(1,slotCount))}</td>
-      <td class="cv" style="color:var(--green)">${atkPctRequired}%</td>
-      <td class="cv" style="color:var(--muted)">${critPctRef}%</td>
-    </tr>`;
-  }
-  document.getElementById('ratioTbl').innerHTML = html;
-
-  // 권장 T1~T4 계산 (S1/S5/S10 기준)
-  const keyStages = [1,5,10];
-  const mainRecs = keyStages.map(s=>{
-    const m = mainTargets.find(x=>x.s===s);
-    return m ? `S${s}(iLvl${m.ilvl}): ~${m.atkRequired}` : '';
-  });
-  const randRecs = keyStages.map(s=>{
-    const r = randTargets.find(x=>x.s===s);
-    return r ? `S${s}: ~${r.atkPctRequired}%` : '';
-  });
-
-  document.getElementById('mainStatRecommend').innerHTML = mainRecs.join('<br>');
-  document.getElementById('randStatRecommend').innerHTML = randRecs.join('<br>');
-  document.getElementById('ratioStatus').textContent = `${mainRatio}% / ${randRatio}%`;
-}
-
-// 아이템별 랜덤스탯 풀
-// 슬롯 타입별 랜덤스탯 풀 (아이템 공통)
-const STAT_POOL = {
-  Weapon:   {good:['Attack%','AttackSpeed%','CritChance%','CritDamage%'],  medium:['MoveSpeed%'],               junk:['Defense_flat','HP_flat']},
-  Helmet:   {good:['CritDamage%','CritChance%','HP%','AttackSpeed%'],      medium:['MagicFind%'],               junk:['Attack_flat','Defense_flat']},
-  Armor:    {good:['HP%','Defense%'],                       medium:['MoveSpeed%'],               junk:['Attack_flat','CritDamage%']},
-  Gloves:   {good:['Attack%','CritDamage%','CritChance%','AttackSpeed%'],  medium:['MagicFind%'],               junk:['Defense_flat','HP_flat']},
-  Boots:    {good:['MoveSpeed%','Attack%'],                 medium:['AttackSpeed%'],             junk:['Defense_flat','HP_flat']},
-  Ring:     {good:['Attack%','CritDamage%','CritChance%','AttackSpeed%'],  medium:['MagicFind%'],               junk:['Defense_flat','HP_flat']},
-  Necklace: {good:['Attack%','CritDamage%','HP%','Defense%'],              medium:['MagicFind%'],               junk:['HP_flat','Defense_flat']},
-};
-
-const SLOT_KEYS = ['Weapon','Helmet','Armor','Gloves','Boots','Ring','Necklace'];
-let currentPoolTab = 0;
-
-function badge(stat, type) {
-  const colors = {good:'var(--green)', medium:'var(--yellow)', junk:'var(--muted)'};
-  const bg = {good:'var(--green-dim)', medium:'var(--yellow-dim)', junk:'var(--bg3)'};
-  return `<span style="display:inline-flex;background:${bg[type]};color:${colors[type]};border-radius:3px;padding:2px 6px;font-size:10px;font-family:'JetBrains Mono',monospace;margin:2px">${stat}</span>`;
-}
-
-const ALL_STATS = [
-  'Attack%','Defense%','HP%','CritChance%','CritDamage%',
-  'AttackSpeed%','MoveSpeed%','MagicFind%',
-  'Attack_flat','Defense_flat','HP_flat','PickupRange'
-];
-
-// 랜덤스탯 기본 T1~T4 범위 (수정 가능)
-const DEFAULT_RAND_RANGES = {
-  'Attack%':      {t1:[20,40],  t2:[41,65],  t3:[66,90],  t4:[91,120], isPercent:true},
-  'Defense%':     {t1:[10,22],  t2:[23,38],  t3:[39,55],  t4:[56,75],  isPercent:true},
-  'HP%':          {t1:[5,12],   t2:[13,22],  t3:[23,33],  t4:[34,45],  isPercent:true},
-  'CritChance%':  {t1:[3,8],    t2:[9,14],   t3:[15,20],  t4:[21,27],  isPercent:true},
-  'CritDamage%':  {t1:[15,35],  t2:[36,60],  t3:[61,85],  t4:[86,115], isPercent:true},
-  'AttackSpeed%': {t1:[6,14],   t2:[15,22],  t3:[23,30],  t4:[31,40],  isPercent:true},
-  'MoveSpeed%':   {t1:[4,10],   t2:[11,17],  t3:[18,24],  t4:[25,32],  isPercent:true},
-  'MagicFind%':   {t1:[5,12],   t2:[13,22],  t3:[23,33],  t4:[34,45],  isPercent:true},
-  'Attack_flat':  {t1:[2,6],    t2:[7,12],   t3:[13,18],  t4:[19,25],  isPercent:false},
-  'Defense_flat': {t1:[2,6],    t2:[7,12],   t3:[13,18],  t4:[19,25],  isPercent:false},
-  'HP_flat':      {t1:[10,25],  t2:[26,45],  t3:[46,68],  t4:[69,95],  isPercent:false},
-  'PickupRange':  {t1:[0.2,0.5],t2:[0.5,0.9],t3:[0.9,1.3],t4:[1.3,1.8],isPercent:false},
-};
-// 런타임 수정 가능한 복사본
-let RAND_RANGES = JSON.parse(JSON.stringify(DEFAULT_RAND_RANGES));
-
-let editingSlot = null, editingIdx = null;
-
-function showStatPool(tabIdx) {
-  currentPoolTab = tabIdx;
-  closePoolEdit();
-  document.querySelectorAll('[id^="rp_tab"]').forEach((b,i)=>b.classList.toggle('active',i===tabIdx));
-  const slot = SLOT_KEYS[tabIdx];
-  const pool = (STAT_POOL[slot])||{good:[],medium:[],junk:[]};
-  if(!pool.good) pool.good=[];
-  if(!pool.medium) pool.medium=[];
-  if(!pool.junk) pool.junk=[];
-  let html = '<table style="width:100%;border-collapse:collapse;font-size:11px">';
-  html += '<thead><tr style="background:var(--bg3)">';
-  html += '<th style="padding:8px 12px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:2px solid var(--border);width:100px">슬롯</th>';
-  html += '<th style="padding:8px 12px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--green);border-bottom:2px solid var(--border)">★★★ 좋음</th>';
-  html += '<th style="padding:8px 12px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--yellow);border-bottom:2px solid var(--border)">★★ 보통</th>';
-  html += '<th style="padding:8px 12px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:2px solid var(--border)">★ 꽝</th>';
-  html += '<th style="padding:8px 12px;border-bottom:2px solid var(--border);width:60px"></th>';
-  html += '</tr></thead><tbody>';
-  html += `<tr style="background:var(--bg)">`;
-  html += `<td style="padding:10px 12px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--yellow)">${slot}</td>`;
-  html += `<td style="padding:10px 12px">${pool.good.map(s=>badge(s,'good')).join('')}</td>`;
-  html += `<td style="padding:10px 12px">${pool.medium.map(s=>badge(s,'medium')).join('')}</td>`;
-  html += `<td style="padding:10px 12px">${pool.junk.map(s=>badge(s,'junk')).join('')}</td>`;
-  html += `<td style="padding:10px 12px;text-align:center"><button onclick="openPoolEdit('${slot}')" style="background:var(--blue-dim);border:1px solid var(--blue);color:var(--blue);font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer">✏️ 편집</button></td>`;
-  html += '</tr>';
-  html += '</tbody></table>';
-  // 집계 표 추가
-  html += renderStatAggregate(slot);
-  document.getElementById('statPoolTable').innerHTML = html;
-}
-
-function getTierMid(stat, tier) {
-  const r = RAND_RANGES[stat];
-  if(!r) return 0;
-  const [mn,mx] = r[tier];
-  return (mn+mx)/2;
-}
-
-function renderStatAggregate(slot) {
-  const pool = (STAT_POOL[slot])||{good:[],medium:[],junk:[]};
-  if(!pool.good) pool.good=[];
-  if(!pool.medium) pool.medium=[];
-  if(!pool.junk) pool.junk=[];
-  const tiers = ['t1','t2','t3','t4'];
-  const tierLabels = ['T1 (iLvl1~19)','T2 (iLvl20~39)','T3 (iLvl40~59)','T4 (iLvl60)'];
-  const grades = [{label:'Magic',  count:1},{label:'Rare',count:2},{label:'Epic/Unique',count:3}];
-
-  // 슬롯 메인스탯 티어 값
-  const mainTiersMap = {
-    Weapon:   getGlobalTiers('weapon',currentWeapon),
-    Helmet:   getGlobalTiers('helmet'),
-    Armor:    getGlobalTiers('armor'),
-    Gloves:   getGlobalTiers('gloves'),
-    Boots:    getGlobalTiers('boots'),
-    Ring:     getGlobalTiers('ring'),
-    Necklace: getGlobalTiers('necklace'),
-  };
-  const mainTiers = mainTiersMap[slot] || {t1:[0,0],t2:[0,0],t3:[0,0],t4:[0,0]};
-
-  let html = '<div style="border-top:2px solid var(--border);padding:12px 16px">';
-  html += "<div style='font-family:JetBrains Mono,monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px'>티어별 스탯 집계 (메인 + 랜덤 평균)</div>";
-  html += '<table style="width:100%;border-collapse:collapse;font-size:11px">';
-  html += '<thead><tr style="background:var(--bg3)">';
-  html += '<th style="padding:6px 10px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">등급</th>';
-  tiers.forEach((t,i)=> html+=`<th style="padding:6px 10px;text-align:center;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">${tierLabels[i]}</th>`);
-  html += '</tr></thead><tbody>';
-
-  grades.forEach((g,gi)=>{
-    const bg = gi%2===0?'var(--bg)':'var(--bg2)';
-    html += `<tr style="background:${bg}">`;
-    html += `<td style="padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--yellow);border-bottom:1px solid var(--border)">${g.label}</td>`;
-
-    tiers.forEach(t=>{
-      const [mn,mx] = mainTiers[t]||[0,0];
-      const mainMid = (mn+mx)/2;
-
-      // 좋음 스탯 상위 N개 합산
-      const goodMids = pool.good
-        .map(s=>getTierMid(s,t))
-        .sort((a,b)=>b-a)
-        .slice(0,g.count);
-      const randSum = goodMids.reduce((a,b)=>a+b,0);
-      const total = mainMid + randSum;
-
-      html += `<td style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;border-bottom:1px solid var(--border)">
-        <span style="color:var(--yellow)">${mainMid.toFixed(1)}</span>
-        <span style="color:var(--muted)"> + </span>
-        <span style="color:var(--green)">${randSum.toFixed(1)}</span>
-        <span style="color:var(--muted)"> = </span>
-        <span style="color:#fff;font-weight:700">${total.toFixed(1)}</span>
-      </td>`;
-    });
-    html += '</tr>';
-  });
-  html += '</tbody></table>';
-
-  // 랜덤스탯 T1~T4 수치 설정 테이블
-  html += "<div style='font-family:JetBrains Mono,monospace;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px'>랜덤스탯 수치 설정 (Min ~ Max)</div>";
-  html += '<table style="width:100%;border-collapse:collapse;font-size:11px">';
-  html += '<thead><tr style="background:var(--bg3)">';
-  html += '<th style="padding:5px 8px;text-align:left;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">스탯</th>';
-  html += '<th style="padding:5px 8px;text-align:center;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">등급</th>';
-  tiers.forEach((t,i)=>html+=`<th style="padding:5px 8px;text-align:center;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">${tierLabels[i]}</th>`);
-  html += '</tr></thead><tbody>';
-
-  const visibleStats = [...pool.good, ...pool.medium, ...pool.junk];
-  visibleStats.forEach((stat,i)=>{
-    const tier_val = pool.good.includes(stat)?'good':pool.medium.includes(stat)?'medium':'junk';
-    const color = tier_val==='good'?'var(--green)':tier_val==='medium'?'var(--yellow)':'var(--muted)';
-    const bg = i%2===0?'var(--bg)':'var(--bg2)';
-    const statId = stat.replace('%','pct').replace('_','x');
-    html += `<tr style="background:${bg}">`;
-    html += `<td style="padding:5px 8px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:${color};border-bottom:1px solid var(--border)">${stat}</td>`;
-    html += `<td style="padding:5px 8px;text-align:center;font-size:10px;color:${color};border-bottom:1px solid var(--border)">${tier_val==='good'?'★★★':tier_val==='medium'?'★★':'★'}</td>`;
-    tiers.forEach(t=>{
-      const r = RAND_RANGES[stat]||{t1:[0,0],t2:[0,0],t3:[0,0],t4:[0,0]};
-      const [mn,mx] = r[t];
-      const suf = RAND_RANGES[stat]?.isPercent?'%':'';
-      html += `<td style="padding:5px 8px;text-align:center;border-bottom:1px solid var(--border)">
-        <input type="number" value="${mn}" style="width:38px;font-size:10px" onchange="updateRandRange('${stat}','${t}',0,+this.value);renderStatAggregate('${slot}')">
-        <span style="color:var(--muted);font-size:9px">~</span>
-        <input type="number" value="${mx}" style="width:38px;font-size:10px" onchange="updateRandRange('${stat}','${t}',1,+this.value);renderStatAggregate('${slot}')">
-        <span style="color:var(--muted);font-size:9px">${suf}</span>
-      </td>`;
-    });
-    html += '</tr>';
-  });
-  html += '</tbody></table></div>';
-  return html;
-}
-
-function updateRandRange(stat, tier, idx, val) {
-  if(!RAND_RANGES[stat]) RAND_RANGES[stat]={...DEFAULT_RAND_RANGES[stat]};
-  RAND_RANGES[stat][tier][idx] = val;
-  debounceSave({...D, randRanges: RAND_RANGES});
-}
-
-// 집계 다시 렌더 (슬롯 전환 없이)
-function rerenderAggregate(slot) {
-  const el = document.getElementById('statPoolTable');
-  if(!el) return;
-  // 집계 부분만 교체 (전체 재렌더)
-  showStatPool(currentPoolTab);
-}
-
-function openPoolEdit(slot) {
-  editingSlot = slot; editingIdx = null;
-  const pool = (STAT_POOL[slot])||{good:[],medium:[],junk:[]};
-  if(!pool.good) pool.good=[];
-  if(!pool.medium) pool.medium=[];
-  if(!pool.junk) pool.junk=[];
-  document.getElementById('editItemName').textContent = slot;
-  document.getElementById('editPanel').style.display = 'block';
-
-  // 스탯별로 현재 tier 확인
-  function getTierOf(s) {
-    if(pool.good.includes(s))   return 'good';
-    if(pool.medium.includes(s)) return 'medium';
-    if(pool.junk.includes(s))   return 'junk';
-    return 'none';
-  }
-
-  // 스탯별 라디오 그룹으로 표시 (좋음/보통/꽝/없음 중 하나)
-  const tiers = ['good','medium','junk','none'];
-  const tierLabels = {'good':'★★★','medium':'★★','junk':'★','none':'—'};
-  const tierColors = {'good':'var(--green)','medium':'var(--yellow)','junk':'var(--muted)','none':'#333'};
-
-  // 편집 패널을 단일 테이블로 통합
-  let tableHtml = `<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px">
-    <thead><tr style="background:var(--bg)">
-      <th style="padding:6px 10px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">스탯</th>
-      <th style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);border-bottom:1px solid var(--border)">★★★ 좋음</th>
-      <th style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--yellow);border-bottom:1px solid var(--border)">★★ 보통</th>
-      <th style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);border-bottom:1px solid var(--border)">★ 꽝</th>
-      <th style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:#444;border-bottom:1px solid var(--border)">— 없음</th>
-    </tr></thead><tbody>`;
-
-  ALL_STATS.forEach((s,i)=>{
-    const cur = getTierOf(s);
-    const bg = i%2===0?'var(--bg2)':'var(--bg)';
-    tableHtml += `<tr style="background:${bg}">
-      <td style="padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#fff;border-bottom:1px solid var(--border)">${s}</td>`;
-    ['good','medium','junk','none'].forEach(t=>{
-      const checked = cur===t ? 'checked' : '';
-      const accent = t==='good'?'#4ade80':t==='medium'?'#fbbf24':t==='junk'?'#888':'#444';
-      tableHtml += `<td style="padding:5px 10px;text-align:center;border-bottom:1px solid var(--border)">
-        <input type="radio" name="stat_${s.replace('%','pct').replace('_','x')}" value="${t}" ${checked} style="accent-color:${accent};width:14px;height:14px;cursor:pointer">
-      </td>`;
-    });
-    tableHtml += '</tr>';
-  });
-  tableHtml += '</tbody></table>';
-
-  // 3컬럼 div 숨기고 테이블로 교체
-  document.getElementById('editGood').innerHTML = '';
-  document.getElementById('editMedium').innerHTML = '';
-  document.getElementById('editJunk').innerHTML = '';
-  document.getElementById('editGood').parentElement.parentElement.children[1].innerHTML = tableHtml;
-}
-
-function savePoolEdit() {
-  if(editingSlot===null) return;
-  const result = {good:[], medium:[], junk:[]};
-  ALL_STATS.forEach(s=>{
-    const name = 'stat_'+s.replace('%','pct').replace('_','x');
-    const radios = document.querySelectorAll(`input[name="${name}"]`);
-    radios.forEach(r=>{ if(r.checked && r.value!=='none') result[r.value].push(s); });
-  });
-  STAT_POOL[editingSlot] = result;
-  debounceSave({...D, statPool: STAT_POOL});
-  closePoolEdit();
-  showStatPool(currentPoolTab);
-}
-
-function closePoolEdit() {
-  document.getElementById('editPanel').style.display = 'none';
-  editingSlot = null; editingIdx = null;
-}
-
-
-function saveToFile() {
-  const filename = 'pew_pew_balancing_' + new Date().toISOString().slice(0,10) + '.json';
-  const blob = new Blob([JSON.stringify(D, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function loadFromFile(event) {
-  const file = event.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const loaded = JSON.parse(e.target.result);
-      // 기존 D에 병합
-      Object.assign(D, loaded);
-      // 필수 필드 초기화 (없는 경우 기본값)
-      if(!D.weaponSpds) D.weaponSpds = [...DEFAULTS.weaponSpds];
-      if(!D.stageEquip) D.stageEquip = {...STAGE_EQUIP_DEFAULT};
-      if(!D.stageILVL)  D.stageILVL  = {1:1,2:8,3:8,4:20,5:25,6:30,7:33,8:38,9:42,10:55};
-      if(!D.globalTiers) D.globalTiers = JSON.parse(JSON.stringify(DEFAULTS.globalTiers));
-      if(!D.stages) D.stages = {};
-      if(!D.units)  D.units  = {};
-      // stages / units 각 스테이지 초기화
-      for(let s=1;s<=10;s++){
-        if(!D.stages[s]) D.stages[s] = defaultStageSlots(s);
-        if(!D.units[s])  D.units[s]  = defaultUnits(s);
-      }
-      // randRanges / statPool 복원
-      if(D.randRanges) RAND_RANGES = {...DEFAULT_RAND_RANGES, ...D.randRanges};
-      if(D.statPool)   Object.assign(STAT_POOL, D.statPool);
-      // 스케일 UI 업데이트
-      const scaleEl = document.getElementById('ilbScale');
-      if(scaleEl) scaleEl.value = D.scale||0.02;
-      // 무기 선택 복원
-      currentWeapon = D.weaponIdx||0;
-      document.querySelectorAll('[id^="wb"]').forEach((b,j)=>b.classList.toggle('active',currentWeapon===j));
-      const bsEl = document.getElementById('baseSpd');
-      if(bsEl) bsEl.value = (D.weaponSpds&&D.weaponSpds[currentWeapon])||WEAPONS[currentWeapon].baseSpd;
-      // UI 전체 갱신
-      recalcAll();
-      calcStatRatio();
-      if(typeof showStatPool==='function') try{showStatPool(currentPoolTab||0);}catch(e){console.warn('showStatPool',e);}
-      calcEco();
-      alert('✅ 로드 완료: ' + file.name);
-    } catch(err) {
-      alert('❌ 파일 형식 오류: ' + err.message + '\n' + err.stack);
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = ''; // 같은 파일 재선택 가능하게
-}
-
-function calcEco() {
-  const plays        = +document.getElementById('ec_plays').value || 0;
-
-  // 스테이지 데이터에서 골드 수입 자동 계산
-  // 플레이 횟수를 스테이지 수로 분배 (균등)
-  let stageGoldPerPlay = 0;
-  for(let s=1;s<=10;s++){
-    const u = D.units[s]||{};
-    const goldPerMob = u.goldPerMob || 5;
-    const mobCount   = u.mobCount   || 25;
-    const bossGold2  = u.bossGold   || 30;
-    stageGoldPerPlay += (goldPerMob * mobCount + bossGold2) / 10; // 10스테이지 평균
-  }
-  const autoIncome = Math.round(stageGoldPerPlay * plays);
-
-  // 하위 호환용 수동 입력값 (숨김 처리지만 유지)
-  const mobs         = 0;
-  const mobGold      = 0;
-  const bossGold     = 0;
-  const reforge      = +document.getElementById('ec_reforge').value || 0;
-  const reforgeCost  = +document.getElementById('ec_reforgeCost').value || 0;
-  const gamble       = +document.getElementById('ec_gamble').value || 0;
-  const gambleGold   = +document.getElementById('ec_gambleGold').value || 0;
-  const gambleShard  = +document.getElementById('ec_gambleShard').value || 0;
-  const salvage      = +document.getElementById('ec_salvage').value || 0;
-  const salvageShard = +document.getElementById('ec_salvageShard').value || 0;
-  const shopCost     = +document.getElementById('ec_shopCost').value || 0;
-
-  const income  = autoIncome;
-  const statroll     = +document.getElementById('ec_statroll').value || 0;
-  const statrollCost = +document.getElementById('ec_statrollCost').value || 0;
-  const expense = reforge * reforgeCost + statroll * statrollCost;
-  const net     = income - expense;
-  const shardIn  = salvage * salvageShard;
-  const shardOut = 0; // 겜블/교환소 없음
-  const shardNet = shardIn - shardOut;
-  const days     = shardNet; // 일간 순 조각
-
-  document.getElementById('ec_incomeVal').textContent  = income.toLocaleString();
-  document.getElementById('ec_expenseVal').textContent = expense.toLocaleString();
-  document.getElementById('ec_netVal').textContent     = (net >= 0 ? '+' : '') + net.toLocaleString();
-  document.getElementById('ec_netVal').style.color     = net >= 0 ? 'var(--green)' : 'var(--red)';
-  document.getElementById('ec_netLabel').textContent   = net >= 0 ? '✅ 흑자' : '⚠️ 적자';
-  document.getElementById('ec_shardIn').textContent    = shardIn;
-  document.getElementById('ec_shardOut').textContent   = shardOut;
-  document.getElementById('ec_shardNet').textContent   = (shardNet >= 0 ? '+' : '') + shardNet;
-  document.getElementById('ec_shardNet').style.color   = shardNet >= 0 ? 'var(--green)' : 'var(--red)';
-
-  const dEl = document.getElementById('ec_daysVal');
-  const lEl = document.getElementById('ec_daysLabel');
-  dEl.textContent = (days >= 0 ? '+' : '') + days + ' 조각/일';
-  dEl.style.color = days >= 0 ? 'var(--green)' : 'var(--red)';
-  lEl.textContent = days >= 0 ? '✅ 흑자' : '⚠️ 적자 — 소각 늘리기';
-
-  document.getElementById('ec_verdict').textContent = (net >= 0 && shardNet >= 0 && isFinite(days)) ? '✅' : '⚠️';
-  document.getElementById('st4status').textContent  = (net >= 0 && shardNet >= 0) ? '✅' : '⚠️';
-  // 스테이지별 골드 미리보기
-  const prev = document.getElementById('ec_stageGoldPreview');
-  if(prev) {
-    let previewLines = [];
-    for(let s=1;s<=10;s++){
-      const u=D.units[s]||{};
-      const g=(u.goldPerMob||5)*(u.mobCount||25)+(u.bossGold||30);
-      previewLines.push(`S${s}: ${g}골드/회`);
-    }
-    prev.innerHTML = previewLines.join('<br>');
-  }
-}
-
-const CL=[
-  {s:'1단계',t:'전투 코어',g:'움직이는 것 자체가 재밌다',p:'now'},
-  {s:'2단계',t:'스테이지 밸런싱',g:'TTK 목표 달성',p:'now'},
-  {s:'3단계',t:'레벨업 템포',g:'레벨업이 기다려진다',p:'now'},
-  {s:'4단계',t:'스킬 선택',g:'무기 개성 강화',p:'now'},
-  {s:'5단계',t:'무기 Archetype',g:'무기 바꾸면 플레이가 달라진다',p:'now'},
-  {s:'6단계',t:'장비 메인스탯',g:'슬롯 역할 명확',p:'later'},
-  {s:'7단계',t:'랜덤옵션',g:'파밍 기대감 발생',p:'later'},
-  {s:'8단계',t:'경제',g:'소비 자연스럽다',p:'later'},
-  {s:'9단계',t:'드랍률',g:'파밍 루프 유지',p:'later'},
-  {s:'10단계',t:'광고버프',g:'광고 없이도 재밌다',p:'later'},
-];
-const chk=new Set(JSON.parse(localStorage.getItem('pp_cl')||'[]'));
-function renderCL(){
-  document.getElementById('cl').innerHTML=CL.map((x,i)=>`
-    <div class="ci ${chk.has(i)?'done':''}" onclick="tog(${i})">
-      <div class="cb">${chk.has(i)?'✓':''}</div>
-      <div><div class="cs">${x.s} <span class="pr ${x.p==='now'?'pn':'pl'}">${x.p==='now'?'▶ 지금':'● 나중에'}</span></div>
-      <div class="ct">${x.t}</div><div class="cg">${x.g}</div></div>
-    </div>`).join('');
-}
-function tog(i){chk.has(i)?chk.delete(i):chk.add(i);localStorage.setItem('pp_cl',JSON.stringify([...chk]));renderCL()}
-
-// URL 복사
-
-
-// 등급별 Scale 업데이트
-function updateGradeScales(){
-  gradeScales['Common'] = +document.getElementById('gs0').value||0.01;
-  gradeScales['Magic']  = +document.getElementById('gs1').value||0.015;
-  gradeScales['Rare']   = +document.getElementById('gs2').value||0.02;
-  gradeScales['Epic']   = +document.getElementById('gs3').value||0.025;
-  gradeScales['Unique'] = +document.getElementById('gs4').value||0.03;
-  D.gradeScales = {...gradeScales};
-  save();
-  recalcAll();
-}
-
-// 초기 로드: Gist 우선
-// Token 버튼 상태
-(()=>{
-  const t = localStorage.getItem('pp_gist_token');
-  const btn = document.getElementById('tokenBtn');
-  if(btn) btn.style.color = t ? 'var(--green)' : 'var(--red)';
-})();
-
-(async () => {
-  if (!GIST_TOKEN) {
-    setSyncStatus('⚠️ Token 없음 — 🔑 Token 설정 클릭', 'var(--red)');
-  }
-  const gistData = GIST_TOKEN ? await loadFromGist() : null;
-  // Gist 데이터가 실제 내용 있을 때만 사용 (빈 객체 {} 무시)
-  if (gistData && Object.keys(gistData).length > 2) {
-    D = gistData;
-    for(let s=1;s<=10;s++){
-      if(!D.stages[s]) D.stages[s]=defaultStageSlots(s);
-      if(!D.units[s])  D.units[s]=defaultUnits(s);
-    }
-
-  }
-
-  document.getElementById('ilbScale').value=D.scale||0.02;
-  // 저장된 gradeScales 복원
-  if(D.gradeScales){
-  Object.assign(gradeScales, D.gradeScales);
-  if(D.gradeScales.Common) document.getElementById('gs0').value=D.gradeScales.Common;
-  if(D.gradeScales.Magic)  document.getElementById('gs1').value=D.gradeScales.Magic;
-  if(D.gradeScales.Rare)   document.getElementById('gs2').value=D.gradeScales.Rare;
-  if(D.gradeScales.Epic)   document.getElementById('gs3').value=D.gradeScales.Epic;
-  if(D.gradeScales.Unique) document.getElementById('gs4').value=D.gradeScales.Unique;
-  }
-  selectWeapon(currentWeapon);
-  renderTabs();
-  renderSlotTable();
-  renderGradeCompare();
-  calcTTK();
-  renderCL();
-calcEco();
-calcStatRatio();
-showStatPool(0);
-})();
+calc();
 </script>
 </body>
 </html>
