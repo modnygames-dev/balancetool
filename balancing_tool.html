@@ -31,7 +31,7 @@ aside{border-right:1px solid var(--line);padding:16px 18px 40px;background:var(-
 .prow input:focus{outline:none;border-color:var(--accent)}
 .gradeTbl{width:100%;border-collapse:collapse;font-size:12px}
 .gradeTbl td{padding:3px 4px}
-.gradeTbl input{width:58px;background:var(--bg);border:1px solid var(--line);border-radius:4px;font-family:var(--mono);font-size:12px;padding:2px 5px;text-align:right;color:var(--text)}
+.gradeTbl input{width:44px;background:var(--bg);border:1px solid var(--line);border-radius:4px;font-family:var(--mono);font-size:12px;padding:2px 5px;text-align:right;color:var(--text)}
 .gname{font-weight:700}
 .g1{color:var(--g1)}.g2{color:var(--g2)}.g3{color:var(--g3)}.g4{color:var(--g4)}.g5{color:var(--g5)}
 .sumline{font-family:var(--mono);font-size:11.5px;margin-top:4px}
@@ -75,7 +75,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v10</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v11</span></h1>
   <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
   <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
   <button class="copy" id="resetBtn" title="저장된 값을 지우고 파일 기본값으로 되돌립니다">기본값 복원</button>
@@ -89,6 +89,11 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
   <section>
     <div class="shead"><h2>장비드랍 경제 (메타 진행)</h2><span class="note">요구 등급 클릭으로 변경 — 등급 상승 지점이 곧 벽</span><button class="copy" data-t="drop">엑셀 복사</button></div>
     <div style="overflow-x:auto"><table class="data" id="dropTbl"></table></div>
+  </section>
+
+  <section>
+    <div class="shead"><h2>옵션 분해 (버짓 → 아이템 수치)</h2><span class="note">무기 BaseStat × (1+옵션 롤 합) × 크리 — Unity 테이블용</span><button class="copy" data-t="dec">엑셀 복사</button></div>
+    <div style="overflow-x:auto"><table class="data" id="decTbl"></table></div>
   </section>
 
   <section>
@@ -148,6 +153,11 @@ const PDEF = [
  {k:"wu", n:"벽당 추가 슬롯", v:2, d:""},
  {k:"wint", n:"벽 간격", v:5, d:"N스테이지마다 벽", int:1},
  {k:"enh", n:"강화 기여율", v:0.15, d:"골드 강화 확정 쿠션"},
+ {g:"옵션 분해"},
+ {k:"slots", n:"총 장비 슬롯", v:6, d:"총 옵션 = 슬롯 × 등급별 옵션 개수"},
+ {k:"critM", n:"평균 크리 배율", v:1.15, d:"크리확률 × 크리뎀 기대값"},
+ {k:"por", n:"옵션 1개당 평균 롤", v:0.08, d:"옵션 하나의 평균 기여 (8%)"},
+ {k:"spread", n:"옵션 롤 폭(±)", v:0.4, d:"롤 범위 = 평균×(1∓폭)"},
  {g:"페이싱 목표"},
  {k:"daily", n:"일일 플레이(분)", v:60, d:"플레이 시간 → 캘린더 일 환산"},
  {k:"tmid", n:"s5 목표(일)", v:1, d:""},
@@ -156,6 +166,7 @@ const PDEF = [
 const P = {};
 let gprob = [0.54, 0.28, 0.12, 0.04, 0.02];
 let gmult = [1.0, 1.3, 1.7, 2.1, 2.6];
+let gopt = [0, 1, 2, 3, 4];
 const gname = ["일반","매직","레어","세트","유니크"];
 let req = [1,1,2,2,3,3,3,4,4,5];
 
@@ -168,8 +179,8 @@ for (const p of PDEF) {
   html += `<div class="prow"><label title="${p.d}">${p.n}</label><input id="p_${p.k}" value="${p.v}" ${p.int?'step="1"':''}></div>`;
 }
 html += `</div><div class="grp"><h2>등급 테이블</h2><table class="gradeTbl">
-<tr><td></td><td style="color:var(--dim);font-size:10.5px">드랍 확률</td><td style="color:var(--dim);font-size:10.5px">파워 배율</td></tr>`;
-for (let i=0;i<5;i++) html += `<tr><td class="gname g${i+1}">${gname[i]}</td><td><input id="gp_${i}" value="${gprob[i]}"></td><td><input id="gm_${i}" value="${gmult[i]}"></td></tr>`;
+<tr><td></td><td style="color:var(--dim);font-size:10.5px">드랍 확률</td><td style="color:var(--dim);font-size:10.5px">파워 배율</td><td style="color:var(--dim);font-size:10.5px">옵션 수</td></tr>`;
+for (let i=0;i<5;i++) html += `<tr><td class="gname g${i+1}">${gname[i]}</td><td><input id="gp_${i}" value="${gprob[i]}"></td><td><input id="gm_${i}" value="${gmult[i]}"></td><td><input id="gn_${i}" value="${gopt[i]}"></td></tr>`;
 html += `</table><div class="sumline" id="gsum"></div></div>`;
 aside.innerHTML = html;
 aside.querySelectorAll("input").forEach(inp => inp.addEventListener("input", readAndCalc));
@@ -182,8 +193,10 @@ function readAndCalc(){
   for (let i=0;i<5;i++){
     const gp = parseFloat(document.getElementById("gp_"+i).value);
     const gm = parseFloat(document.getElementById("gm_"+i).value);
+    const gn = parseFloat(document.getElementById("gn_"+i).value);
     if (isFinite(gp)) gprob[i] = gp;
     if (isFinite(gm)) gmult[i] = gm;
+    if (isFinite(gn)) gopt[i] = gn;
   }
   calc();
 }
@@ -231,7 +244,15 @@ function calc(){
     rows.push({s, g, pReq, pUp, need, drops, effd, runs, dps:dps[s], bhp:dps[s]*lvlMult*P.ttk_b,
                cmin, ch:cmin/60, cd:cmin/P.daily, isWall});
   }
-  R = {rows, steps, boss, coll, runT, sel,
+  const dec = [];
+  for (let s=1;s<=10;s++){
+    const g = req[s-1], no = gopt[g-1], tot = P.slots*no;
+    const eo = 1 + tot*P.por;
+    const bases = gmult.map(m=>P.P0d*Math.pow(P.ilv,s)*m*(1+P.enh)/(eo*P.critM));
+    const mn = P.por*(1-P.spread), mx = P.por*(1+P.spread);
+    dec.push({s, g, no, tot, bases, mn, mx, thr: mn+(1-P.a)*(mx-mn), chk: bases[g-1]*eo*P.critM});
+  }
+  R = {rows, steps, boss, coll, runT, sel, dec,
        inVerd: boss===null ? {ok:false, t:"⚠ 쿼터 미달 — 스폰/DPS 상향"} :
                coll===null || coll>boss.t ? {ok:true, t:"OK: 보스가 붕괴보다 먼저"} :
                {ok:false, t:"⚠ 붕괴가 보스보다 먼저"}};
@@ -270,6 +291,18 @@ function render(){
   document.getElementById("dropTbl").innerHTML = h;
   document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ req[c.dataset.s-1]=+c.dataset.g; calc(); });
   document.getElementById("selStg").textContent = R.sel;
+
+  // 옵션 분해 테이블
+  let dh = `<tr><th>스테이지</th><th>요구</th><th>Base 일반</th><th>매직</th><th>레어</th><th>세트</th><th>유니크</th><th>옵션/개</th><th>롤 범위</th><th>합격≥</th><th>검증</th></tr>`;
+  for (const d of R.dec){
+    const err = Math.abs(d.chk - R.rows[d.s-1].dps)/R.rows[d.s-1].dps;
+    dh += `<tr><td>s${d.s}</td><td class="g${d.g}">${gname[d.g-1]}</td>`
+        + d.bases.map((b,i)=>`<td class="${i+1===d.g?'okc':''}">${F(b,2)}</td>`).join("")
+        + `<td>${d.no}</td><td>${d.no?`${(d.mn*100).toFixed(1)}~${(d.mx*100).toFixed(1)}%`:'옵션 없음'}</td>`
+        + `<td>${d.no?(d.thr*100).toFixed(1)+'%':'—'}</td>`
+        + `<td class="${err<0.001?'okc':'warnc'}">${err<0.001?'0.00%':'⚠ '+(err*100).toFixed(2)+'%'}</td></tr>`;
+  }
+  document.getElementById("decTbl").innerHTML = dh;
 
   // 인런 테이블
   let ih = `<tr><th>t(분)</th><th>스폰율</th><th>몹 HP</th><th>레벨</th><th>DPS</th><th>DPS 킬속도</th><th>실효</th><th>누적 킬</th><th>병목</th></tr>`;
@@ -316,6 +349,9 @@ document.querySelectorAll("button.copy").forEach(b=>b.onclick=()=>{
   if (b.dataset.t==="drop"){
     t = "스테이지\t요구등급\t등급이상확률\t업그레이드확률/드랍\t필요슬롯\t드랍/런\t유효드랍/런\t필요파밍런\t누적(시간)\t누적(일)\t기대DPS(장비)\t보스HP\n";
     t += R.rows.map(r=>[r.s,gname[r.g-1],r.pReq,r.pUp,r.need,r.drops,r.effd,r.runs,r.ch,r.cd,r.dps,r.bhp].join("\t")).join("\n");
+  } else if (b.dataset.t==="dec"){
+    t = "스테이지\t요구등급\tBase일반\tBase매직\tBase레어\tBase세트\tBase유니크\t아이템당옵션\t롤MIN\t롤MAX\t합격임계\n";
+    t += R.dec.map(d=>[d.s,gname[d.g-1],...d.bases.map(b=>b.toFixed(3)),d.no,d.mn,d.mx,d.thr].join("\t")).join("\n");
   } else {
     t = "시간(분)\t스폰율\t몹HP\t레벨\tDPS\tDPS킬속도\t실효킬속도\t누적킬\n";
     t += R.steps.map(s=>[s.t,s.sp,s.mh,s.lvl,s.d,s.fr,s.eff,s.ck].join("\t")).join("\n");
@@ -329,7 +365,7 @@ document.querySelectorAll("button.copy").forEach(b=>b.onclick=()=>{
 // ---------------- 저장/복원 (localStorage) ----------------
 const SKEY = "balsim_v9";
 function persist(){
-  try { localStorage.setItem(SKEY, JSON.stringify({P, gprob, gmult, req})); } catch(e) {}
+  try { localStorage.setItem(SKEY, JSON.stringify({P, gprob, gmult, gopt, req})); } catch(e) {}
 }
 function restore(){
   try {
@@ -338,8 +374,9 @@ function restore(){
     for (const k in s.P) if (k in P) { P[k] = s.P[k]; const el = document.getElementById("p_"+k); if (el) el.value = s.P[k]; }
     if (Array.isArray(s.gprob) && s.gprob.length===5) gprob = s.gprob;
     if (Array.isArray(s.gmult) && s.gmult.length===5) gmult = s.gmult;
+    if (Array.isArray(s.gopt) && s.gopt.length===5) gopt = s.gopt;
     if (Array.isArray(s.req) && s.req.length===10) req = s.req;
-    for (let i=0;i<5;i++){ document.getElementById("gp_"+i).value = gprob[i]; document.getElementById("gm_"+i).value = gmult[i]; }
+    for (let i=0;i<5;i++){ document.getElementById("gp_"+i).value = gprob[i]; document.getElementById("gm_"+i).value = gmult[i]; document.getElementById("gn_"+i).value = gopt[i]; }
   } catch(e) {}
 }
 document.getElementById("resetBtn").onclick = ()=>{
