@@ -8,7 +8,7 @@
 :root{
   --bg:#16181d; --panel:#1e2128; --panel2:#23272f; --line:#2c313a;
   --text:#d6d9de; --muted:#8b919c; --dim:#5c6270;
-  --g1:#c8c8c8; --g2:#6b93ff; --g3:#ffd24d; --g4:#c7833f;
+  --g1:#c8c8c8; --g2:#6b93ff; --g3:#ffd24d; --g4:#57c46a; --g5:#c7833f;
   --ok:#58c47a; --warn:#ff7a5c; --accent:#ffd24d;
   --mono:ui-monospace,'JetBrains Mono','Cascadia Code',Consolas,monospace;
 }
@@ -33,7 +33,7 @@ aside{border-right:1px solid var(--line);padding:16px 18px 40px;background:var(-
 .gradeTbl td{padding:3px 4px}
 .gradeTbl input{width:58px;background:var(--bg);border:1px solid var(--line);border-radius:4px;font-family:var(--mono);font-size:12px;padding:2px 5px;text-align:right;color:var(--text)}
 .gname{font-weight:700}
-.g1{color:var(--g1)}.g2{color:var(--g2)}.g3{color:var(--g3)}.g4{color:var(--g4)}
+.g1{color:var(--g1)}.g2{color:var(--g2)}.g3{color:var(--g3)}.g4{color:var(--g4)}.g5{color:var(--g5)}
 .sumline{font-family:var(--mono);font-size:11.5px;margin-top:4px}
 /* ---------- 결과 ---------- */
 main{padding:18px 22px 60px;min-width:0}
@@ -57,11 +57,12 @@ table.data th:first-child,table.data td:first-child{text-align:left}
 tr.wall td{background:rgba(255,210,77,.05)}
 td.warnc{color:var(--warn)} td.okc{color:var(--ok)}
 .chips{display:flex;gap:3px}
-.chip{width:22px;height:20px;border:1px solid var(--line);border-radius:3px;background:var(--bg);cursor:pointer;font-size:10.5px;line-height:18px;text-align:center;color:var(--dim);font-family:var(--mono)}
+.chip{width:19px;height:20px;border:1px solid var(--line);border-radius:3px;background:var(--bg);cursor:pointer;font-size:10.5px;line-height:18px;text-align:center;color:var(--dim);font-family:var(--mono)}
 .chip.on1{border-color:var(--g1);color:var(--g1);background:rgba(200,200,200,.08)}
 .chip.on2{border-color:var(--g2);color:var(--g2);background:rgba(107,147,255,.1)}
 .chip.on3{border-color:var(--g3);color:var(--g3);background:rgba(255,210,77,.1)}
-.chip.on4{border-color:var(--g4);color:var(--g4);background:rgba(199,131,63,.12)}
+.chip.on4{border-color:var(--g4);color:var(--g4);background:rgba(87,196,106,.1)}
+.chip.on5{border-color:var(--g5);color:var(--g5);background:rgba(199,131,63,.12)}
 svg{display:block;background:var(--panel);border:1px solid var(--line);border-radius:6px}
 .legend{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin-top:6px}
 .legend b{font-weight:600}
@@ -74,7 +75,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v7</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v8</span></h1>
   <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
   <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
 </header>
@@ -136,7 +137,7 @@ const PDEF = [
  {k:"P0d", n:"기준 DPS (P0)", v:10, d:"스케일 기준점"},
  {k:"ilv", n:"아이템레벨 성장", v:1.15, d:"스테이지당 드랍 기본 파워"},
  {k:"dpk", n:"킬당 드랍률", v:0.011, d:"전투 중 드랍"},
- {k:"bd", n:"보스 확정 드랍", v:2, d:""},
+ {k:"bd", n:"보스 확정 드랍", v:3, d:""},
  {k:"rd", n:"드랍 성장률", v:1.3, d:"스테이지당 드랍 수 배율"},
  {k:"a", n:"옵션 합격률", v:0.5, d:"랜덤 옵션 상위 a%만 업그레이드 인정"},
  {k:"w", n:"슬롯 유효율", v:0.7, d:"낭비 드랍 반영"},
@@ -150,10 +151,10 @@ const PDEF = [
  {k:"tend", n:"s10 목표(일)", v:7, d:""},
 ];
 const P = {};
-let gprob = [0.58, 0.30, 0.095, 0.025];
-let gmult = [1.0, 1.3, 1.7, 2.2];
-const gname = ["일반","매직","레어","유니크"];
-let req = [1,1,2,2,3,3,3,3,3,4];
+let gprob = [0.54, 0.28, 0.12, 0.04, 0.02];
+let gmult = [1.0, 1.3, 1.7, 2.1, 2.6];
+const gname = ["일반","매직","레어","세트","유니크"];
+let req = [1,1,2,2,3,3,3,4,4,5];
 
 // ---------------- 파라미터 UI ----------------
 const aside = document.getElementById("params");
@@ -165,7 +166,7 @@ for (const p of PDEF) {
 }
 html += `</div><div class="grp"><h2>등급 테이블</h2><table class="gradeTbl">
 <tr><td></td><td style="color:var(--dim);font-size:10.5px">드랍 확률</td><td style="color:var(--dim);font-size:10.5px">파워 배율</td></tr>`;
-for (let i=0;i<4;i++) html += `<tr><td class="gname g${i+1}">${gname[i]}</td><td><input id="gp_${i}" value="${gprob[i]}"></td><td><input id="gm_${i}" value="${gmult[i]}"></td></tr>`;
+for (let i=0;i<5;i++) html += `<tr><td class="gname g${i+1}">${gname[i]}</td><td><input id="gp_${i}" value="${gprob[i]}"></td><td><input id="gm_${i}" value="${gmult[i]}"></td></tr>`;
 html += `</table><div class="sumline" id="gsum"></div></div>`;
 aside.innerHTML = html;
 aside.querySelectorAll("input").forEach(inp => inp.addEventListener("input", readAndCalc));
@@ -175,7 +176,7 @@ function readAndCalc(){
     const v = parseFloat(document.getElementById("p_"+p.k).value);
     if (isFinite(v)) P[p.k] = v;
   }
-  for (let i=0;i<4;i++){
+  for (let i=0;i<5;i++){
     const gp = parseFloat(document.getElementById("gp_"+i).value);
     const gm = parseFloat(document.getElementById("gm_"+i).value);
     if (isFinite(gp)) gprob[i] = gp;
@@ -190,8 +191,8 @@ function calc(){
   const sum = gprob.reduce((a,b)=>a+b,0);
   document.getElementById("gsum").innerHTML =
     `합계 ${(sum*100).toFixed(1)}% ${Math.abs(sum-1)<0.001?'<span style="color:var(--ok)">OK</span>':'<span style="color:var(--warn)">⚠ 100% 아님</span>'}`;
-  const cum = [0,0,0,0];
-  for (let i=0;i<4;i++) for (let j=i;j<4;j++) cum[i]+=gprob[j];
+  const cum = [0,0,0,0,0];
+  for (let i=0;i<5;i++) for (let j=i;j<5;j++) cum[i]+=gprob[j];
 
   // ① 장비 파워 (D2 드랍 + 강화 쿠션) — 정본
   const dps = [];
@@ -250,7 +251,7 @@ function render(){
   let h = `<tr><th>스테이지</th><th>요구 등급</th><th>등급↑ 확률</th><th>업글 확률/드랍</th><th>필요 슬롯</th><th>드랍/런</th><th>유효/런</th><th>파밍 런</th><th>누적(h)</th><th>누적(일)</th><th>DPS(장비)</th><th>보스 HP</th></tr>`;
   for (const r of R.rows){
     h += `<tr class="${r.isWall?'wall':''}"><td>s${r.s}${r.isWall?' 벽':''}</td>
-    <td><div class="chips">${[1,2,3,4].map(g=>`<span class="chip ${r.g===g?'on'+g:''}" data-s="${r.s}" data-g="${g}">${g}</span>`).join("")}</div></td>
+    <td><div class="chips">${[1,2,3,4,5].map(g=>`<span class="chip ${r.g===g?'on'+g:''}" data-s="${r.s}" data-g="${g}">${g}</span>`).join("")}</div></td>
     <td>${(r.pReq*100).toFixed(1)}%</td><td>${(r.pUp*100).toFixed(2)}%</td><td>${r.need}</td>
     <td>${F(r.drops,1)}</td><td>${F(r.effd,2)}</td><td><b>${r.runs}</b></td>
     <td>${F(r.ch,1)}</td><td>${F(r.cd,2)}</td><td>${F(r.dps,1)}</td><td>${F(r.bhp,0)}</td></tr>`;
