@@ -75,7 +75,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v11</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v12</span></h1>
   <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
   <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
   <button class="copy" id="resetBtn" title="저장된 값을 지우고 파일 기본값으로 되돌립니다">기본값 복원</button>
@@ -102,7 +102,12 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
   </section>
 
   <section>
-    <div class="shead"><h2>인런 시뮬레이션 (기준 스테이지 <span id="selStg"></span>)</h2><span class="note">30초 스텝 · 스폰 곡선 vs 장비+레벨 DPS</span><button class="copy" data-t="inrun">엑셀 복사</button></div>
+    <div class="shead"><h2>인런 전 스테이지 판정</h2><span class="note">10개 런 동시 시뮬레이션 — 다이얼 돌릴 필요 없음</span><button class="copy" data-t="all">엑셀 복사</button></div>
+    <div style="overflow-x:auto"><table class="data" id="allTbl"></table></div>
+  </section>
+
+  <section>
+    <div class="shead"><h2>인런 상세 (스테이지 <span id="selStg"></span>)</h2><span class="note">30초 스텝 · 스폰 곡선 vs 장비+레벨 DPS</span><button class="copy" data-t="inrun">엑셀 복사</button></div>
     <svg id="irChart" width="100%" height="170" viewBox="0 0 720 170" preserveAspectRatio="none"></svg>
     <div class="legend"><span><b style="color:var(--g2)">──</b> 스폰율(마리/분)</span><span><b style="color:var(--g3)">──</b> 실효 킬속도</span><span><b style="color:var(--warn)">│</b> 붕괴</span><span><b style="color:var(--ok)">│</b> 보스 등장</span></div>
     <details style="margin-top:10px"><summary>스텝 테이블 펼치기</summary>
@@ -131,7 +136,7 @@ const PDEF = [
  {k:"ovh", n:"런 오버헤드(분)", v:0.5, d:"이동/젬 수집/연출"},
  {k:"spawn", n:"스폰율 폴백(마리/분)", v:60, d:"인런 미도달 시 런 시간 폴백용"},
  {g:"인런 성장"},
- {k:"sel", n:"기준 스테이지 (1~10)", v:5, d:"인런 시뮬의 장비 파워를 가져올 스테이지", int:1},
+ {k:"sel", n:"상세 보기 스테이지 (1~10)", v:5, d:"차트·스텝 테이블에 표시할 스테이지 — 판정은 전 스테이지 자동", int:1},
  {k:"aoe", n:"동시 타격 계수", v:3, d:"광역기 평균 동시 히트"},
  {k:"sp0", n:"초기 스폰율", v:30, d:"런 시작 마리/분"},
  {k:"rs", n:"스폰 성장(30초당)", v:1.12, d:"웨이브 압박 곡선"},
@@ -214,24 +219,32 @@ function calc(){
   const dps = [];
   for (let s=1;s<=10;s++) dps[s] = P.P0d * Math.pow(P.ilv,s) * gmult[req[s-1]-1] * (1+P.enh);
 
-  // ② 인런 시뮬 (기준 스테이지)
-  const sel = Math.min(10, Math.max(1, Math.round(P.sel)));
-  const base = dps[sel], hp0 = base * P.ttk_n;
-  const steps = []; let ck=0, cx=0, boss=null, coll=null;
-  for (let k=1;k<=20;k++){
-    const sp = P.sp0*Math.pow(P.rs,k-1), mh = hp0*Math.pow(P.rm,k-1);
-    const lvl = k===1?0:Math.floor(Math.log(cx*(P.rx-1)/P.X0+1)/Math.log(P.rx));
-    const d = base*Math.pow(P.dlv,lvl), fr = d/mh*60*P.aoe, eff = Math.min(sp,fr);
-    const kills = eff*0.5, pk = ck; ck += kills; cx += kills*P.gem*P.col;
-    if (coll===null && fr<sp) coll = k*0.5;
-    if (boss===null && ck>=P.quota && pk<P.quota) boss = {t:k*0.5, lvl};
-    steps.push({t:k*0.5, sp, mh, lvl, d, fr, eff, ck:Math.round(ck), cx:Math.round(cx)});
+  // ② 인런 시뮬 — 전 스테이지 동시 실행
+  function simRun(base){
+    const hp0 = base*P.ttk_n, steps=[]; let ck=0, cx=0, boss=null, coll=null;
+    for (let k=1;k<=20;k++){
+      const sp = P.sp0*Math.pow(P.rs,k-1), mh = hp0*Math.pow(P.rm,k-1);
+      const lvl = k===1?0:Math.floor(Math.log(cx*(P.rx-1)/P.X0+1)/Math.log(P.rx));
+      const d = base*Math.pow(P.dlv,lvl), fr = d/mh*60*P.aoe, eff = Math.min(sp,fr);
+      const kills = eff*0.5, pk = ck; ck += kills; cx += kills*P.gem*P.col;
+      if (coll===null && fr<sp) coll = k*0.5;
+      if (boss===null && ck>=P.quota && pk<P.quota) boss = {t:k*0.5, lvl};
+      steps.push({t:k*0.5, sp, mh, lvl, d, fr, eff, ck:Math.round(ck), cx:Math.round(cx)});
+    }
+    return {steps, boss, coll};
   }
-  // ③ 런 시간 = 인런 파생 (폴백: 쿼터/스폰율)
-  const runT = (boss?boss.t:P.quota/P.spawn) + P.ttk_b/60 + P.ovh;
-  const R0boss = boss;
+  const sel = Math.min(10, Math.max(1, Math.round(P.sel)));
+  const all = [];
+  for (let s=1;s<=10;s++){
+    const r0 = simRun(dps[s]);
+    const rt = (r0.boss?r0.boss.t:P.quota/P.spawn) + P.ttk_b/60 + P.ovh;
+    const ok = r0.boss!==null && (r0.coll===null || r0.coll>r0.boss.t);
+    all.push({s, boss:r0.boss, coll:r0.coll, rt, ok, steps:r0.steps});
+  }
+  const cur = all[sel-1], steps = cur.steps, boss = cur.boss, coll = cur.coll;
+  const runT = cur.rt;
 
-  // ④ 드랍 경제 → 파밍 런 → 누적 일수
+  // ④ 드랍 경제 — 스테이지별 런 시간 적용 (파밍 = s-1의 런 시간)
   const rows = []; let cmin = 0;
   for (let s=1;s<=10;s++){
     const g = req[s-1], pReq = cum[g-1], pUp = pReq*P.a*P.w;
@@ -239,8 +252,9 @@ function calc(){
     const need = P.u + (isWall?P.wu:0);
     const drops = (P.quota*P.dpk+P.bd) * Math.pow(P.rd, s===1?0:s-2);
     const effd = drops*pUp, runs = Math.ceil(need/effd);
-    cmin += runs*runT + runT;
-    const lvlMult = Math.pow(P.dlv, R0boss ? R0boss.lvl : 0);
+    const farmT = all[s===1?0:s-2].rt;
+    cmin += runs*farmT + all[s-1].rt;
+    const lvlMult = Math.pow(P.dlv, all[s-1].boss?all[s-1].boss.lvl:0);
     rows.push({s, g, pReq, pUp, need, drops, effd, runs, dps:dps[s], bhp:dps[s]*lvlMult*P.ttk_b,
                cmin, ch:cmin/60, cd:cmin/P.daily, isWall});
   }
@@ -252,7 +266,7 @@ function calc(){
     const mn = P.por*(1-P.spread), mx = P.por*(1+P.spread);
     dec.push({s, g, no, tot, bases, mn, mx, thr: mn+(1-P.a)*(mx-mn), chk: bases[g-1]*eo*P.critM});
   }
-  R = {rows, steps, boss, coll, runT, sel, dec,
+  R = {rows, steps, boss, coll, runT, sel, dec, all,
        inVerd: boss===null ? {ok:false, t:"⚠ 쿼터 미달 — 스폰/DPS 상향"} :
                coll===null || coll>boss.t ? {ok:true, t:"OK: 보스가 붕괴보다 먼저"} :
                {ok:false, t:"⚠ 붕괴가 보스보다 먼저"}};
@@ -271,7 +285,10 @@ function render(){
     vcard("s5 도달", F(r5.cd,2)+"일", j5, `목표 ≤ ${P.tmid}일`),
     vcard("s10 도달", F(r10.cd,2)+"일", j10, `목표 ≤ ${P.tend}일`),
     vcard("런 시간", F(R.runT,2)+"분", {ok:R.runT<=7,t:R.runT<=7?"세션 목표 내":"⚠ 세션 과장"}, R.boss?`보스 ${R.boss.t}분 + 전투/오버헤드`:"인런 폴백값"),
-    vcard("인런 판정", R.boss?`L${R.boss.lvl} · ${R.boss.t}분`:"미도달", R.inVerd, R.coll?`붕괴 ${R.coll}분`:"붕괴 없음"),
+    (()=>{ const nOk = R.all.filter(a=>a.ok).length, bad = R.all.find(a=>!a.ok);
+      return vcard("인런 전판정", `${nOk}/10`,
+        nOk===10?{ok:true,t:"전 스테이지 OK"}:{ok:false,t:`⚠ s${bad.s}부터 실패`},
+        `상세 보기: s${R.sel}`); })(),
     vcard("보스 타임어택", `${F(P.ttk_b,0)}s / ${F(P.blimit,0)}s`,
       P.ttk_b>=P.blimit ? {ok:false,t:"⚠ 여유 0 — 기대 장비도 실패"} :
       P.ttk_b>P.blimit*0.85 ? {ok:false,t:`⚠ 여유 ${F((1-P.ttk_b/P.blimit)*100,0)}% — 너무 타이트`} :
@@ -290,6 +307,14 @@ function render(){
   }
   document.getElementById("dropTbl").innerHTML = h;
   document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{ req[c.dataset.s-1]=+c.dataset.g; calc(); });
+  let ah = `<tr><th></th>${R.all.map(a=>`<th>s${a.s}</th>`).join("")}</tr>`;
+  ah += `<tr><td>보스 도달(분)</td>${R.all.map(a=>`<td>${a.boss?F(a.boss.t,1):'—'}</td>`).join("")}</tr>`;
+  ah += `<tr><td>도달 레벨</td>${R.all.map(a=>`<td>${a.boss?'L'+a.boss.lvl:'—'}</td>`).join("")}</tr>`;
+  ah += `<tr><td>붕괴(분)</td>${R.all.map(a=>`<td>${a.coll?F(a.coll,1):'없음'}</td>`).join("")}</tr>`;
+  ah += `<tr><td>런 시간(분)</td>${R.all.map(a=>`<td>${F(a.rt,2)}</td>`).join("")}</tr>`;
+  ah += `<tr><td>판정</td>${R.all.map(a=>`<td class="${a.ok?'okc':'warnc'}">${a.ok?'OK':'⚠'}</td>`).join("")}</tr>`;
+  document.getElementById("allTbl").innerHTML = ah;
+
   document.getElementById("selStg").textContent = R.sel;
 
   // 옵션 분해 테이블
@@ -349,6 +374,13 @@ document.querySelectorAll("button.copy").forEach(b=>b.onclick=()=>{
   if (b.dataset.t==="drop"){
     t = "스테이지\t요구등급\t등급이상확률\t업그레이드확률/드랍\t필요슬롯\t드랍/런\t유효드랍/런\t필요파밍런\t누적(시간)\t누적(일)\t기대DPS(장비)\t보스HP\n";
     t += R.rows.map(r=>[r.s,gname[r.g-1],r.pReq,r.pUp,r.need,r.drops,r.effd,r.runs,r.ch,r.cd,r.dps,r.bhp].join("\t")).join("\n");
+  } else if (b.dataset.t==="all"){
+    t = "항목\t" + R.all.map(a=>"s"+a.s).join("\t") + "\n";
+    t += "보스도달(분)\t"+R.all.map(a=>a.boss?a.boss.t:"미도달").join("\t")+"\n";
+    t += "도달레벨\t"+R.all.map(a=>a.boss?a.boss.lvl:"-").join("\t")+"\n";
+    t += "붕괴(분)\t"+R.all.map(a=>a.coll??"없음").join("\t")+"\n";
+    t += "런시간(분)\t"+R.all.map(a=>a.rt.toFixed(2)).join("\t")+"\n";
+    t += "판정\t"+R.all.map(a=>a.ok?"OK":"실패").join("\t");
   } else if (b.dataset.t==="dec"){
     t = "스테이지\t요구등급\tBase일반\tBase매직\tBase레어\tBase세트\tBase유니크\t아이템당옵션\t롤MIN\t롤MAX\t합격임계\n";
     t += R.dec.map(d=>[d.s,gname[d.g-1],...d.bases.map(b=>b.toFixed(3)),d.no,d.mn,d.mx,d.thr].join("\t")).join("\n");
