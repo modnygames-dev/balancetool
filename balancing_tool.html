@@ -75,7 +75,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v9</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v10</span></h1>
   <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
   <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
   <button class="copy" id="resetBtn" title="저장된 값을 지우고 파일 기본값으로 되돌립니다">기본값 복원</button>
@@ -107,6 +107,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 
   <p class="fine">
     ※ 기대값 모델 — D2식 RNG는 분산이 커서 상·하위 10% 유저의 도달 시간이 2~3배 벌어질 수 있음 → 천장(pity) 권장: 표의 필요 런 × 1.5를 확정 드랍 N값의 출발점으로.<br>
+    ※ 보스 = 단일 대상(동시타격 미적용) 60초 타임어택. 보스 HP = 기대 DPS × 보스 도달 레벨 배율 × 목표 TTK. 목표 TTK ÷ 제한시간 = 통과에 필요한 최소 장비 비율 → 이 비율이 곧 벽의 강도.<br>
     ※ 골드는 진행 병목이 아닌 강화·옵션 재롤 싱크. 강화는 총 DPS의 (1+강화 기여율) 확정 쿠션으로 합산됨.<br>
     ※ 엑셀 복사 버튼은 탭 구분 텍스트를 복사 — 시트에 바로 붙여넣기 가능.
   </p>
@@ -119,7 +120,8 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 const PDEF = [
  {g:"전투 구조"},
  {k:"quota", n:"킬 쿼터", v:300, d:"이 수만큼 처치하면 보스 등장"},
- {k:"ttk_b", n:"보스 TTK(초)", v:45, d:"적정 파워 시 보스 처치 시간"},
+ {k:"ttk_b", n:"보스 목표 TTK(초)", v:45, d:"기대 장비+기대 레벨 유저의 보스전 시간 — 보스 HP가 여기서 역산됨"},
+ {k:"blimit", n:"보스 제한시간(초)", v:60, d:"이 시간 안에 못 죽이면 런 실패 — TTK와의 격차가 언더기어 허용폭"},
  {k:"ttk_n", n:"일반몹 TTK(초)", v:1, d:"몹 HP 역산 계수"},
  {k:"ovh", n:"런 오버헤드(분)", v:0.5, d:"이동/젬 수집/연출"},
  {k:"spawn", n:"스폰율 폴백(마리/분)", v:60, d:"인런 미도달 시 런 시간 폴백용"},
@@ -214,6 +216,7 @@ function calc(){
   }
   // ③ 런 시간 = 인런 파생 (폴백: 쿼터/스폰율)
   const runT = (boss?boss.t:P.quota/P.spawn) + P.ttk_b/60 + P.ovh;
+  const R0boss = boss;
 
   // ④ 드랍 경제 → 파밍 런 → 누적 일수
   const rows = []; let cmin = 0;
@@ -224,7 +227,8 @@ function calc(){
     const drops = (P.quota*P.dpk+P.bd) * Math.pow(P.rd, s===1?0:s-2);
     const effd = drops*pUp, runs = Math.ceil(need/effd);
     cmin += runs*runT + runT;
-    rows.push({s, g, pReq, pUp, need, drops, effd, runs, dps:dps[s], bhp:dps[s]*P.ttk_b,
+    const lvlMult = Math.pow(P.dlv, R0boss ? R0boss.lvl : 0);
+    rows.push({s, g, pReq, pUp, need, drops, effd, runs, dps:dps[s], bhp:dps[s]*lvlMult*P.ttk_b,
                cmin, ch:cmin/60, cd:cmin/P.daily, isWall});
   }
   R = {rows, steps, boss, coll, runT, sel,
@@ -247,6 +251,11 @@ function render(){
     vcard("s10 도달", F(r10.cd,2)+"일", j10, `목표 ≤ ${P.tend}일`),
     vcard("런 시간", F(R.runT,2)+"분", {ok:R.runT<=7,t:R.runT<=7?"세션 목표 내":"⚠ 세션 과장"}, R.boss?`보스 ${R.boss.t}분 + 전투/오버헤드`:"인런 폴백값"),
     vcard("인런 판정", R.boss?`L${R.boss.lvl} · ${R.boss.t}분`:"미도달", R.inVerd, R.coll?`붕괴 ${R.coll}분`:"붕괴 없음"),
+    vcard("보스 타임어택", `${F(P.ttk_b,0)}s / ${F(P.blimit,0)}s`,
+      P.ttk_b>=P.blimit ? {ok:false,t:"⚠ 여유 0 — 기대 장비도 실패"} :
+      P.ttk_b>P.blimit*0.85 ? {ok:false,t:`⚠ 여유 ${F((1-P.ttk_b/P.blimit)*100,0)}% — 너무 타이트`} :
+      {ok:true,t:`언더기어 허용 ${F((1-P.ttk_b/P.blimit)*100,0)}%`},
+      `장비 ${F(P.ttk_b/P.blimit*100,0)}% 수준까지 통과`),
   ].join("");
 
   // 드랍 테이블
