@@ -82,7 +82,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v14</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v15</span></h1>
   <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
   <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
   <button class="copy" id="resetBtn" title="저장된 값을 지우고 파일 기본값으로 되돌립니다">기본값 복원</button>
@@ -114,7 +114,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
   </section>
 
   <section>
-    <div class="shead"><h2>인런 상세 (스테이지 <span id="selStg"></span>)</h2><span class="note">30초 스텝 · 스폰 곡선 vs 장비+레벨 DPS</span><button class="copy" data-t="inrun">엑셀 복사</button></div>
+    <div class="shead"><h2>인런 상세 (스테이지 <span id="selStg"></span>)</h2><span class="note">30초 스텝 · 웨이브(100킬마다 전환) vs 장비+레벨 DPS</span><button class="copy" data-t="inrun">엑셀 복사</button></div>
     <svg id="irChart" width="100%" height="170" viewBox="0 0 720 170" preserveAspectRatio="none"></svg>
     <div class="legend"><span><b style="color:var(--g2)">──</b> 스폰율(마리/분)</span><span><b style="color:var(--g3)">──</b> 실효 킬속도</span><span><b style="color:var(--warn)">│</b> 붕괴</span><span><b style="color:var(--ok)">│</b> 보스 등장</span></div>
     <details style="margin-top:10px"><summary>스텝 테이블 펼치기</summary>
@@ -124,7 +124,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 
   <p class="fine">
     ※ 기대값 모델 — D2식 RNG는 분산이 커서 상·하위 10% 유저의 도달 시간이 2~3배 벌어질 수 있음 → 천장(pity) 권장: 표의 필요 런 × 1.5를 확정 드랍 N값의 출발점으로.<br>
-    ※ 킬 쿼터 수집은 시간 제한 없음 — 실패 조건은 보스전 타임어택뿐. 붕괴 후에도 런은 계속되지만 '슬로그'(세션 늘어짐)로 경고. ※ 보스 = 단일 대상(동시타격 미적용) 60초 타임어택. 보스 HP = 기대 DPS × 보스 도달 레벨 배율 × 목표 TTK. 목표 TTK ÷ 제한시간 = 통과에 필요한 최소 장비 비율 → 이 비율이 곧 벽의 강도.<br>
+    ※ 웨이브는 시간이 아니라 킬 기반 — 쿼터÷웨이브 수(기본 300÷3=100킬)마다 스폰율·몹HP가 계단식 상승. ※ 킬 쿼터 수집은 시간 제한 없음 — 실패 조건은 보스전 타임어택뿐. 붕괴 후에도 런은 계속되지만 '슬로그'(세션 늘어짐)로 경고. ※ 보스 = 단일 대상(동시타격 미적용) 60초 타임어택. 보스 HP = 기대 DPS × 보스 도달 레벨 배율 × 목표 TTK. 목표 TTK ÷ 제한시간 = 통과에 필요한 최소 장비 비율 → 이 비율이 곧 벽의 강도.<br>
     ※ 골드는 진행 병목이 아닌 강화·옵션 재롤 싱크. 강화는 총 DPS의 (1+강화 기여율) 확정 쿠션으로 합산됨.<br>
     ※ 엑셀 복사 버튼은 탭 구분 텍스트를 복사 — 시트에 바로 붙여넣기 가능.
   </p>
@@ -137,6 +137,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 const PDEF = [
  {g:"전투 구조"},
  {k:"quota", n:"킬 쿼터", v:300, d:"이 수만큼 처치하면 보스 등장"},
+ {k:"waves", n:"웨이브 수", v:3, int:1, d:"쿼터÷웨이브 수 = 웨이브 전환 킬 수 (시간이 아니라 킬 기반)"},
  {k:"ttk_b", n:"보스 목표 TTK(초)", v:45, d:"기대 장비+기대 레벨 유저의 보스전 시간 — 보스 HP가 여기서 역산됨"},
  {k:"blimit", n:"보스 제한시간(초)", v:60, d:"이 시간 안에 못 죽이면 런 실패 — TTK와의 격차가 언더기어 허용폭"},
  {k:"ttk_n", n:"일반몹 TTK(초)", v:1, d:"몹 HP 역산 계수"},
@@ -145,9 +146,9 @@ const PDEF = [
  {g:"인런 성장"},
  {k:"sel", n:"상세 보기 스테이지 (1~10)", v:5, d:"차트·스텝 테이블에 표시할 스테이지 — 판정은 전 스테이지 자동", int:1},
  {k:"aoe", cat:"m", n:"동시 타격 계수", v:3, d:"광역기 평균 동시 히트"},
- {k:"sp0", cat:"m", n:"초기 스폰율", v:30, d:"런 시작 마리/분"},
- {k:"rs", cat:"m", n:"스폰 성장(30초당)", v:1.12, d:"웨이브 압박 곡선"},
- {k:"rm", n:"몹HP 성장(30초당)", v:1.15, d:"런 내 몹 강화"},
+ {k:"sp0", cat:"m", n:"웨이브1 스폰율", v:40, d:"첫 웨이브의 분당 스폰 — 구현 스폰 테이블과 대조"},
+ {k:"ws", cat:"m", n:"웨이브당 스폰 배율", v:1.5, d:"웨이브 전환 시 스폰율이 몇 배가 되나 — 구현과 대조"},
+ {k:"wh", n:"웨이브당 몹HP 배율", v:1.4, d:"웨이브 전환 시 몹 HP 배율 — 런 내 압박의 계단"},
  {k:"X0", n:"레벨1 필요 XP", v:50, d:""},
  {k:"rx", n:"레벨 XP 성장률", v:1.4, d:""},
  {k:"gem", n:"킬당 젬 XP", v:5, d:""},
@@ -233,13 +234,14 @@ function calc(){
   function simRun(base){
     const hp0 = base*P.ttk_n, steps=[]; let ck=0, cx=0, boss=null, coll=null;
     for (let k=1;k<=60;k++){  // 30분 지평 — 쿼터는 시간 무제한
-      const sp = P.sp0*Math.pow(P.rs,k-1), mh = hp0*Math.pow(P.rm,k-1);
+      const wave = Math.min(Math.round(P.waves)-1, Math.floor(ck/(P.quota/Math.round(P.waves))));
+      const sp = P.sp0*Math.pow(P.ws,wave), mh = hp0*Math.pow(P.wh,wave);
       const lvl = k===1?0:Math.floor(Math.log(cx*(P.rx-1)/P.X0+1)/Math.log(P.rx));
       const d = base*Math.pow(P.dlv,lvl), fr = d/mh*60*P.aoe, eff = Math.min(sp,fr);
       const kills = eff*0.5, pk = ck; ck += kills; cx += kills*P.gem*P.col;
       if (coll===null && fr<sp) coll = k*0.5;
       if (boss===null && ck>=P.quota && pk<P.quota) boss = {t:k*0.5, lvl};
-      steps.push({t:k*0.5, sp, mh, lvl, d, fr, eff, ck:Math.round(ck), cx:Math.round(cx)});
+      steps.push({t:k*0.5, wave, sp, mh, lvl, d, fr, eff, ck:Math.round(ck), cx:Math.round(cx)});
     }
     return {steps, boss, coll};
   }
@@ -345,10 +347,10 @@ function render(){
   document.getElementById("decTbl").innerHTML = dh;
 
   // 인런 테이블
-  let ih = `<tr><th>t(분)</th><th>스폰율</th><th>몹 HP</th><th>레벨</th><th>DPS</th><th>DPS 킬속도</th><th>실효</th><th>누적 킬</th><th>병목</th></tr>`;
+  let ih = `<tr><th>t(분)</th><th>웨이브</th><th>스폰율</th><th>몹 HP</th><th>레벨</th><th>DPS</th><th>DPS 킬속도</th><th>실효</th><th>누적 킬</th><th>병목</th></tr>`;
   for (const s of R.steps.filter(p=>p.t<=R.tmax)){
     const b = s.fr<s.sp;
-    ih += `<tr><td>${s.t}</td><td>${F(s.sp,1)}</td><td>${F(s.mh,1)}</td><td>L${s.lvl}</td><td>${F(s.d,1)}</td><td>${F(s.fr,1)}</td><td>${F(s.eff,1)}</td><td>${s.ck}${R.boss&&s.t===R.boss.t?' ★':''}</td><td class="${b?'warnc':'okc'}">${b?'DPS 제한':'스폰 제한'}</td></tr>`;
+    ih += `<tr><td>${s.t}</td><td>W${s.wave+1}</td><td>${F(s.sp,1)}</td><td>${F(s.mh,1)}</td><td>L${s.lvl}</td><td>${F(s.d,1)}</td><td>${F(s.fr,1)}</td><td>${F(s.eff,1)}</td><td>${s.ck}${R.boss&&s.t===R.boss.t?' ★':''}</td><td class="${b?'warnc':'okc'}">${b?'DPS 제한':'스폰 제한'}</td></tr>`;
   }
   document.getElementById("irTbl").innerHTML = ih;
   drawCum(); drawIR();
@@ -377,6 +379,8 @@ function drawIR(){
   let s = "";
   for (let i=0;i<=3;i++){ const v=max/3*i; s+=`<line x1="${L}" x2="${W-14}" y1="${y(v)}" y2="${y(v)}" stroke="#262a32"/><text x="${L-6}" y="${y(v)+4}" fill="#5c6270" font-size="10" text-anchor="end">${v.toFixed(0)}</text>`; }
   for (let t=2;t<=R.tmax;t+=2) s+=`<text x="${x(t)}" y="${H-6}" fill="#5c6270" font-size="10" text-anchor="middle">${t}분</text>`;
+  for (let i=1;i<S.length;i++) if (S[i].wave!==S[i-1].wave)
+    s+=`<line x1="${x(S[i].t)}" x2="${x(S[i].t)}" y1="${T}" y2="${H-B}" stroke="#3a4150" stroke-dasharray="2 4"/><text x="${x(S[i].t)+3}" y="${T+9}" fill="#5c6270" font-size="9">W${S[i].wave+1}</text>`;
   if (R.coll && R.coll<=R.tmax) s+=`<line x1="${x(R.coll)}" x2="${x(R.coll)}" y1="${T}" y2="${H-B}" stroke="var(--warn)" stroke-dasharray="3 3"/>`;
   if (R.boss && R.boss.t<=R.tmax) s+=`<line x1="${x(R.boss.t)}" x2="${x(R.boss.t)}" y1="${T}" y2="${H-B}" stroke="var(--ok)" stroke-dasharray="3 3"/>`;
   s += line(S.map(p=>[x(p.t),y(p.sp)]),"var(--g2)");
@@ -401,8 +405,8 @@ document.querySelectorAll("button.copy").forEach(b=>b.onclick=()=>{
     t = "스테이지\t요구등급\tBase일반\tBase매직\tBase레어\tBase세트\tBase유니크\t아이템당옵션\t롤MIN\t롤MAX\t합격임계\n";
     t += R.dec.map(d=>[d.s,gname[d.g-1],...d.bases.map(b=>b.toFixed(3)),d.no,d.mn,d.mx,d.thr].join("\t")).join("\n");
   } else {
-    t = "시간(분)\t스폰율\t몹HP\t레벨\tDPS\tDPS킬속도\t실효킬속도\t누적킬\n";
-    t += R.steps.map(s=>[s.t,s.sp,s.mh,s.lvl,s.d,s.fr,s.eff,s.ck].join("\t")).join("\n");
+    t = "시간(분)\t웨이브\t스폰율\t몹HP\t레벨\tDPS\tDPS킬속도\t실효킬속도\t누적킬\n";
+    t += R.steps.map(s=>[s.t,"W"+(s.wave+1),s.sp,s.mh,s.lvl,s.d,s.fr,s.eff,s.ck].join("\t")).join("\n");
   }
   navigator.clipboard.writeText(t).then(()=>{
     const el = document.getElementById("toast");
