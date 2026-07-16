@@ -82,7 +82,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v21</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v22</span></h1>
   <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
   <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
   <button class="copy" id="expBtn" title="현재 설정 전체를 JSON으로 복사 — 채팅에 붙여넣어 공유">설정 복사</button>
@@ -106,7 +106,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
   </section>
 
   <section>
-    <div class="shead"><h2>Unity 테이블 내보내기 — 몬스터</h2><span class="note">몹 HP = DPS × TTK × 웨이브 배율, 보스 HP = 레벨·bbias 보정</span><button class="copy" data-t="mob">엑셀 복사</button></div>
+    <div class="shead"><h2>Unity 테이블 내보내기 — 몬스터</h2><span class="note">몹 ATK = 유저HP ÷ 버티는 시간 ÷ 피격 빈도 · 유저 HP = 기본체력 × 장비 스케일</span><button class="copy" data-t="mob">엑셀 복사</button></div>
     <div style="overflow-x:auto"><table class="data" id="mobTbl"></table></div>
   </section>
 
@@ -136,7 +136,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 
   <p class="fine">
     ※ 기대값 모델 — D2식 RNG는 분산이 커서 상·하위 10% 유저의 도달 시간이 2~3배 벌어질 수 있음 → 천장(pity) 권장: 표의 필요 런 × 1.5를 확정 드랍 N값의 출발점으로.<br>
-    ※ 무기 5종의 DPS 예산은 동일 — 공속은 손맛, ATK = Base÷공속. 옵션 풀 설계 시 모든 옵션 종류의 DPS 등가 8%(롤 4.8~11.2%) 유지. 몹 DPS(생존 축)는 미구축 — 유저 eHP 앵커 확정 후 추가. ※ 아이템레벨: 드랍 ilvl = 스테이지 × 6 (캡 60, s10에서 도달). Base 파워 = P0 × glv^ilvl — 캡 이후 진행은 등급·옵션 체이스. ※ 기대 DPS는 몹전 기준 — 보스 특화 유니크 효과(bossElite, execute 등)의 추가 기대값은 '보스전 배율 보정'으로 반영, 보스 HP가 함께 상향돼 목표 TTK 유지. 유니크 효과 1개의 기대 배율 예산 = 등급 배율 격차(2.6/2.1≈1.24). ※ ATK 구성 = ①장비(Base × (1+옵션 롤 합) × 크리) × ②세션 버프(1 + 카드 수 × 카드당 보너스, 합연산) × ③광고 버프(밸런스 기준은 무버프 — 버프는 언더기어 구제/가속 수단).<br>
+    ※ 무기 5종의 DPS 예산은 동일 — 공속은 손맛, ATK = Base÷공속. 옵션 풀 설계 시 모든 옵션 종류의 DPS 등가 8%(롤 4.8~11.2%) 유지. 생존 축: 유저 HP = 기본체력 × 아이템레벨 × 등급 (방어구 옵션 분해는 추후). 레벨업 회복 30% × 보스 도달 레벨 ≈ 원 체력의 약 2배 추가 — 실효 생존 예산은 목표의 ~3배(회피 제외). 보스전은 회복 없음(레벨업 없는 구간)이라 한 방 비율 × 4방이 실질 목숨. ※ 아이템레벨: 드랍 ilvl = 스테이지 × 6 (캡 60, s10에서 도달). Base 파워 = P0 × glv^ilvl — 캡 이후 진행은 등급·옵션 체이스. ※ 기대 DPS는 몹전 기준 — 보스 특화 유니크 효과(bossElite, execute 등)의 추가 기대값은 '보스전 배율 보정'으로 반영, 보스 HP가 함께 상향돼 목표 TTK 유지. 유니크 효과 1개의 기대 배율 예산 = 등급 배율 격차(2.6/2.1≈1.24). ※ ATK 구성 = ①장비(Base × (1+옵션 롤 합) × 크리) × ②세션 버프(1 + 카드 수 × 카드당 보너스, 합연산) × ③광고 버프(밸런스 기준은 무버프 — 버프는 언더기어 구제/가속 수단).<br>
     ※ 웨이브는 시간이 아니라 킬 기반 — 쿼터÷웨이브 수(기본 300÷3=100킬)마다 스폰율·몹HP가 계단식 상승. ※ 킬 쿼터 수집은 시간 제한 없음 — 실패 조건은 보스전 타임어택뿐. 붕괴 후에도 런은 계속되지만 '슬로그'(세션 늘어짐)로 경고. ※ 보스 = 단일 대상(동시타격 미적용) 60초 타임어택. 보스 HP = 기대 DPS × 보스 도달 레벨 배율 × 목표 TTK. 목표 TTK ÷ 제한시간 = 통과에 필요한 최소 장비 비율 → 이 비율이 곧 벽의 강도.<br>
     ※ 골드는 진행 병목이 아닌 강화·옵션 재롤 싱크. 강화는 총 DPS의 (1+강화 기여율) 확정 쿠션으로 합산됨.<br>
     ※ 엑셀 복사 버튼은 탭 구분 텍스트를 복사 — 시트에 바로 붙여넣기 가능.
@@ -188,6 +188,12 @@ const PDEF = [
  {k:"critM", n:"크리 기대값(평균 배수)", v:1.15, d:"크리확률 × 크리뎀 기대값 [코드명 critM]"},
  {k:"por", n:"옵션 한 줄의 값(평균)", v:0.08, d:"옵션 하나의 평균 기여 (8%) [코드명 por]"},
  {k:"spread", n:"옵션 복불복 폭(±)", v:0.4, d:"롤 범위 = 평균×(1∓폭) [코드명 spread]"},
+ {g:"생존 축"},
+ {k:"php0", cat:"a", n:"기본 체력(무장비)", v:100, d:"생존 축의 좌표 원점 — 공격 축의 기준점 DPS와 같은 역할 [코드명 php0]"},
+ {k:"surv", n:"버티는 시간 목표(초)", v:45, d:"적정 장비 유저가 회피 없이 맞기만 할 때 죽기까지의 시간 — 몹 공격력이 여기서 역산됨 [코드명 surv]"},
+ {k:"hitrate", cat:"m", n:"초당 맞는 횟수", v:1.0, d:"떼에 둘러싸였을 때 초당 피격 수 — s1 프로토타입 로그로 실측 [코드명 hitrate]"},
+ {k:"bhit", n:"보스 한 방(체력 비율)", v:0.25, d:"보스 공격 1회 = 내 최대체력의 몇 % (0.25 = 4방 사망) [코드명 bhit]"},
+ {k:"heal", n:"레벨업 회복(체력 비율)", v:0.3, d:"레벨업 시 최대체력의 30% 회복 — 구현값 [코드명 heal]"},
  {g:"페이싱 목표"},
  {k:"daily", cat:"a", n:"하루 평균 플레이(분)", v:60, d:"플레이 시간 → 캘린더 일 환산 [코드명 daily]"},
  {k:"tmid", n:"스테이지5 도달 목표(일)", v:1, d:" [코드명 tmid]"},
@@ -308,9 +314,13 @@ function calc(){
   }
   const mobs = [];
   for (let s=1;s<=10;s++){
-    const hp = [];
-    for (let w=0;w<Math.round(P.waves);w++) hp.push(dps[s]*P.ttk_n*Math.pow(P.wh,w));
-    mobs.push({s, hp, bhp: rows[s-1].bhp, il: ilvl(s)});
+    const php = P.php0 * Math.pow(P.glv, ilvl(s)) * gmult[req[s-1]-1];
+    const hp = [], atk = [];
+    for (let w=0;w<Math.round(P.waves);w++){
+      hp.push(dps[s]*P.ttk_n*Math.pow(P.wh,w));
+      atk.push(php/P.surv/P.hitrate*Math.pow(P.wh,w));
+    }
+    mobs.push({s, hp, atk, php, bhit: php*P.bhit, bhp: rows[s-1].bhp, il: ilvl(s)});
   }
   R = {rows, steps, boss, coll, runT, sel, dec, all, tmax, mobs,
        inVerd: boss===null ? {ok:false, t:"⚠ 쿼터 수렴 실패 — 킬 속도가 0으로 붕괴"} :
@@ -380,9 +390,9 @@ function render(){
   document.getElementById("decTbl").innerHTML = dh;
 
   // 몬스터 테이블
-  let mh2 = `<tr><th>스테이지</th><th>ilvl</th>${Array.from({length:Math.round(P.waves)},(_,w)=>`<th>W${w+1} 몹HP</th>`).join("")}<th>몹 DPS(참고)</th><th>보스 HP</th></tr>`;
+  let mh2 = `<tr><th>스테이지</th><th>ilvl</th><th>유저 HP</th>${Array.from({length:Math.round(P.waves)},(_,w)=>`<th>W${w+1} 몹HP</th>`).join("")}${Array.from({length:Math.round(P.waves)},(_,w)=>`<th>W${w+1} 몹ATK</th>`).join("")}<th>보스 HP</th><th>보스 한 방</th></tr>`;
   for (const m of R.mobs){
-    mh2 += `<tr><td>s${m.s}</td><td>${m.il}</td>${m.hp.map(h=>`<td>${F(h,1)}</td>`).join("")}<td class="warnc">생존축 미구축</td><td>${F(m.bhp,0)}</td></tr>`;
+    mh2 += `<tr><td>s${m.s}</td><td>${m.il}</td><td>${F(m.php,0)}</td>${m.hp.map(h=>`<td>${F(h,1)}</td>`).join("")}${m.atk.map(a2=>`<td>${F(a2,2)}</td>`).join("")}<td>${F(m.bhp,0)}</td><td>${F(m.bhit,0)}</td></tr>`;
   }
   document.getElementById("mobTbl").innerHTML = mh2;
 
@@ -449,8 +459,8 @@ document.querySelectorAll("button.copy").forEach(b=>b.onclick=()=>{
     t += "런시간(분)\t"+R.all.map(a=>a.rt.toFixed(2)).join("\t")+"\n";
     t += "판정\t"+R.all.map(a=>a.state==="ok"?"OK":a.state==="slog"?"슬로그":"수렴실패").join("\t");
   } else if (b.dataset.t==="mob"){
-    t = "스테이지\tilvl\t" + Array.from({length:Math.round(P.waves)},(_,w)=>"W"+(w+1)+"몹HP").join("\t") + "\t보스HP\n";
-    t += R.mobs.map(m=>[m.s,m.il,...m.hp.map(h=>h.toFixed(2)),m.bhp.toFixed(1)].join("\t")).join("\n");
+    t = "스테이지\tilvl\t유저HP\t" + Array.from({length:Math.round(P.waves)},(_,w)=>"W"+(w+1)+"몹HP").join("\t") + "\t" + Array.from({length:Math.round(P.waves)},(_,w)=>"W"+(w+1)+"몹ATK").join("\t") + "\t보스HP\t보스한방\n";
+    t += R.mobs.map(m=>[m.s,m.il,m.php.toFixed(1),...m.hp.map(h=>h.toFixed(2)),...m.atk.map(a2=>a2.toFixed(3)),m.bhp.toFixed(1),m.bhit.toFixed(1)].join("\t")).join("\n");
   } else if (b.dataset.t==="wpn"){
     t = "무기\t공속\t스테이지\tilvl\t등급\tATK\n";
     const lines = [];
