@@ -82,9 +82,11 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v18</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v19</span></h1>
   <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
   <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
+  <button class="copy" id="expBtn" title="현재 설정 전체를 JSON으로 복사 — 채팅에 붙여넣어 공유">설정 복사</button>
+  <button class="copy" id="impBtn" title="공유받은 설정 JSON을 붙여넣어 적용">설정 붙여넣기</button>
   <button class="copy" id="resetBtn" title="저장된 값을 지우고 파일 기본값으로 되돌립니다">기본값 복원</button>
 </header>
 
@@ -425,18 +427,33 @@ const SKEY = "balsim_v9";
 function persist(){
   try { localStorage.setItem(SKEY, JSON.stringify({P, gprob, gmult, gopt, req})); } catch(e) {}
 }
-function restore(){
-  try {
-    const s = JSON.parse(localStorage.getItem(SKEY));
-    if (!s) return;
-    for (const k in s.P) if (k in P) { P[k] = s.P[k]; const el = document.getElementById("p_"+k); if (el) el.value = s.P[k]; }
-    if (Array.isArray(s.gprob) && s.gprob.length===5) gprob = s.gprob;
-    if (Array.isArray(s.gmult) && s.gmult.length===5) gmult = s.gmult;
-    if (Array.isArray(s.gopt) && s.gopt.length===5) gopt = s.gopt;
-    if (Array.isArray(s.req) && s.req.length===10) req = s.req;
-    for (let i=0;i<5;i++){ document.getElementById("gp_"+i).value = gprob[i]; document.getElementById("gm_"+i).value = gmult[i]; document.getElementById("gn_"+i).value = gopt[i]; }
-  } catch(e) {}
+function applyState(s){
+  for (const k in s.P||{}) if (k in P) { P[k] = s.P[k]; const el = document.getElementById("p_"+k); if (el) el.value = s.P[k]; }
+  if (Array.isArray(s.gprob) && s.gprob.length===5) gprob = s.gprob;
+  if (Array.isArray(s.gmult) && s.gmult.length===5) gmult = s.gmult;
+  if (Array.isArray(s.gopt) && s.gopt.length===5) gopt = s.gopt;
+  if (Array.isArray(s.req) && s.req.length===10) req = s.req;
+  for (let i=0;i<5;i++){ document.getElementById("gp_"+i).value = gprob[i]; document.getElementById("gm_"+i).value = gmult[i]; document.getElementById("gn_"+i).value = gopt[i]; }
 }
+function restore(){
+  try { const s = JSON.parse(localStorage.getItem(SKEY)); if (s) applyState(s); } catch(e) {}
+}
+document.getElementById("expBtn").onclick = ()=>{
+  navigator.clipboard.writeText(JSON.stringify({P, gprob, gmult, gopt, req})).then(()=>{
+    const el = document.getElementById("toast");
+    el.textContent = "설정 JSON 복사됨 — 채팅에 붙여넣으세요";
+    el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),1600);
+  });
+};
+document.getElementById("impBtn").onclick = ()=>{
+  const t = prompt("설정 JSON을 붙여넣으세요:");
+  if (!t) return;
+  try { applyState(JSON.parse(t)); calc();
+    const el = document.getElementById("toast");
+    el.textContent = "설정 적용됨";
+    el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),1200);
+  } catch(e) { alert("JSON 형식이 올바르지 않습니다"); }
+};
 document.getElementById("resetBtn").onclick = ()=>{
   try { localStorage.removeItem(SKEY); } catch(e) {}
   location.reload();
