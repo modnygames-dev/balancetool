@@ -82,7 +82,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v16</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v18</span></h1>
   <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
   <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
   <button class="copy" id="resetBtn" title="저장된 값을 지우고 파일 기본값으로 되돌립니다">기본값 복원</button>
@@ -124,7 +124,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 
   <p class="fine">
     ※ 기대값 모델 — D2식 RNG는 분산이 커서 상·하위 10% 유저의 도달 시간이 2~3배 벌어질 수 있음 → 천장(pity) 권장: 표의 필요 런 × 1.5를 확정 드랍 N값의 출발점으로.<br>
-    ※ ATK 구성 = ①장비(Base × (1+옵션 롤 합) × 크리) × ②세션 버프(1 + 카드 수 × 카드당 보너스, 합연산) × ③광고 버프(밸런스 기준은 무버프 — 버프는 언더기어 구제/가속 수단).<br>
+    ※ 아이템레벨: 드랍 ilvl = 스테이지 × 6 (캡 60, s10에서 도달). Base 파워 = P0 × glv^ilvl — 캡 이후 진행은 등급·옵션 체이스. ※ 기대 DPS는 몹전 기준 — 보스 특화 유니크 효과(bossElite, execute 등)의 추가 기대값은 '보스전 배율 보정'으로 반영, 보스 HP가 함께 상향돼 목표 TTK 유지. 유니크 효과 1개의 기대 배율 예산 = 등급 배율 격차(2.6/2.1≈1.24). ※ ATK 구성 = ①장비(Base × (1+옵션 롤 합) × 크리) × ②세션 버프(1 + 카드 수 × 카드당 보너스, 합연산) × ③광고 버프(밸런스 기준은 무버프 — 버프는 언더기어 구제/가속 수단).<br>
     ※ 웨이브는 시간이 아니라 킬 기반 — 쿼터÷웨이브 수(기본 300÷3=100킬)마다 스폰율·몹HP가 계단식 상승. ※ 킬 쿼터 수집은 시간 제한 없음 — 실패 조건은 보스전 타임어택뿐. 붕괴 후에도 런은 계속되지만 '슬로그'(세션 늘어짐)로 경고. ※ 보스 = 단일 대상(동시타격 미적용) 60초 타임어택. 보스 HP = 기대 DPS × 보스 도달 레벨 배율 × 목표 TTK. 목표 TTK ÷ 제한시간 = 통과에 필요한 최소 장비 비율 → 이 비율이 곧 벽의 강도.<br>
     ※ 골드는 진행 병목이 아닌 강화·옵션 재롤 싱크. 강화는 총 DPS의 (1+강화 기여율) 확정 쿠션으로 합산됨.<br>
     ※ 엑셀 복사 버튼은 탭 구분 텍스트를 복사 — 시트에 바로 붙여넣기 가능.
@@ -157,7 +157,9 @@ const PDEF = [
  {k:"sbuff", n:"카드당 ATK 보너스", v:0.2, d:"세션 버프 — 레벨업 카드 1장의 평균 공격 보너스, 합연산으로 누적"},
  {g:"D2 드랍 경제"},
  {k:"P0d", cat:"a", n:"기준 DPS (P0)", v:10, d:"스케일 기준점"},
- {k:"ilv", n:"아이템레벨 성장", v:1.15, d:"스테이지당 드랍 기본 파워"},
+ {k:"glv", n:"ilvl당 파워 성장", v:1.0236, d:"아이템레벨 1당 Base 배율 — 스테이지당(×6렙) ≈ 1.15"},
+ {k:"ips", n:"스테이지당 드랍 ilvl", v:6, int:1, d:"스테이지 s 드랍의 기대 아이템레벨 = s × 이 값 (캡까지)"},
+ {k:"icap", n:"최대 아이템레벨", v:60, int:1, d:"ilvl 캡 — 도달 후 진행은 등급·옵션 체이스만 남음"},
  {k:"dpk", n:"킬당 드랍률", v:0.011, d:"전투 중 드랍"},
  {k:"bd", n:"보스 확정 드랍", v:3, d:""},
  {k:"rd", n:"드랍 성장률", v:1.3, d:"스테이지당 드랍 수 배율"},
@@ -167,6 +169,7 @@ const PDEF = [
  {k:"wu", n:"벽당 추가 슬롯", v:2, d:""},
  {k:"wint", n:"벽 간격", v:5, d:"N스테이지마다 벽", int:1},
  {k:"enh", n:"강화 기여율", v:0, d:"골드 강화 시스템 도입 시 사용 — 현재 미구현이므로 0"},
+ {k:"bbias", n:"보스전 배율 보정", v:1.0, d:"보스 특화 유니크(bossElite·execute 등)의 기대값 ÷ 몹전 기대값 — 기본 DPS는 몹전 기준, 보스 HP가 이 배율만큼 상향 보정됨"},
  {k:"abuff", n:"광고 ATK 버프 배율", v:1.3, d:"AdBuffSystem AttackBoost — 기준 밸런스는 무버프, 버프는 언더기어 구제·가속 수단"},
  {g:"옵션 분해"},
  {k:"slots", n:"총 장비 슬롯", v:6, d:"총 옵션 = 슬롯 × 등급별 옵션 개수"},
@@ -229,8 +232,9 @@ function calc(){
   for (let i=0;i<5;i++) for (let j=i;j<5;j++) cum[i]+=gprob[j];
 
   // ① 장비 파워 (D2 드랍 + 강화 쿠션) — 정본
+  const ilvl = s=>Math.min(Math.round(P.icap), s*Math.round(P.ips));
   const dps = [];
-  for (let s=1;s<=10;s++) dps[s] = P.P0d * Math.pow(P.ilv,s) * gmult[req[s-1]-1] * (1+P.enh);
+  for (let s=1;s<=10;s++) dps[s] = P.P0d * Math.pow(P.glv, ilvl(s)) * gmult[req[s-1]-1] * (1+P.enh);
 
   // ② 인런 시뮬 — 전 스테이지 동시 실행
   function simRun(base){
@@ -270,16 +274,16 @@ function calc(){
     const farmT = all[s===1?0:s-2].rt;
     cmin += runs*farmT + all[s-1].rt;
     const lvlMult = 1 + (all[s-1].boss?all[s-1].boss.lvl:0)*P.sbuff;
-    rows.push({s, g, pReq, pUp, need, drops, effd, runs, dps:dps[s], bhp:dps[s]*lvlMult*P.ttk_b,
+    rows.push({s, g, pReq, pUp, need, drops, effd, runs, dps:dps[s], bhp:dps[s]*lvlMult*P.bbias*P.ttk_b,
                cmin, ch:cmin/60, cd:cmin/P.daily, isWall});
   }
   const dec = [];
   for (let s=1;s<=10;s++){
     const g = req[s-1], no = gopt[g-1], tot = P.slots*no;
     const eo = 1 + tot*P.por;
-    const bases = gmult.map(m=>P.P0d*Math.pow(P.ilv,s)*m*(1+P.enh)/(eo*P.critM));
+    const bases = gmult.map(m=>P.P0d*Math.pow(P.glv, ilvl(s))*m*(1+P.enh)/(eo*P.critM));
     const mn = P.por*(1-P.spread), mx = P.por*(1+P.spread);
-    dec.push({s, g, no, tot, bases, mn, mx, thr: mn+(1-P.a)*(mx-mn), chk: bases[g-1]*eo*P.critM});
+    dec.push({s, g, no, tot, bases, mn, mx, thr: mn+(1-P.a)*(mx-mn), chk: bases[g-1]*eo*P.critM, il: ilvl(s)});
   }
   R = {rows, steps, boss, coll, runT, sel, dec, all, tmax,
        inVerd: boss===null ? {ok:false, t:"⚠ 쿼터 수렴 실패 — 킬 속도가 0으로 붕괴"} :
@@ -337,10 +341,10 @@ function render(){
   document.getElementById("selStg").textContent = R.sel;
 
   // 옵션 분해 테이블
-  let dh = `<tr><th>스테이지</th><th>요구</th><th>Base 일반</th><th>매직</th><th>레어</th><th>세트</th><th>유니크</th><th>옵션/개</th><th>롤 범위</th><th>합격≥</th><th>검증</th></tr>`;
+  let dh = `<tr><th>스테이지</th><th>ilvl</th><th>요구</th><th>Base 일반</th><th>매직</th><th>레어</th><th>세트</th><th>유니크</th><th>옵션/개</th><th>롤 범위</th><th>합격≥</th><th>검증</th></tr>`;
   for (const d of R.dec){
     const err = Math.abs(d.chk - R.rows[d.s-1].dps)/R.rows[d.s-1].dps;
-    dh += `<tr><td>s${d.s}</td><td class="g${d.g}">${gname[d.g-1]}</td>`
+    dh += `<tr><td>s${d.s}</td><td>${d.il}</td><td class="g${d.g}">${gname[d.g-1]}</td>`
         + d.bases.map((b,i)=>`<td class="${i+1===d.g?'okc':''}">${F(b,2)}</td>`).join("")
         + `<td>${d.no}</td><td>${d.no?`${(d.mn*100).toFixed(1)}~${(d.mx*100).toFixed(1)}%`:'옵션 없음'}</td>`
         + `<td>${d.no?(d.thr*100).toFixed(1)+'%':'—'}</td>`
@@ -404,8 +408,8 @@ document.querySelectorAll("button.copy").forEach(b=>b.onclick=()=>{
     t += "런시간(분)\t"+R.all.map(a=>a.rt.toFixed(2)).join("\t")+"\n";
     t += "판정\t"+R.all.map(a=>a.state==="ok"?"OK":a.state==="slog"?"슬로그":"수렴실패").join("\t");
   } else if (b.dataset.t==="dec"){
-    t = "스테이지\t요구등급\tBase일반\tBase매직\tBase레어\tBase세트\tBase유니크\t아이템당옵션\t롤MIN\t롤MAX\t합격임계\n";
-    t += R.dec.map(d=>[d.s,gname[d.g-1],...d.bases.map(b=>b.toFixed(3)),d.no,d.mn,d.mx,d.thr].join("\t")).join("\n");
+    t = "스테이지\tilvl\t요구등급\tBase일반\tBase매직\tBase레어\tBase세트\tBase유니크\t아이템당옵션\t롤MIN\t롤MAX\t합격임계\n";
+    t += R.dec.map(d=>[d.s,d.il,gname[d.g-1],...d.bases.map(b=>b.toFixed(3)),d.no,d.mn,d.mx,d.thr].join("\t")).join("\n");
   } else {
     t = "시간(분)\t웨이브\t스폰율\t몹HP\t레벨\tDPS\tDPS킬속도\t실효킬속도\t누적킬\n";
     t += R.steps.map(s=>[s.t,"W"+(s.wave+1),s.sp,s.mh,s.lvl,s.d,s.fr,s.eff,s.ck].join("\t")).join("\n");
