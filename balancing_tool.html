@@ -82,11 +82,9 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v22</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v18</span></h1>
   <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
   <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
-  <button class="copy" id="expBtn" title="현재 설정 전체를 JSON으로 복사 — 채팅에 붙여넣어 공유">설정 복사</button>
-  <button class="copy" id="impBtn" title="공유받은 설정 JSON을 붙여넣어 적용">설정 붙여넣기</button>
   <button class="copy" id="resetBtn" title="저장된 값을 지우고 파일 기본값으로 되돌립니다">기본값 복원</button>
 </header>
 
@@ -103,16 +101,6 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
   <section>
     <div class="shead"><h2>옵션 분해 (버짓 → 아이템 수치)</h2><span class="note">무기 BaseStat × (1+옵션 롤 합) × 크리 — Unity 테이블용</span><button class="copy" data-t="dec">엑셀 복사</button></div>
     <div style="overflow-x:auto"><table class="data" id="decTbl"></table></div>
-  </section>
-
-  <section>
-    <div class="shead"><h2>Unity 테이블 내보내기 — 몬스터</h2><span class="note">몹 ATK = 유저HP ÷ 버티는 시간 ÷ 피격 빈도 · 유저 HP = 기본체력 × 장비 스케일</span><button class="copy" data-t="mob">엑셀 복사</button></div>
-    <div style="overflow-x:auto"><table class="data" id="mobTbl"></table></div>
-  </section>
-
-  <section>
-    <div class="shead"><h2>Unity 테이블 내보내기 — 무기 ATK (요구 등급 기준)</h2><span class="note">ATK = 무기 Base(스테이지, 등급) ÷ 공속 — 복사 시 5등급 전체 포함</span><button class="copy" data-t="wpn">엑셀 복사</button></div>
-    <div style="overflow-x:auto"><table class="data" id="wpnTbl"></table></div>
   </section>
 
   <section>
@@ -136,7 +124,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 
   <p class="fine">
     ※ 기대값 모델 — D2식 RNG는 분산이 커서 상·하위 10% 유저의 도달 시간이 2~3배 벌어질 수 있음 → 천장(pity) 권장: 표의 필요 런 × 1.5를 확정 드랍 N값의 출발점으로.<br>
-    ※ 무기 5종의 DPS 예산은 동일 — 공속은 손맛, ATK = Base÷공속. 옵션 풀 설계 시 모든 옵션 종류의 DPS 등가 8%(롤 4.8~11.2%) 유지. 생존 축: 유저 HP = 기본체력 × 아이템레벨 × 등급 (방어구 옵션 분해는 추후). 레벨업 회복 30% × 보스 도달 레벨 ≈ 원 체력의 약 2배 추가 — 실효 생존 예산은 목표의 ~3배(회피 제외). 보스전은 회복 없음(레벨업 없는 구간)이라 한 방 비율 × 4방이 실질 목숨. ※ 아이템레벨: 드랍 ilvl = 스테이지 × 6 (캡 60, s10에서 도달). Base 파워 = P0 × glv^ilvl — 캡 이후 진행은 등급·옵션 체이스. ※ 기대 DPS는 몹전 기준 — 보스 특화 유니크 효과(bossElite, execute 등)의 추가 기대값은 '보스전 배율 보정'으로 반영, 보스 HP가 함께 상향돼 목표 TTK 유지. 유니크 효과 1개의 기대 배율 예산 = 등급 배율 격차(2.6/2.1≈1.24). ※ ATK 구성 = ①장비(Base × (1+옵션 롤 합) × 크리) × ②세션 버프(1 + 카드 수 × 카드당 보너스, 합연산) × ③광고 버프(밸런스 기준은 무버프 — 버프는 언더기어 구제/가속 수단).<br>
+    ※ 아이템레벨: 드랍 ilvl = 스테이지 × 6 (캡 60, s10에서 도달). Base 파워 = P0 × glv^ilvl — 캡 이후 진행은 등급·옵션 체이스. ※ 기대 DPS는 몹전 기준 — 보스 특화 유니크 효과(bossElite, execute 등)의 추가 기대값은 '보스전 배율 보정'으로 반영, 보스 HP가 함께 상향돼 목표 TTK 유지. 유니크 효과 1개의 기대 배율 예산 = 등급 배율 격차(2.6/2.1≈1.24). ※ ATK 구성 = ①장비(Base × (1+옵션 롤 합) × 크리) × ②세션 버프(1 + 카드 수 × 카드당 보너스, 합연산) × ③광고 버프(밸런스 기준은 무버프 — 버프는 언더기어 구제/가속 수단).<br>
     ※ 웨이브는 시간이 아니라 킬 기반 — 쿼터÷웨이브 수(기본 300÷3=100킬)마다 스폰율·몹HP가 계단식 상승. ※ 킬 쿼터 수집은 시간 제한 없음 — 실패 조건은 보스전 타임어택뿐. 붕괴 후에도 런은 계속되지만 '슬로그'(세션 늘어짐)로 경고. ※ 보스 = 단일 대상(동시타격 미적용) 60초 타임어택. 보스 HP = 기대 DPS × 보스 도달 레벨 배율 × 목표 TTK. 목표 TTK ÷ 제한시간 = 통과에 필요한 최소 장비 비율 → 이 비율이 곧 벽의 강도.<br>
     ※ 골드는 진행 병목이 아닌 강화·옵션 재롤 싱크. 강화는 총 DPS의 (1+강화 기여율) 확정 쿠션으로 합산됨.<br>
     ※ 엑셀 복사 버튼은 탭 구분 텍스트를 복사 — 시트에 바로 붙여넣기 가능.
@@ -149,62 +137,54 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 // ---------------- 파라미터 정의 (v6 기본값) ----------------
 const PDEF = [
  {g:"전투 구조"},
- {k:"quota", n:"보스 소환 킬 수", v:300, d:"이 수만큼 처치하면 보스 등장 [코드명 quota]"},
- {k:"waves", n:"웨이브 수", v:3, int:1, d:"쿼터÷웨이브 수 = 웨이브 전환 킬 수 (시간이 아니라 킬 기반) [코드명 waves]"},
- {k:"ttk_b", n:"보스전 목표 시간(초)", v:45, d:"기대 장비+기대 레벨 유저의 보스전 시간 — 보스 HP가 여기서 역산됨 [코드명 ttk_b]"},
- {k:"blimit", n:"보스 제한시간(초)", v:60, d:"이 시간 안에 못 죽이면 런 실패 — TTK와의 격차가 언더기어 허용폭 [코드명 blimit]"},
- {k:"ttk_n", n:"몹 하나 잡는 시간(초)", v:1, d:"몹 HP 역산 계수 [코드명 ttk_n]"},
- {k:"ovh", cat:"m", n:"전투 외 시간(분)", v:0.5, d:"이동/젬 수집/연출 [코드명 ovh]"},
- {k:"spawn", cat:"a", n:"예비 스폰율(계산용)", v:60, d:"인런 미도달 시 런 시간 폴백용 [코드명 spawn]"},
+ {k:"quota", n:"킬 쿼터", v:300, d:"이 수만큼 처치하면 보스 등장"},
+ {k:"waves", n:"웨이브 수", v:3, int:1, d:"쿼터÷웨이브 수 = 웨이브 전환 킬 수 (시간이 아니라 킬 기반)"},
+ {k:"ttk_b", n:"보스 목표 TTK(초)", v:45, d:"기대 장비+기대 레벨 유저의 보스전 시간 — 보스 HP가 여기서 역산됨"},
+ {k:"blimit", n:"보스 제한시간(초)", v:60, d:"이 시간 안에 못 죽이면 런 실패 — TTK와의 격차가 언더기어 허용폭"},
+ {k:"ttk_n", n:"일반몹 TTK(초)", v:1, d:"몹 HP 역산 계수"},
+ {k:"ovh", cat:"m", n:"런 오버헤드(분)", v:0.5, d:"이동/젬 수집/연출"},
+ {k:"spawn", cat:"a", n:"스폰율 폴백(마리/분)", v:60, d:"인런 미도달 시 런 시간 폴백용"},
  {g:"인런 성장"},
- {k:"sel", n:"상세 보기 스테이지 (1~10)", v:5, d:"차트·스텝 테이블에 표시할 스테이지 — 판정은 전 스테이지 자동 [코드명 sel]", int:1},
- {k:"aoe", cat:"m", n:"한 번에 때리는 마리 수", v:3, d:"광역기 평균 동시 히트 [코드명 aoe]"},
- {k:"sp0", cat:"m", n:"웨이브1 등장 속도(마리/분)", v:40, d:"첫 웨이브의 분당 스폰 — 구현 스폰 테이블과 대조 [코드명 sp0]"},
- {k:"ws", cat:"m", n:"웨이브 오를 때 등장 배수", v:1.5, d:"웨이브 전환 시 스폰율이 몇 배가 되나 — 구현과 대조 [코드명 ws]"},
- {k:"wh", n:"웨이브 오를 때 몹 체력 배수", v:1.4, d:"웨이브 전환 시 몹 HP 배율 — 런 내 압박의 계단 [코드명 wh]"},
- {k:"X0", n:"첫 레벨업 필요 경험치", v:50, d:" [코드명 X0]"},
- {k:"rx", n:"레벨업 간격 늘어나는 속도", v:1.4, d:" [코드명 rx]"},
- {k:"gem", n:"몹 하나의 경험치", v:5, d:" [코드명 gem]"},
- {k:"col", cat:"m", n:"젬 줍는 비율", v:0.85, d:"수동 수집 — 놓치는 젬 반영 [코드명 col]"},
- {k:"sbuff", n:"카드 한 장의 힘(+공격)", v:0.2, d:"세션 버프 — 레벨업 카드 1장의 평균 공격 보너스, 합연산으로 누적 [코드명 sbuff]"},
+ {k:"sel", n:"상세 보기 스테이지 (1~10)", v:5, d:"차트·스텝 테이블에 표시할 스테이지 — 판정은 전 스테이지 자동", int:1},
+ {k:"aoe", cat:"m", n:"동시 타격 계수", v:3, d:"광역기 평균 동시 히트"},
+ {k:"sp0", cat:"m", n:"웨이브1 스폰율", v:40, d:"첫 웨이브의 분당 스폰 — 구현 스폰 테이블과 대조"},
+ {k:"ws", cat:"m", n:"웨이브당 스폰 배율", v:1.5, d:"웨이브 전환 시 스폰율이 몇 배가 되나 — 구현과 대조"},
+ {k:"wh", n:"웨이브당 몹HP 배율", v:1.4, d:"웨이브 전환 시 몹 HP 배율 — 런 내 압박의 계단"},
+ {k:"X0", n:"레벨1 필요 XP", v:50, d:""},
+ {k:"rx", n:"레벨 XP 성장률", v:1.4, d:""},
+ {k:"gem", n:"킬당 젬 XP", v:5, d:""},
+ {k:"col", cat:"m", n:"젬 수집률", v:0.85, d:"수동 수집 — 놓치는 젬 반영"},
+ {k:"sbuff", n:"카드당 ATK 보너스", v:0.2, d:"세션 버프 — 레벨업 카드 1장의 평균 공격 보너스, 합연산으로 누적"},
  {g:"D2 드랍 경제"},
- {k:"P0d", cat:"a", n:"기준점 DPS (좌표 원점)", v:10, d:"스케일 기준점 [코드명 P0d]"},
- {k:"glv", n:"아이템레벨 성장폭", v:1.0236, d:"아이템레벨 1당 Base 배율 — 스테이지당(×6렙) ≈ 1.15 [코드명 glv]"},
- {k:"ips", n:"스테이지당 아이템레벨", v:6, int:1, d:"스테이지 s 드랍의 기대 아이템레벨 = s × 이 값 (캡까지) [코드명 ips]"},
- {k:"icap", n:"최대 아이템레벨", v:60, int:1, d:"ilvl 캡 — 도달 후 진행은 등급·옵션 체이스만 남음 [코드명 icap]"},
- {k:"dpk", n:"몹이 장비 떨굴 확률", v:0.011, d:"전투 중 드랍 [코드명 dpk]"},
- {k:"bd", n:"보스 확정 드랍 개수", v:3, d:" [코드명 bd]"},
- {k:"rd", n:"뒷 스테이지 드랍 증가 배수", v:1.3, d:"스테이지당 드랍 수 배율 [코드명 rd]"},
- {k:"a", n:"쓸 만한 옵션 비율", v:0.5, d:"랜덤 옵션 상위 a%만 업그레이드 인정 [코드명 a]"},
- {k:"w", n:"내 슬롯에 맞는 비율", v:0.7, d:"낭비 드랍 반영 [코드명 w]"},
- {k:"u", n:"스테이지마다 갈아야 할 장비 수", v:3, d:"갈아야 하는 슬롯 수 [코드명 u]"},
- {k:"wu", n:"벽에서 더 갈아야 할 장비 수", v:2, d:" [코드명 wu]"},
- {k:"wint", n:"벽 스테이지 간격", v:5, d:"N스테이지마다 벽 [코드명 wint]", int:1},
- {k:"enh", n:"강화 보너스 (미구현=0)", v:0, d:"골드 강화 시스템 도입 시 사용 — 현재 미구현이므로 0 [코드명 enh]"},
- {k:"bbias", n:"보스전 특화 보정", v:1.0, d:"보스 특화 유니크(bossElite·execute 등)의 기대값 ÷ 몹전 기대값 — 기본 DPS는 몹전 기준, 보스 HP가 이 배율만큼 상향 보정됨 [코드명 bbias]"},
- {k:"abuff", n:"광고의 힘(배수)", v:1.3, d:"AdBuffSystem AttackBoost — 기준 밸런스는 무버프, 버프는 언더기어 구제·가속 수단 [코드명 abuff]"},
+ {k:"P0d", cat:"a", n:"기준 DPS (P0)", v:10, d:"스케일 기준점"},
+ {k:"glv", n:"ilvl당 파워 성장", v:1.0236, d:"아이템레벨 1당 Base 배율 — 스테이지당(×6렙) ≈ 1.15"},
+ {k:"ips", n:"스테이지당 드랍 ilvl", v:6, int:1, d:"스테이지 s 드랍의 기대 아이템레벨 = s × 이 값 (캡까지)"},
+ {k:"icap", n:"최대 아이템레벨", v:60, int:1, d:"ilvl 캡 — 도달 후 진행은 등급·옵션 체이스만 남음"},
+ {k:"dpk", n:"킬당 드랍률", v:0.011, d:"전투 중 드랍"},
+ {k:"bd", n:"보스 확정 드랍", v:3, d:""},
+ {k:"rd", n:"드랍 성장률", v:1.3, d:"스테이지당 드랍 수 배율"},
+ {k:"a", n:"옵션 합격률", v:0.5, d:"랜덤 옵션 상위 a%만 업그레이드 인정"},
+ {k:"w", n:"슬롯 유효율", v:0.7, d:"낭비 드랍 반영"},
+ {k:"u", n:"스테이지당 업그레이드 슬롯", v:3, d:"갈아야 하는 슬롯 수"},
+ {k:"wu", n:"벽당 추가 슬롯", v:2, d:""},
+ {k:"wint", n:"벽 간격", v:5, d:"N스테이지마다 벽", int:1},
+ {k:"enh", n:"강화 기여율", v:0, d:"골드 강화 시스템 도입 시 사용 — 현재 미구현이므로 0"},
+ {k:"bbias", n:"보스전 배율 보정", v:1.0, d:"보스 특화 유니크(bossElite·execute 등)의 기대값 ÷ 몹전 기대값 — 기본 DPS는 몹전 기준, 보스 HP가 이 배율만큼 상향 보정됨"},
+ {k:"abuff", n:"광고 ATK 버프 배율", v:1.3, d:"AdBuffSystem AttackBoost — 기준 밸런스는 무버프, 버프는 언더기어 구제·가속 수단"},
  {g:"옵션 분해"},
- {k:"slots", n:"총 장비 슬롯", v:6, d:"총 옵션 = 슬롯 × 등급별 옵션 개수 [코드명 slots]"},
- {k:"critM", n:"크리 기대값(평균 배수)", v:1.15, d:"크리확률 × 크리뎀 기대값 [코드명 critM]"},
- {k:"por", n:"옵션 한 줄의 값(평균)", v:0.08, d:"옵션 하나의 평균 기여 (8%) [코드명 por]"},
- {k:"spread", n:"옵션 복불복 폭(±)", v:0.4, d:"롤 범위 = 평균×(1∓폭) [코드명 spread]"},
- {g:"생존 축"},
- {k:"php0", cat:"a", n:"기본 체력(무장비)", v:100, d:"생존 축의 좌표 원점 — 공격 축의 기준점 DPS와 같은 역할 [코드명 php0]"},
- {k:"surv", n:"버티는 시간 목표(초)", v:45, d:"적정 장비 유저가 회피 없이 맞기만 할 때 죽기까지의 시간 — 몹 공격력이 여기서 역산됨 [코드명 surv]"},
- {k:"hitrate", cat:"m", n:"초당 맞는 횟수", v:1.0, d:"떼에 둘러싸였을 때 초당 피격 수 — s1 프로토타입 로그로 실측 [코드명 hitrate]"},
- {k:"bhit", n:"보스 한 방(체력 비율)", v:0.25, d:"보스 공격 1회 = 내 최대체력의 몇 % (0.25 = 4방 사망) [코드명 bhit]"},
- {k:"heal", n:"레벨업 회복(체력 비율)", v:0.3, d:"레벨업 시 최대체력의 30% 회복 — 구현값 [코드명 heal]"},
+ {k:"slots", n:"총 장비 슬롯", v:6, d:"총 옵션 = 슬롯 × 등급별 옵션 개수"},
+ {k:"critM", n:"평균 크리 배율", v:1.15, d:"크리확률 × 크리뎀 기대값"},
+ {k:"por", n:"옵션 1개당 평균 롤", v:0.08, d:"옵션 하나의 평균 기여 (8%)"},
+ {k:"spread", n:"옵션 롤 폭(±)", v:0.4, d:"롤 범위 = 평균×(1∓폭)"},
  {g:"페이싱 목표"},
- {k:"daily", cat:"a", n:"하루 평균 플레이(분)", v:60, d:"플레이 시간 → 캘린더 일 환산 [코드명 daily]"},
- {k:"tmid", n:"스테이지5 도달 목표(일)", v:1, d:" [코드명 tmid]"},
- {k:"tend", n:"스테이지10 도달 목표(일)", v:7, d:" [코드명 tend]"},
+ {k:"daily", cat:"a", n:"일일 플레이(분)", v:60, d:"플레이 시간 → 캘린더 일 환산"},
+ {k:"tmid", n:"s5 목표(일)", v:1, d:""},
+ {k:"tend", n:"s10 목표(일)", v:7, d:""},
 ];
 const P = {};
 let gprob = [0.54, 0.28, 0.12, 0.04, 0.02];
 let gmult = [1.0, 1.3, 1.7, 2.1, 2.6];
 let gopt = [0, 1, 2, 3, 4];
-let wspd = [2.0, 1.5, 1.0, 0.7, 0.5];
-const wname = ["무기A(속사)","무기B","무기C(표준)","무기D","무기E(중병기)"];
 const gname = ["일반","매직","레어","세트","유니크"];
 let req = [1,1,2,2,3,3,3,4,4,5];
 
@@ -220,9 +200,6 @@ html += `</div><div class="grp"><h2>등급 테이블</h2><table class="gradeTbl"
 <tr><td></td><td style="color:var(--dim);font-size:10.5px">드랍 확률</td><td style="color:var(--dim);font-size:10.5px">파워 배율</td><td style="color:var(--dim);font-size:10.5px">옵션 수</td></tr>`;
 for (let i=0;i<5;i++) html += `<tr><td class="gname g${i+1}">${gname[i]}</td><td><input id="gp_${i}" value="${gprob[i]}"></td><td><input id="gm_${i}" value="${gmult[i]}"></td><td><input id="gn_${i}" value="${gopt[i]}"></td></tr>`;
 html += `</table><div class="sumline" id="gsum"></div></div>`;
-html += `<div class="grp"><h2>무기 공속 (타/초)</h2>`;
-for (let i=0;i<5;i++) html += `<div class="prow"><label title="ATK = DPS 예산 ÷ 공속 — 공속은 손맛 설계, DPS 예산은 동일">${wname[i]}</label><input id="wv_${i}" value="${wspd[i]}"></div>`;
-html += `</div>`;
 aside.innerHTML = `<div class="legend2">
 <span class="sw" style="background:#ff9d5c"></span><b>실측 교체</b> — s1 프로토타입 로그로 보정하는 추정치<br>
 <span class="sw" style="background:var(--accent)"></span><b>설계 다이얼</b> — 판정을 초록으로 만드는 튜닝값<br>
@@ -241,10 +218,6 @@ function readAndCalc(){
     if (isFinite(gp)) gprob[i] = gp;
     if (isFinite(gm)) gmult[i] = gm;
     if (isFinite(gn)) gopt[i] = gn;
-  }
-  for (let i=0;i<5;i++){
-    const wv = parseFloat(document.getElementById("wv_"+i).value);
-    if (isFinite(wv)) wspd[i] = wv;
   }
   calc();
 }
@@ -312,17 +285,7 @@ function calc(){
     const mn = P.por*(1-P.spread), mx = P.por*(1+P.spread);
     dec.push({s, g, no, tot, bases, mn, mx, thr: mn+(1-P.a)*(mx-mn), chk: bases[g-1]*eo*P.critM, il: ilvl(s)});
   }
-  const mobs = [];
-  for (let s=1;s<=10;s++){
-    const php = P.php0 * Math.pow(P.glv, ilvl(s)) * gmult[req[s-1]-1];
-    const hp = [], atk = [];
-    for (let w=0;w<Math.round(P.waves);w++){
-      hp.push(dps[s]*P.ttk_n*Math.pow(P.wh,w));
-      atk.push(php/P.surv/P.hitrate*Math.pow(P.wh,w));
-    }
-    mobs.push({s, hp, atk, php, bhit: php*P.bhit, bhp: rows[s-1].bhp, il: ilvl(s)});
-  }
-  R = {rows, steps, boss, coll, runT, sel, dec, all, tmax, mobs,
+  R = {rows, steps, boss, coll, runT, sel, dec, all, tmax,
        inVerd: boss===null ? {ok:false, t:"⚠ 쿼터 수렴 실패 — 킬 속도가 0으로 붕괴"} :
                coll===null || coll>boss.t ? {ok:true, t:"OK: 붕괴 전 보스 도달"} :
                {ok:false, t:`⚠ 붕괴 후 슬로그 ${(boss.t-coll).toFixed(1)}분`}};
@@ -389,20 +352,6 @@ function render(){
   }
   document.getElementById("decTbl").innerHTML = dh;
 
-  // 몬스터 테이블
-  let mh2 = `<tr><th>스테이지</th><th>ilvl</th><th>유저 HP</th>${Array.from({length:Math.round(P.waves)},(_,w)=>`<th>W${w+1} 몹HP</th>`).join("")}${Array.from({length:Math.round(P.waves)},(_,w)=>`<th>W${w+1} 몹ATK</th>`).join("")}<th>보스 HP</th><th>보스 한 방</th></tr>`;
-  for (const m of R.mobs){
-    mh2 += `<tr><td>s${m.s}</td><td>${m.il}</td><td>${F(m.php,0)}</td>${m.hp.map(h=>`<td>${F(h,1)}</td>`).join("")}${m.atk.map(a2=>`<td>${F(a2,2)}</td>`).join("")}<td>${F(m.bhp,0)}</td><td>${F(m.bhit,0)}</td></tr>`;
-  }
-  document.getElementById("mobTbl").innerHTML = mh2;
-
-  // 무기 테이블 (요구 등급 기준 ATK)
-  let wh2 = `<tr><th>무기</th><th>공속</th>${R.dec.map(d=>`<th>s${d.s}</th>`).join("")}</tr>`;
-  for (let i=0;i<5;i++){
-    wh2 += `<tr><td>${wname[i]}</td><td>${F(wspd[i],2)}</td>${R.dec.map(d=>`<td>${F(d.bases[d.g-1]/wspd[i],1)}</td>`).join("")}</tr>`;
-  }
-  document.getElementById("wpnTbl").innerHTML = wh2;
-
   // 인런 테이블
   let ih = `<tr><th>t(분)</th><th>웨이브</th><th>스폰율</th><th>몹 HP</th><th>레벨</th><th>DPS</th><th>DPS 킬속도</th><th>실효</th><th>누적 킬</th><th>병목</th></tr>`;
   for (const s of R.steps.filter(p=>p.t<=R.tmax)){
@@ -458,15 +407,6 @@ document.querySelectorAll("button.copy").forEach(b=>b.onclick=()=>{
     t += "붕괴(분)\t"+R.all.map(a=>a.coll??"없음").join("\t")+"\n";
     t += "런시간(분)\t"+R.all.map(a=>a.rt.toFixed(2)).join("\t")+"\n";
     t += "판정\t"+R.all.map(a=>a.state==="ok"?"OK":a.state==="slog"?"슬로그":"수렴실패").join("\t");
-  } else if (b.dataset.t==="mob"){
-    t = "스테이지\tilvl\t유저HP\t" + Array.from({length:Math.round(P.waves)},(_,w)=>"W"+(w+1)+"몹HP").join("\t") + "\t" + Array.from({length:Math.round(P.waves)},(_,w)=>"W"+(w+1)+"몹ATK").join("\t") + "\t보스HP\t보스한방\n";
-    t += R.mobs.map(m=>[m.s,m.il,m.php.toFixed(1),...m.hp.map(h=>h.toFixed(2)),...m.atk.map(a2=>a2.toFixed(3)),m.bhp.toFixed(1),m.bhit.toFixed(1)].join("\t")).join("\n");
-  } else if (b.dataset.t==="wpn"){
-    t = "무기\t공속\t스테이지\tilvl\t등급\tATK\n";
-    const lines = [];
-    for (let i=0;i<5;i++) for (const d of R.dec) for (let g=1;g<=5;g++)
-      lines.push([wname[i],wspd[i],d.s,d.il,gname[g-1],(d.bases[g-1]/wspd[i]).toFixed(3)].join("\t"));
-    t += lines.join("\n");
   } else if (b.dataset.t==="dec"){
     t = "스테이지\tilvl\t요구등급\tBase일반\tBase매직\tBase레어\tBase세트\tBase유니크\t아이템당옵션\t롤MIN\t롤MAX\t합격임계\n";
     t += R.dec.map(d=>[d.s,d.il,gname[d.g-1],...d.bases.map(b=>b.toFixed(3)),d.no,d.mn,d.mx,d.thr].join("\t")).join("\n");
@@ -483,36 +423,20 @@ document.querySelectorAll("button.copy").forEach(b=>b.onclick=()=>{
 // ---------------- 저장/복원 (localStorage) ----------------
 const SKEY = "balsim_v9";
 function persist(){
-  try { localStorage.setItem(SKEY, JSON.stringify({P, gprob, gmult, gopt, req, wspd})); } catch(e) {}
-}
-function applyState(s){
-  for (const k in s.P||{}) if (k in P) { P[k] = s.P[k]; const el = document.getElementById("p_"+k); if (el) el.value = s.P[k]; }
-  if (Array.isArray(s.gprob) && s.gprob.length===5) gprob = s.gprob;
-  if (Array.isArray(s.gmult) && s.gmult.length===5) gmult = s.gmult;
-  if (Array.isArray(s.gopt) && s.gopt.length===5) gopt = s.gopt;
-  if (Array.isArray(s.req) && s.req.length===10) req = s.req;
-  if (Array.isArray(s.wspd) && s.wspd.length===5) wspd = s.wspd;
-  for (let i=0;i<5;i++){ document.getElementById("gp_"+i).value = gprob[i]; document.getElementById("gm_"+i).value = gmult[i]; document.getElementById("gn_"+i).value = gopt[i]; document.getElementById("wv_"+i).value = wspd[i]; }
+  try { localStorage.setItem(SKEY, JSON.stringify({P, gprob, gmult, gopt, req})); } catch(e) {}
 }
 function restore(){
-  try { const s = JSON.parse(localStorage.getItem(SKEY)); if (s) applyState(s); } catch(e) {}
+  try {
+    const s = JSON.parse(localStorage.getItem(SKEY));
+    if (!s) return;
+    for (const k in s.P) if (k in P) { P[k] = s.P[k]; const el = document.getElementById("p_"+k); if (el) el.value = s.P[k]; }
+    if (Array.isArray(s.gprob) && s.gprob.length===5) gprob = s.gprob;
+    if (Array.isArray(s.gmult) && s.gmult.length===5) gmult = s.gmult;
+    if (Array.isArray(s.gopt) && s.gopt.length===5) gopt = s.gopt;
+    if (Array.isArray(s.req) && s.req.length===10) req = s.req;
+    for (let i=0;i<5;i++){ document.getElementById("gp_"+i).value = gprob[i]; document.getElementById("gm_"+i).value = gmult[i]; document.getElementById("gn_"+i).value = gopt[i]; }
+  } catch(e) {}
 }
-document.getElementById("expBtn").onclick = ()=>{
-  navigator.clipboard.writeText(JSON.stringify({P, gprob, gmult, gopt, req, wspd})).then(()=>{
-    const el = document.getElementById("toast");
-    el.textContent = "설정 JSON 복사됨 — 채팅에 붙여넣으세요";
-    el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),1600);
-  });
-};
-document.getElementById("impBtn").onclick = ()=>{
-  const t = prompt("설정 JSON을 붙여넣으세요:");
-  if (!t) return;
-  try { applyState(JSON.parse(t)); calc();
-    const el = document.getElementById("toast");
-    el.textContent = "설정 적용됨";
-    el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),1200);
-  } catch(e) { alert("JSON 형식이 올바르지 않습니다"); }
-};
 document.getElementById("resetBtn").onclick = ()=>{
   try { localStorage.removeItem(SKEY); } catch(e) {}
   location.reload();
