@@ -29,6 +29,13 @@ aside{border-right:1px solid var(--line);padding:16px 18px 40px;background:var(-
 .prow label{font-size:12.5px;color:var(--text);flex:1;cursor:help}
 .prow input{width:74px;background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--accent);font-family:var(--mono);font-size:12.5px;padding:3px 7px;text-align:right}
 .prow input:focus{outline:none;border-color:var(--accent)}
+.prow{border-left:3px solid var(--accent);padding-left:7px}
+.prow.m{border-left-color:#ff9d5c}
+.prow.m input{color:#ff9d5c;border-color:rgba(255,157,92,.45)}
+.prow.a{border-left-color:#454b57}
+.prow.a input{color:var(--muted)}
+.legend2{font-size:11px;color:var(--muted);line-height:1.9;margin-bottom:14px;padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:6px}
+.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:baseline}
 .gradeTbl{width:100%;border-collapse:collapse;font-size:12px}
 .gradeTbl td{padding:3px 4px}
 .gradeTbl input{width:44px;background:var(--bg);border:1px solid var(--line);border-radius:4px;font-family:var(--mono);font-size:12px;padding:2px 5px;text-align:right;color:var(--text)}
@@ -75,7 +82,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12.5px;margin-bottom
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v12</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v13</span></h1>
   <span class="sub">뱀서 전투 × D2 랜덤 아이템 · 10스테이지 · 킬 쿼터 → 보스</span>
   <span class="pipe">장비 → 인런 → 런 시간 → 드랍 경제 → 도달 일수</span>
   <button class="copy" id="resetBtn" title="저장된 값을 지우고 파일 기본값으로 되돌립니다">기본값 복원</button>
@@ -133,21 +140,21 @@ const PDEF = [
  {k:"ttk_b", n:"보스 목표 TTK(초)", v:45, d:"기대 장비+기대 레벨 유저의 보스전 시간 — 보스 HP가 여기서 역산됨"},
  {k:"blimit", n:"보스 제한시간(초)", v:60, d:"이 시간 안에 못 죽이면 런 실패 — TTK와의 격차가 언더기어 허용폭"},
  {k:"ttk_n", n:"일반몹 TTK(초)", v:1, d:"몹 HP 역산 계수"},
- {k:"ovh", n:"런 오버헤드(분)", v:0.5, d:"이동/젬 수집/연출"},
- {k:"spawn", n:"스폰율 폴백(마리/분)", v:60, d:"인런 미도달 시 런 시간 폴백용"},
+ {k:"ovh", cat:"m", n:"런 오버헤드(분)", v:0.5, d:"이동/젬 수집/연출"},
+ {k:"spawn", cat:"a", n:"스폰율 폴백(마리/분)", v:60, d:"인런 미도달 시 런 시간 폴백용"},
  {g:"인런 성장"},
  {k:"sel", n:"상세 보기 스테이지 (1~10)", v:5, d:"차트·스텝 테이블에 표시할 스테이지 — 판정은 전 스테이지 자동", int:1},
- {k:"aoe", n:"동시 타격 계수", v:3, d:"광역기 평균 동시 히트"},
- {k:"sp0", n:"초기 스폰율", v:30, d:"런 시작 마리/분"},
- {k:"rs", n:"스폰 성장(30초당)", v:1.12, d:"웨이브 압박 곡선"},
+ {k:"aoe", cat:"m", n:"동시 타격 계수", v:3, d:"광역기 평균 동시 히트"},
+ {k:"sp0", cat:"m", n:"초기 스폰율", v:30, d:"런 시작 마리/분"},
+ {k:"rs", cat:"m", n:"스폰 성장(30초당)", v:1.12, d:"웨이브 압박 곡선"},
  {k:"rm", n:"몹HP 성장(30초당)", v:1.15, d:"런 내 몹 강화"},
  {k:"X0", n:"레벨1 필요 XP", v:50, d:""},
  {k:"rx", n:"레벨 XP 성장률", v:1.4, d:""},
  {k:"gem", n:"킬당 젬 XP", v:5, d:""},
- {k:"col", n:"젬 수집률", v:0.85, d:"수동 수집 — 놓치는 젬 반영"},
+ {k:"col", cat:"m", n:"젬 수집률", v:0.85, d:"수동 수집 — 놓치는 젬 반영"},
  {k:"dlv", n:"레벨당 DPS 배율", v:1.15, d:"레벨업 1회 평균 전투력"},
  {g:"D2 드랍 경제"},
- {k:"P0d", n:"기준 DPS (P0)", v:10, d:"스케일 기준점"},
+ {k:"P0d", cat:"a", n:"기준 DPS (P0)", v:10, d:"스케일 기준점"},
  {k:"ilv", n:"아이템레벨 성장", v:1.15, d:"스테이지당 드랍 기본 파워"},
  {k:"dpk", n:"킬당 드랍률", v:0.011, d:"전투 중 드랍"},
  {k:"bd", n:"보스 확정 드랍", v:3, d:""},
@@ -164,7 +171,7 @@ const PDEF = [
  {k:"por", n:"옵션 1개당 평균 롤", v:0.08, d:"옵션 하나의 평균 기여 (8%)"},
  {k:"spread", n:"옵션 롤 폭(±)", v:0.4, d:"롤 범위 = 평균×(1∓폭)"},
  {g:"페이싱 목표"},
- {k:"daily", n:"일일 플레이(분)", v:60, d:"플레이 시간 → 캘린더 일 환산"},
+ {k:"daily", cat:"a", n:"일일 플레이(분)", v:60, d:"플레이 시간 → 캘린더 일 환산"},
  {k:"tmid", n:"s5 목표(일)", v:1, d:""},
  {k:"tend", n:"s10 목표(일)", v:7, d:""},
 ];
@@ -181,13 +188,16 @@ let html = "";
 for (const p of PDEF) {
   if (p.g) { html += `${html?'</div>':''}<div class="grp"><h2>${p.g}</h2>`; continue; }
   P[p.k] = p.v;
-  html += `<div class="prow"><label title="${p.d}">${p.n}</label><input id="p_${p.k}" value="${p.v}" ${p.int?'step="1"':''}></div>`;
+  html += `<div class="prow ${p.cat||""}"><label title="${p.d}">${p.n}</label><input id="p_${p.k}" value="${p.v}" ${p.int?'step="1"':''}></div>`;
 }
 html += `</div><div class="grp"><h2>등급 테이블</h2><table class="gradeTbl">
 <tr><td></td><td style="color:var(--dim);font-size:10.5px">드랍 확률</td><td style="color:var(--dim);font-size:10.5px">파워 배율</td><td style="color:var(--dim);font-size:10.5px">옵션 수</td></tr>`;
 for (let i=0;i<5;i++) html += `<tr><td class="gname g${i+1}">${gname[i]}</td><td><input id="gp_${i}" value="${gprob[i]}"></td><td><input id="gm_${i}" value="${gmult[i]}"></td><td><input id="gn_${i}" value="${gopt[i]}"></td></tr>`;
 html += `</table><div class="sumline" id="gsum"></div></div>`;
-aside.innerHTML = html;
+aside.innerHTML = `<div class="legend2">
+<span class="sw" style="background:#ff9d5c"></span><b>실측 교체</b> — s1 프로토타입 로그로 보정하는 추정치<br>
+<span class="sw" style="background:var(--accent)"></span><b>설계 다이얼</b> — 판정을 초록으로 만드는 튜닝값<br>
+<span class="sw" style="background:#454b57"></span><b>앵커</b> — 좌표계 고정, 건드리지 않음</div>` + html;
 aside.querySelectorAll("input").forEach(inp => inp.addEventListener("input", readAndCalc));
 
 function readAndCalc(){
