@@ -80,7 +80,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v39 · 자동 역산</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v41 · 자동 역산</span></h1>
   <span class="sub">게이지 → 3페이즈 스폰 → 보스 60초 · unit/Wave/ItemGrade 값 내장</span>
   <span class="spacer"></span>
   <button class="copy" id="expBtn">설정 복사</button>
@@ -124,7 +124,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
   </section>
 
   <p class="fine">
-    ※ 등급 프리미엄 = ItemGrade ilvlBonus × ilvl — 초반 등급 차 미미(s1 ~6%), 후반 결정적(s10 유니크 2.5배). 벽의 강도가 게임 진행에 따라 자연히 세짐. ※ 플레이어 곡선 = 앵커(@ilvl20/40/60) 기하 보간 — 스테이지마다 매끄러운 우상향, 유닛 스탯이 자동 추종. ※ 서브스탯 층 = 해금 슬롯 수 × 등급 옵션 수 × 평균 롤 × 공격 비중 — 슬롯 해금·등급 진행에 따라 자동 성장. ※ 근/원 분배: 유닛 테이블 값 = 스폰 가중 평균 목표 → 계수 분배는 정규화돼 평균 불변(TTK·페이싱 유지). 근거리 = 탱커(HP↑ ATK↓), 원거리 = 유리대포(HP↓ ATK↑). ※ 판정: OK = 게이지 도달 + 런 시간 상한 이내. 웨이브 2·3의 스폰이 처치력을 넘는 것(필드 포화)은 고장이 아니라 의도된 밀도 설계 — 포화/붕괴 행은 정보용. ※ 스폰 모델 = 필드 누적: 스폰은 maxEnemies 캡까지, 킬은 필드에서 — 못 죽인 몹이 저금됐다가 레벨업 후 회수됨. 필드 포화 = 화면 꽉 참 시점(부활 광고 좌표). ※ 웨이브 = 킬 수 기반 확정 (클리어 300, 100마다 전환). 몹 스탯은 웨이브별 수정 가능 — 기본값은 현 unit.json(전 웨이브 동일). W2/W3를 올려 웨이브 램프를 설계하면 인런 압박 곡선이 생김.<br>※ 클리어 킬 수 300은 현 Wave.json(200)과 불일치 — 테이블 갱신 대상.<br>
+    ※ 등급 프리미엄 = ItemGrade ilvlBonus × ilvl — 초반 등급 차 미미(s1 ~6%), 후반 결정적(s10 유니크 2.5배). 벽의 강도가 게임 진행에 따라 자연히 세짐. ※ 플레이어 곡선 = 앵커(@ilvl20/40/60) 기하 보간 — 스테이지마다 매끄러운 우상향, 유닛 스탯이 자동 추종. ※ 동시 타격 = 기본 1 + 패시브×등급 발동률 + 카드×레벨 — s1 초반 단일 타겟에서 런/등급 진행에 따라 광역화. ※ 서브스탯 층 = 해금 슬롯 수 × 등급 옵션 수 × 평균 롤 × 공격 비중 — 슬롯 해금·등급 진행에 따라 자동 성장. ※ 근/원 분배: 유닛 테이블 값 = 스폰 가중 평균 목표 → 계수 분배는 정규화돼 평균 불변(TTK·페이싱 유지). 근거리 = 탱커(HP↑ ATK↓), 원거리 = 유리대포(HP↓ ATK↑). ※ 판정: OK = 게이지 도달 + 런 시간 상한 이내. 웨이브 2·3의 스폰이 처치력을 넘는 것(필드 포화)은 고장이 아니라 의도된 밀도 설계 — 포화/붕괴 행은 정보용. ※ 스폰 모델 = 필드 누적: 스폰은 maxEnemies 캡까지, 킬은 필드에서 — 못 죽인 몹이 저금됐다가 레벨업 후 회수됨. 필드 포화 = 화면 꽉 참 시점(부활 광고 좌표). ※ 웨이브 = 킬 수 기반 확정 (클리어 300, 100마다 전환). 몹 스탯은 웨이브별 수정 가능 — 기본값은 현 unit.json(전 웨이브 동일). W2/W3를 올려 웨이브 램프를 설계하면 인런 압박 곡선이 생김.<br>※ 클리어 킬 수 300은 현 Wave.json(200)과 불일치 — 테이블 갱신 대상.<br>
     ※ 플레이어 DPS = 무기 DPS 예산(티어 브래킷 t1/t2/t3) × 등급 총배율(옵션+패시브 포함) × 크리 기대 × 광고 버프(기준 ON) × 카드(런 내 합연산). 크리 기본값 = CharacterData(확률 0, 크리뎀 115%).<br>
     ※ 레벨 = battlelevel 선형(+5), 캡 10 — 런당 카드 선택 최대 9회.<br>
     ※ 보스전(초)이 제한의 50% 미만이면 "쉬움" — 실테이블 보스 HP가 모델 대비 낮다는 신호.
@@ -153,7 +153,9 @@ const PDEF = [
  {k:"me2", n:"웨이브2 최대 동시 몹", v:30, int:1, d:"midMaxEnemies [코드명 me2]"},
  {k:"me3", n:"웨이브3 최대 동시 몹", v:50, int:1, d:"lateMaxEnemies [코드명 me3]"},
  {g:"인런 성장 (battlelevel/upgradeoption)"},
- {k:"aoe", cat:"m", n:"한 번에 때리는 마리 수", v:3, d:"광역 평균 동시 히트 — 실측 [코드명 aoe]"},
+ {k:"aoe0", cat:"a", n:"기본 동시 타격", v:1, d:"무기 기본 = 단일 타겟 (s1 시작 상태) [코드명 aoe0]"},
+ {k:"aoeC", cat:"m", n:"카드당 광역 증가", v:0.25, d:"투사체 카드(멀티샷·사이드샷 등)의 평균 타깃 증가 — 실측 [코드명 aoeC]"},
+ {k:"aoeP", cat:"m", n:"패시브 광역 기여(만발동)", v:2, d:"무기 패시브 상시 발동 가정 시 추가 타깃 — 등급 발동률(gproc)이 곱해짐 [코드명 aoeP]"},
  {k:"xp1", n:"레벨2 필요 경험치", v:10, d:"battlelevel: 10 [코드명 xp1]"},
  {k:"xps", n:"레벨당 경험치 증가", v:5, d:"battlelevel: +5 선형 [코드명 xps]"},
  {k:"lcap", n:"레벨 캡", v:10, int:1, d:"battlelevel 최대 — 카드 선택 최대 캡-1회 [코드명 lcap]"},
@@ -320,7 +322,8 @@ function calc(){
       if (satT===null && N >= me-0.5) satT = t;      // 필드 포화 = 스폰 직후 기준
       const lvl = levelFromXP(xp);
       const d = pDps * (1 + (lvl-1)*P.cardv);
-      const cap = d/mHP[wv][s-1]*60*P.aoe*dt;        // 처치 가능량
+      const aoe = P.aoe0 + P.aoeP*gproc[req[s-1]-1] + P.aoeC*(lvl-1);
+      const cap = d/mHP[wv][s-1]*60*aoe*dt;          // 처치 가능량 (동시 타격 성장 반영)
       const kills = Math.min(N, cap);
       N -= kills;
       if (coll===null && cap < want) coll = t;       // 처치력 < 스폰 시도
@@ -407,12 +410,13 @@ function calc(){
 }
 
 // ============ 렌더 ============
-function vcard(k,v,j,sub){ return `<div class="vcard ${j.ok?'ok':'warn'}"><div class="k">${k} <span style="color:var(--dim)">· ${sub||""}</span></div><div class="v">${v}</div><div class="j">${j.t}</div></div>`; }
+function vcard(k,v,j,sub,tip){ return `<div class="vcard ${j.ok?'ok':'warn'}" title="${tip||""}"><div class="k">${k} <span style="color:var(--dim)">· ${sub||""}</span></div><div class="v">${v}</div><div class="j">${j.t}</div></div>`; }
 function judge(v,t){ return v<=t*0.5?{ok:false,t:"⚠ 너무 빠름 (조기 소진)"}:v<=t?{ok:true,t:"OK"}:{ok:false,t:"⚠ 너무 느림"}; }
-function bossJ(sec){
-  if (sec > P.blimit) return {c:"warnc", t:`⚠${F(sec,0)}s`};
-  if (sec < P.blimit*0.5) return {c:"dimc", t:`${F(sec,0)}s 쉬움`};
-  return {c:"okc", t:`${F(sec,0)}s`};
+function bossJ(sec, who){
+  const base = `${who} — 보스 HP ÷ 보스 시점 DPS = ${F(sec,0)}초 (제한 ${P.blimit}초)`;
+  if (sec > P.blimit) return {c:"warnc", t:`⚠${F(sec,0)}s`, tip:`${base} → 제한 초과: 보스 HP가 과하거나 플레이어 DPS 부족. 다이얼: 보스전 상한(bHi)·무기 예산·등급 ilvl보너스`};
+  if (sec < P.blimit*0.5) return {c:"dimc", t:`${F(sec,0)}s 쉬움`, tip:`${base} → 제한의 50% 미만: 긴장 없음. 다이얼: 보스전 하한(bLo) 상향`};
+  return {c:"okc", t:`${F(sec,0)}s`, tip:`${base} → 적정 범위(제한의 50~85%)`};
 }
 function render(){
   const r5=R.rows[4], r10=R.rows[9];
@@ -421,8 +425,8 @@ function render(){
   const bossEasy = R.all.filter(a=>a.bsec<P.blimit*0.5).length;
   const nBad = R.all.filter(a=>a.state!=="ok").length;
   document.getElementById("verdicts").innerHTML = [
-    vcard("s5 도달", F(r5.cd,2)+"일", j5, `목표 ≤${P.tmid}일`),
-    vcard("s10 도달", F(r10.cd,2)+"일", j10, `목표 ≤${P.tend}일`),
+    vcard("s5 도달", F(r5.cd,2)+"일", j5, `목표 ≤${P.tmid}일`, `누적 파밍+클리어 시간 ÷ 하루 플레이(${P.daily}분). 빠름 = 콘텐츠 조기 소진(다이얼: 필요 장비 수·옵션 비율), 느림 = 이탈 위험(다이얼: 드랍률·보스 확정 드랍)`),
+    vcard("s10 도달", F(r10.cd,2)+"일", j10, `목표 ≤${P.tend}일`, `캠페인 전체 소요일 — 목표의 50~100%가 초록`),
     vcard("보스 통과(적정)", `${10-bossFail}/10`,
       bossFail>0?{ok:false,t:`⚠ ${bossFail}개 제한 초과`}:
       bossEasy>0?{ok:false,t:`${bossEasy}개 쉬움(50%↓) — HP 상향 여지`}:
@@ -437,13 +441,13 @@ function render(){
   ah += `<tr><td style="color:var(--accent)">플레이어 DPS (보스 시점)</td>${R.all.map(a=>`<td style="color:var(--accent)">${F(R.dps[a.s]*(1+(a.r0.lvl-1)*P.cardv),0)}</td>`).join("")}</tr>`;
   ah += `<tr><td style="color:var(--accent)">플레이어 HP</td>${R.all.map(a=>`<td style="color:var(--accent)">${F(R.php[a.s],0)}</td>`).join("")}</tr>`;
   ah += `<tr><td>게이지 도달(분)</td>${R.all.map(a=>`<td>${a.r0.t?F(a.r0.t,1):"⚠"}</td>`).join("")}</tr>`;
-  ah += `<tr><td>필드 포화(분)</td>${R.all.map(a=>`<td class="${a.r0.satT?'warnc':'dimc'}">${a.r0.satT?F(a.r0.satT,1):'없음'}</td>`).join("")}</tr>`;
+  ah += `<tr><td>필드 포화(분)</td>${R.all.map(a=>`<td class="${a.r0.satT?'warnc':'dimc'}" title="${a.r0.satT?`${F(a.r0.satT,1)}분에 필드가 최대 동시 몹(maxEnemies)에 도달 — 처치력 < 스폰. 의도된 밀도일 수 있음(뱀서의 화면 꽉 참). 피격 빈도 최대 = 부활 광고 좌표`:'필드가 캡에 닿지 않음 — 처치력이 스폰을 따라감'}">${a.r0.satT?F(a.r0.satT,1):'없음'}</td>`).join("")}</tr>`;
   ah += `<tr><td>도달 레벨 (캡 ${Math.round(P.lcap)})</td>${R.all.map(a=>`<td>L${a.r0.lvl}</td>`).join("")}</tr>`;
-  ah += `<tr><td>몹 TTK W1(초)</td>${R.all.map(a=>`<td class="${a.ttk0>3?'warnc':''}">${F(a.ttk0,2)}</td>`).join("")}</tr>`;
-  ah += `<tr><td>몹 TTK W3(초, 레벨 반영)</td>${R.all.map(a=>`<td class="${a.ttk3>3?'warnc':''}">${F(a.ttk3,2)}</td>`).join("")}</tr>`;
+  ah += `<tr><td>몹 TTK W1(초)</td>${R.all.map(a=>`<td class="${a.ttk0>3?'warnc':''}" title="${a.ttk0>3?`몹 HP(W1) ${F(mHP[0][a.s-1],0)} ÷ 시작 DPS ${F(R.dps[a.s],0)} = ${F(a.ttk0,2)}초 > 3초: 몹이 안 녹아 학살감 붕괴. 다이얼: TTK 밴드·무기 예산`:`W1 몹 1마리 처치 시간`}">${F(a.ttk0,2)}</td>`).join("")}</tr>`;
+  ah += `<tr><td>몹 TTK W3(초, 레벨 반영)</td>${R.all.map(a=>`<td class="${a.ttk3>3?'warnc':''}" title="${a.ttk3>3?`몹 HP(W3) ${F(mHP[2][a.s-1],0)} ÷ 보스 시점 DPS = ${F(a.ttk3,2)}초 > 3초: 런 후반 늘어짐 원인. 다이얼: 웨이브3 몹 HP·카드 환산`:`W3 몹 1마리 처치 시간 (카드 누적 반영)`}">${F(a.ttk3,2)}</td>`).join("")}</tr>`;
   ah += `<tr><td>런 시간(분)</td>${R.all.map(a=>`<td>${F(a.rt,2)}</td>`).join("")}</tr>`;
-  ah += `<tr><td>보스전(초, 적정 장비)</td>${R.all.map(a=>{const b=bossJ(a.bsec);return `<td class="${b.c}">${b.t}</td>`;}).join("")}</tr>`;
-  ah += `<tr><td>보스전(초, 첫 도전 -1등급)</td>${R.all.map(a=>{const b=bossJ(a.bsecU);return `<td class="${b.c}">${b.t}</td>`;}).join("")}</tr>`;
+  ah += `<tr><td>보스전(초, 적정 장비)</td>${R.all.map(a=>{const b=bossJ(a.bsec,"적정 장비");return `<td class="${b.c}" title="${b.tip}">${b.t}</td>`;}).join("")}</tr>`;
+  ah += `<tr><td>보스전(초, 첫 도전 -1등급)</td>${R.all.map(a=>{const b=bossJ(a.bsecU,"한 등급 아래 장비");return `<td class="${b.c}" title="${b.tip}">${b.t}</td>`;}).join("")}</tr>`;
   ah += `<tr><td>판정</td>${R.all.map(a=>`<td class="${a.state==='ok'?'okc':'warnc'}">${a.state==='ok'?'OK':a.state==='slog'?'늘어짐':'⚠'}</td>`).join("")}</tr>`;
   document.getElementById("allTbl").innerHTML = ah;
 
@@ -464,8 +468,8 @@ function render(){
     + `
     <td><input class="un" data-a="mobGold" data-s="${s}" value="${mobGold[s-1]}"></td>
     <td>${F(R.php[s],0)}</td>
-    <td class="${a.hits<4?'warnc':''}">${F(a.hits,1)}방</td>
-    <td class="${a.bhits<3?'warnc':''}">${F(a.bhits,1)}방</td></tr>`;
+    <td class="${a.hits<4?'warnc':''}" title="${a.hits<4?`유저 HP ${F(R.php[s],0)} ÷ W3 몹 ATK ${F(mATK[2][s-1],0)} = ${F(a.hits,1)}방 < 4방: 즉사 위험. 다이얼: 피격 밴드·장비 HP 앵커·근/원 ATK 계수`:`유저 HP ÷ W3 몹 ATK — 몇 대 맞으면 죽는가`}">${F(a.hits,1)}방</td>
+    <td class="${a.bhits<3?'warnc':''}" title="${a.bhits<3?`유저 HP ÷ (보스 ATK × 패턴 1.65) = ${F(a.bhits,1)}방 < 3방: 보스전 실수 허용 부족(회복 없는 구간). 다이얼: 보스 피격 밴드·장비 HP`:`보스 공격 몇 대에 죽는가 (패턴 배수 1.65 포함)`}">${F(a.bhits,1)}방</td></tr>`;
   }
   document.getElementById("unitTbl").innerHTML = uh;
   document.getElementById("fillBtn").onclick = ()=>{
