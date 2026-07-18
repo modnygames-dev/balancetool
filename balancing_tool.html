@@ -80,7 +80,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v46 · 자동 역산</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v47 · 자동 역산</span></h1>
   <span class="sub">게이지 → 3페이즈 스폰 → 보스 60초 · unit/Wave/ItemGrade 값 내장</span>
   <span class="spacer"></span>
   <button class="copy" id="expBtn">설정 복사</button>
@@ -177,6 +177,7 @@ const PDEF = [
  {k:"wb1", n:"무기 DPS 예산 @ilvl20", v:28, d:"앵커 — 스테이지 곡선은 앵커 사이 기하 보간(매끄러운 우상향) [코드명 wb1]"},
  {k:"wb2", n:"무기 DPS 예산 @ilvl40", v:66, d:"[코드명 wb2]"},
  {k:"wb3", n:"무기 DPS 예산 @ilvl60", v:165, d:"[코드명 wb3]"},
+ {k:"aspd0", cat:"m", n:"장착 무기 공속(타/초)", v:1.0, d:"최종 데이터 체크의 타격 수 환산용 — 무기별 상이(0.6~2.0), 검증에 쓸 무기의 공속 입력 [코드명 aspd0]"},
  {k:"cch", n:"기대 크리확률(획득)", v:0.1, d:"기본 0% + 옵션/카드 기대 획득분 [코드명 cch]"},
  {k:"cdm", n:"크리뎀 배수", v:1.15, d:"CharacterData critDamage=115 [코드명 cdm]"},
  {k:"sub1", n:"옵션 1줄 평균 롤", v:0.075, d:"서브스탯 1줄의 평균 기여 (권장 롤 4~11%의 중앙) [코드명 sub1]"},
@@ -549,6 +550,10 @@ function render(){
     ["A2 몹 하나 녹는 시간 (런 초반)", "시작 직후 근거리 몹 1마리", `${F(a1.ttk0,2)}초`, "±20%", "무기 예산 · TTK 밴드"],
     ["A3 게이지 300 도달", "입장~보스 등장", `${a1.r0.t?F(a1.r0.t,1):"—"}분`, "±20%", "스폰 수·간격 · 동시 타격"],
     ["A4 보스 직전 레벨", "레벨 표시 확인", `L${a1.r0.lvl}`, "±1", "젬 줍는 비율 · 몹 경험치"],
+    ["A5 몹 처치 타격 수 (W1→W3)", "히트 카운트 — 시작 직후 / 종료 직전 몹 1마리", `${F(a1.ttk0*P.aspd0,1)}회 → ${F(a1.ttk3*P.aspd0,1)}회`, "±1회", "무기 예산 · TTK 밴드 · 공속(aspd0)"],
+    ["A6 보스 처치 타격 수", "보스전 총 히트 수 (또는 시간×공속)", `${F(a1.bsec*P.aspd0,0)}회`, "±20%", "보스전 밴드(bLo·bHi) · 무기 예산"],
+    ["A7 내가 죽는 피격 수 — 일반몹", "W1 / W3에서 가만히 서서 사망까지 피격", `${F(R.php[1]/mATK[0][0],1)}방 → ${F(a1.hits,1)}방`, "±1방", "피격 밴드(hitLo·hitHi) · 장비 HP 앵커 · 근/원 ATK 계수"],
+    ["A8 내가 죽는 피격 수 — 보스", "보스 공격만 맞았을 때 사망까지", `${F(a1.bhits,1)}방`, "±1방", "보스 피격 밴드(bhLo·bhHi) · 패턴 배수 1.65"],
   ];
   const chkB = [
     ["B1 동시 타격 (시작/종료)", "화살 한 발에 맞는 마리 수 — 시작 직후 vs 종료 직전", `${F(P.aoe0,0)} → ${F(P.aoe0+P.aoeC*(a1.r0.lvl-1),1)}`, "카드당 광역(aoeC) · 패시브 광역(aoeP)"],
@@ -556,7 +561,6 @@ function render(){
     ["B3 전투 외 시간", "입장·보스·결과 연출 합", `${F(P.ovh,1)}분`, "전투 외 시간(ovh)"],
     ["B4 초당 피격", "W3에서 5초간 둘러싸여 피격 수", `${F(P.hitr,1)}회/초`, "초당 맞는 횟수(hitr)"],
     ["B5 카드 환산", "고른 카드들의 ATK 환산 평균", `${F(P.cardv*100,0)}%`, "카드 1장 공격 환산(cardv)"],
-    ["B6 피격 허용", "W3에서 가만히 서서 몇 대에 죽는지", `${F(a1.hits,1)}방`, "근/원 ATK 계수 검증"],
   ];
   let ch = `<tr><th>항목</th><th style="text-align:left">측정 방법</th><th>시트 예측</th><th>기준</th><th style="text-align:left">어긋나면 만질 다이얼</th></tr>`;
   for (const r of chkA) ch += `<tr><td style="text-align:left">${r[0]}</td><td style="text-align:left;color:var(--muted)">${r[1]}</td><td style="color:var(--accent)">${r[2]}</td><td>${r[3]}</td><td style="text-align:left;color:var(--muted)">${r[4]}</td></tr>`;
@@ -616,12 +620,16 @@ document.querySelectorAll("button.copy[data-t]").forEach(b=>b.onclick=()=>{
     t += `A2 몹TTK(초반)\t시작직후 1마리\t${a1c.ttk0.toFixed(2)}초\t\t무기예산·TTK밴드\n`;
     t += `A3 게이지도달\t입장~보스\t${a1c.r0.t?a1c.r0.t.toFixed(1):"-"}분\t\t스폰·동시타격\n`;
     t += `A4 보스직전레벨\t레벨표시\tL${a1c.r0.lvl}\t\t젬수집률·경험치\n`;
+    t += `A5 몹처치타격수 W1→W3\t히트 카운트\t${(a1c.ttk0*P.aspd0).toFixed(1)}→${(a1c.ttk3*P.aspd0).toFixed(1)}회\t\t무기예산·TTK밴드·공속\n`;
+    t += `A6 보스처치타격수\t보스전 총 히트\t${(a1c.bsec*P.aspd0).toFixed(0)}회\t\t보스전밴드·무기예산\n`;
+    t += `A7 사망피격수 몹 W1→W3\t사망까지 피격\t${(R.php[1]/mATK[0][0]).toFixed(1)}→${a1c.hits.toFixed(1)}방\t\t피격밴드·장비HP·근원ATK\n`;
+    t += `A8 사망피격수 보스\t보스 공격만\t${a1c.bhits.toFixed(1)}방\t\t보스피격밴드·패턴1.65\n`;
     t += `B1 동시타격 시작/종료\t화살 한 발 타깃 수\t${P.aoe0}→${(P.aoe0+P.aoeC*(a1c.r0.lvl-1)).toFixed(1)}\t\taoeC·aoeP\n`;
     t += `B2 젬수집률\tXP÷킬\t${(P.col*100).toFixed(0)}%\t\tcol\n`;
     t += `B3 전투외시간\t연출 합\t${P.ovh}분\t\tovh\n`;
     t += `B4 초당피격\tW3 5초 피격수\t${P.hitr}/초\t\thitr\n`;
     t += `B5 카드환산\t카드 ATK환산 평균\t${(P.cardv*100).toFixed(0)}%\t\tcardv\n`;
-    t += `B6 피격허용\tW3 사망까지 피격\t${a1c.hits.toFixed(1)}방\t\t근/원 ATK계수`;
+    t = t.replace(/\n$/,"");
   } else if (b.dataset.t==="bm"){
     t="스테이지\t파밍런\t트리거\t오퍼\n";
     t+=R.rows.map((r,i)=>[r.s,r.runs,BMT[bmT[i]],BMO[bmO[i]]].join("\t")).join("\n");
