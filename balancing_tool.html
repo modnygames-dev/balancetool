@@ -80,7 +80,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v47 · 자동 역산</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v48 · 자동 역산</span></h1>
   <span class="sub">게이지 → 3페이즈 스폰 → 보스 60초 · unit/Wave/ItemGrade 값 내장</span>
   <span class="spacer"></span>
   <button class="copy" id="expBtn">설정 복사</button>
@@ -124,7 +124,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
   </section>
 
   <section>
-    <div class="shead"><h2>최종 데이터 체크 — s1 실플레이 검증</h2><span class="note">전제: 광고 버프 3종 ON · s1 적정 장비(일반, ilvl~6) · 예측값은 현재 다이얼 기준 실시간</span><button class="copy" data-t="chk">엑셀 복사</button></div>
+    <div class="shead"><h2>최종 데이터 체크 — 실플레이 검증</h2><span class="note">전제: 광고 버프 3종 ON · 해당 스테이지 적정 장비 · 게임이 집계한 전투 결과 JSON을 붙여넣으면 자동 비교</span><button class="copy" id="mBtn">전투 결과 붙여넣기</button><button class="copy" data-t="chk">엑셀 복사</button></div>
     <div style="overflow-x:auto"><table class="data" id="chkTbl"></table></div>
   </section>
 
@@ -241,6 +241,7 @@ let mobGold= [5,6,8,12,16,25,35,45,80,130];
 // ItemDrop 슬롯 풀 크기
 let pool = [1,2,3,4,7,7,7,7,7,7];
 // BM
+let M = null;  // 전투 결과 실측 JSON
 let bmT = [3,0,1,0,2,0,0,2,0,2];
 let bmO = [10,0,4,0,5,0,0,6,0,7];
 const BMT = ["—","클리어 후 팝업","보스 실패 시","스테이지 진입 시","벽 파밍 중"];
@@ -543,30 +544,47 @@ function render(){
   }
   document.getElementById("bmTbl").innerHTML = bh;
 
-  // 최종 데이터 체크
-  const a1 = R.all[0];
-  const chkA = [
-    ["A1 보스 처치 시간", "스톱워치 — 보스 등장~처치", `${F(a1.bsec,0)}초`, "±20%", "무기 예산 앵커 · 카드 환산"],
-    ["A2 몹 하나 녹는 시간 (런 초반)", "시작 직후 근거리 몹 1마리", `${F(a1.ttk0,2)}초`, "±20%", "무기 예산 · TTK 밴드"],
-    ["A3 게이지 300 도달", "입장~보스 등장", `${a1.r0.t?F(a1.r0.t,1):"—"}분`, "±20%", "스폰 수·간격 · 동시 타격"],
-    ["A4 보스 직전 레벨", "레벨 표시 확인", `L${a1.r0.lvl}`, "±1", "젬 줍는 비율 · 몹 경험치"],
-    ["A5 몹 처치 타격 수 (W1→W3)", "히트 카운트 — 시작 직후 / 종료 직전 몹 1마리", `${F(a1.ttk0*P.aspd0,1)}회 → ${F(a1.ttk3*P.aspd0,1)}회`, "±1회", "무기 예산 · TTK 밴드 · 공속(aspd0)"],
-    ["A6 보스 처치 타격 수", "보스전 총 히트 수 (또는 시간×공속)", `${F(a1.bsec*P.aspd0,0)}회`, "±20%", "보스전 밴드(bLo·bHi) · 무기 예산"],
-    ["A7 내가 죽는 피격 수 — 일반몹", "W1 / W3에서 가만히 서서 사망까지 피격", `${F(R.php[1]/mATK[0][0],1)}방 → ${F(a1.hits,1)}방`, "±1방", "피격 밴드(hitLo·hitHi) · 장비 HP 앵커 · 근/원 ATK 계수"],
-    ["A8 내가 죽는 피격 수 — 보스", "보스 공격만 맞았을 때 사망까지", `${F(a1.bhits,1)}방`, "±1방", "보스 피격 밴드(bhLo·bhHi) · 패턴 배수 1.65"],
+  // 최종 데이터 체크 — 실측 비교
+  const st = (M && M.stage>=1 && M.stage<=10) ? Math.round(M.stage) : 1;
+  const a1 = R.all[st-1];
+  const CHK = [
+    {id:"A1", n:"보스 처치 시간", mth:"보스 등장~처치(초)", p:a1.bsec, dec:0, u:"초", k:"bossKillSec", tol:["pct",20], d:"무기 예산 · 카드 환산"},
+    {id:"A2", n:"몹 녹는 시간(런 초반)", mth:"시작 직후 1마리(초)", p:a1.ttk0, dec:2, u:"초", k:"mobTtkStartSec", tol:["pct",20], d:"무기 예산 · TTK 밴드"},
+    {id:"A3", n:"게이지 도달", mth:"입장~보스(초 집계→분)", p:a1.r0.t, dec:1, u:"분", k:"gaugeReachSec", cv:x=>x/60, tol:["pct",20], d:"스폰 · 동시 타격"},
+    {id:"A4", n:"보스 직전 레벨", mth:"레벨", p:a1.r0.lvl, dec:0, u:"", k:"levelAtBoss", tol:["abs",1], d:"젬 수집률 · 경험치"},
+    {id:"A5a", n:"몹 처치 타격 수 (W1)", mth:"평균 히트 수", p:a1.ttk0*P.aspd0, dec:1, u:"회", k:"hitsToKillMobStart", tol:["abs",1], d:"무기 예산 · 공속(aspd0)"},
+    {id:"A5b", n:"몹 처치 타격 수 (W3)", mth:"평균 히트 수", p:a1.ttk3*P.aspd0, dec:1, u:"회", k:"hitsToKillMobEnd", tol:["abs",1], d:"W3 몹 HP · 카드 환산"},
+    {id:"A6", n:"보스 처치 타격 수", mth:"보스전 총 히트", p:a1.bsec*P.aspd0, dec:0, u:"회", k:"hitsToKillBoss", tol:["pct",20], d:"보스전 밴드 · 무기 예산"},
+    {id:"A7a", n:"사망 피격 수 — 몹 W1", mth:"사망까지 피격", p:R.php[st]/mATK[0][st-1], dec:1, u:"방", k:"hitsToDieMobW1", tol:["abs",1], d:"피격 밴드 · 장비 HP"},
+    {id:"A7b", n:"사망 피격 수 — 몹 W3", mth:"사망까지 피격", p:a1.hits, dec:1, u:"방", k:"hitsToDieMobW3", tol:["abs",1], d:"피격 밴드 · 근/원 ATK 계수"},
+    {id:"A8", n:"사망 피격 수 — 보스", mth:"보스 공격만", p:a1.bhits, dec:1, u:"방", k:"hitsToDieBoss", tol:["abs",1], d:"보스 피격 밴드 · 패턴 1.65"},
+    {id:"B1a", n:"동시 타격 (시작)", mth:"화살 1발 평균 타깃", p:P.aoe0+P.aoeP*gproc[req[st-1]-1], dec:1, u:"", k:"aoeStart", tol:["abs",0.5], d:"패시브 광역(aoeP)"},
+    {id:"B1b", n:"동시 타격 (종료)", mth:"종료 직전 평균 타깃", p:P.aoe0+P.aoeP*gproc[req[st-1]-1]+P.aoeC*(a1.r0.lvl-1), dec:1, u:"", k:"aoeEnd", tol:["abs",0.5], d:"카드당 광역(aoeC)"},
+    {id:"B2", n:"젬 수집률", mth:"획득XP ÷ 킬수", p:P.col, dec:2, u:"", k:"gemCollectRate", tol:["abs",0.1], d:"젬 줍는 비율(col)"},
+    {id:"B3", n:"전투 외 시간", mth:"연출 합(초 집계→분)", p:P.ovh, dec:1, u:"분", k:"overheadSec", cv:x=>x/60, tol:["abs",0.3], d:"전투 외 시간(ovh)"},
+    {id:"B4", n:"초당 피격 (W3)", mth:"피격수 ÷ 노출시간", p:P.hitr, dec:1, u:"/초", k:"hitsPerSecW3", tol:["abs",0.3], d:"초당 맞는 횟수(hitr)"},
+    {id:"B5", n:"카드 ATK 환산 평균", mth:"고른 카드 환산 평균", p:P.cardv, dec:2, u:"", k:"cardAtkAvg", tol:["abs",0.04], d:"카드 환산(cardv)"},
   ];
-  const chkB = [
-    ["B1 동시 타격 (시작/종료)", "화살 한 발에 맞는 마리 수 — 시작 직후 vs 종료 직전", `${F(P.aoe0,0)} → ${F(P.aoe0+P.aoeC*(a1.r0.lvl-1),1)}`, "카드당 광역(aoeC) · 패시브 광역(aoeP)"],
-    ["B2 젬 수집률", "획득 XP ÷ 총 킬 수", `${F(P.col*100,0)}%`, "젬 줍는 비율(col)"],
-    ["B3 전투 외 시간", "입장·보스·결과 연출 합", `${F(P.ovh,1)}분`, "전투 외 시간(ovh)"],
-    ["B4 초당 피격", "W3에서 5초간 둘러싸여 피격 수", `${F(P.hitr,1)}회/초`, "초당 맞는 횟수(hitr)"],
-    ["B5 카드 환산", "고른 카드들의 ATK 환산 평균", `${F(P.cardv*100,0)}%`, "카드 1장 공격 환산(cardv)"],
-  ];
-  let ch = `<tr><th>항목</th><th style="text-align:left">측정 방법</th><th>시트 예측</th><th>기준</th><th style="text-align:left">어긋나면 만질 다이얼</th></tr>`;
-  for (const r of chkA) ch += `<tr><td style="text-align:left">${r[0]}</td><td style="text-align:left;color:var(--muted)">${r[1]}</td><td style="color:var(--accent)">${r[2]}</td><td>${r[3]}</td><td style="text-align:left;color:var(--muted)">${r[4]}</td></tr>`;
-  ch += `<tr><td colspan="5" style="text-align:left;color:var(--dim);font-size:11px;padding-top:8px">B. 실측 파라미터 — 추정값(주황)을 실측으로 교체</td></tr>`;
-  for (const r of chkB) ch += `<tr><td style="text-align:left">${r[0]}</td><td style="text-align:left;color:var(--muted)">${r[1]}</td><td style="color:var(--meas)">${r[2]}</td><td>실측</td><td style="text-align:left;color:var(--muted)">${r[3]}</td></tr>`;
-  ch += `<tr><td colspan="5" style="text-align:left;color:var(--dim);font-size:11px;padding-top:6px">판정: A 4개가 오차 내면 모델 합격 → s2~10 판정 신뢰. 어긋나면 유닛 스탯이 아니라 다이얼을 보정 (자동 역산이 유닛 재생성). 실측 숫자는 설정 JSON과 함께 공유.</td></tr>`;
+  let ch = `<tr><th>항목</th><th style="text-align:left">집계 방법</th><th>시트 예측</th><th>실측 (s${st})</th><th>판정</th><th style="text-align:left">어긋나면 만질 다이얼</th></tr>`;
+  let nOk=0, nHave=0;
+  for (const c of CHK){
+    const pred = c.p;
+    let mv = M ? M[c.k] : undefined;
+    if (mv!==undefined && c.cv) mv = c.cv(mv);
+    let mCell = `<td class="dimc">—</td>`, jCell = `<td class="dimc">—</td>`;
+    if (mv!==undefined && isFinite(mv)){
+      nHave++;
+      const diff = mv - pred;
+      const ok = c.tol[0]==="pct" ? Math.abs(diff)/pred*100 <= c.tol[1] : Math.abs(diff) <= c.tol[1];
+      if (ok) nOk++;
+      const dTxt = c.tol[0]==="pct" ? `${diff>=0?"+":""}${F(diff/pred*100,0)}%` : `${diff>=0?"+":""}${F(diff,1)}`;
+      mCell = `<td>${F(mv,c.dec)}${c.u}</td>`;
+      jCell = `<td class="${ok?'okc':'warnc'}" title="${ok?'허용 오차 내':'예측과 '+dTxt+' 차이 — '+c.d+' 보정 필요'}">${ok?'✓':'⚠ '+dTxt}</td>`;
+    }
+    ch += `<tr><td style="text-align:left">${c.id} ${c.n}</td><td style="text-align:left;color:var(--muted)">${c.mth}</td><td style="color:var(--accent)">${F(pred,c.dec)}${c.u}</td>${mCell}${jCell}<td style="text-align:left;color:var(--muted)">${c.d}</td></tr>`;
+  }
+  ch += `<tr><td colspan="6" style="text-align:left;color:var(--dim);font-size:11px;padding-top:8px">${M ? `실측 ${nHave}개 중 ${nOk}개 허용 오차 내 — ${nOk===nHave?'모델 합격: s2~10 판정 신뢰 가능':'⚠ 항목의 다이얼 보정 후 재플레이'}` : "게임이 집계한 결과 JSON을 [전투 결과 붙여넣기]로 입력하면 실측·판정 열이 채워집니다. JSON 스펙은 필드명 참고: stage, bossKillSec, mobTtkStartSec, gaugeReachSec, levelAtBoss, hitsToKillMobStart/End, hitsToKillBoss, hitsToDieMobW1/W3, hitsToDieBoss, aoeStart/End, gemCollectRate, overheadSec, hitsPerSecW3, cardAtkAvg"}</td></tr>`;
+  R.chk = {CHK, st, nOk, nHave};
   document.getElementById("chkTbl").innerHTML = ch;
   document.querySelectorAll("select.bm").forEach(el=>el.onchange=()=>{
     (el.dataset.k==="t"?bmT:bmO)[el.dataset.s-1]=+el.value; persist();
@@ -614,22 +632,14 @@ document.querySelectorAll("button.copy[data-t]").forEach(b=>b.onclick=()=>{
     t="스테이지\t요구등급\t슬롯풀\t유효율\t업글확률\t파밍런\t누적일\n";
     t+=R.rows.map(r=>[r.s,gname[r.g-1],pool[r.s-1],r.wslot.toFixed(2),r.pUp.toFixed(4),r.runs,r.cd.toFixed(2)].join("\t")).join("\n");
   } else if (b.dataset.t==="chk"){
-    const a1c = R.all[0];
-    t = "항목\t측정방법\t시트예측\t실측값(기입)\t다이얼\n";
-    t += `A1 보스처치시간\t스톱워치\t${a1c.bsec.toFixed(0)}초\t\t무기예산·카드환산\n`;
-    t += `A2 몹TTK(초반)\t시작직후 1마리\t${a1c.ttk0.toFixed(2)}초\t\t무기예산·TTK밴드\n`;
-    t += `A3 게이지도달\t입장~보스\t${a1c.r0.t?a1c.r0.t.toFixed(1):"-"}분\t\t스폰·동시타격\n`;
-    t += `A4 보스직전레벨\t레벨표시\tL${a1c.r0.lvl}\t\t젬수집률·경험치\n`;
-    t += `A5 몹처치타격수 W1→W3\t히트 카운트\t${(a1c.ttk0*P.aspd0).toFixed(1)}→${(a1c.ttk3*P.aspd0).toFixed(1)}회\t\t무기예산·TTK밴드·공속\n`;
-    t += `A6 보스처치타격수\t보스전 총 히트\t${(a1c.bsec*P.aspd0).toFixed(0)}회\t\t보스전밴드·무기예산\n`;
-    t += `A7 사망피격수 몹 W1→W3\t사망까지 피격\t${(R.php[1]/mATK[0][0]).toFixed(1)}→${a1c.hits.toFixed(1)}방\t\t피격밴드·장비HP·근원ATK\n`;
-    t += `A8 사망피격수 보스\t보스 공격만\t${a1c.bhits.toFixed(1)}방\t\t보스피격밴드·패턴1.65\n`;
-    t += `B1 동시타격 시작/종료\t화살 한 발 타깃 수\t${P.aoe0}→${(P.aoe0+P.aoeC*(a1c.r0.lvl-1)).toFixed(1)}\t\taoeC·aoeP\n`;
-    t += `B2 젬수집률\tXP÷킬\t${(P.col*100).toFixed(0)}%\t\tcol\n`;
-    t += `B3 전투외시간\t연출 합\t${P.ovh}분\t\tovh\n`;
-    t += `B4 초당피격\tW3 5초 피격수\t${P.hitr}/초\t\thitr\n`;
-    t += `B5 카드환산\t카드 ATK환산 평균\t${(P.cardv*100).toFixed(0)}%\t\tcardv\n`;
-    t = t.replace(/\n$/,"");
+    t = "항목\t집계방법\t시트예측\t실측\t판정\t다이얼\n";
+    for (const c of R.chk.CHK){
+      let mv = M ? M[c.k] : undefined;
+      if (mv!==undefined && c.cv) mv = c.cv(mv);
+      const has = mv!==undefined && isFinite(mv);
+      const ok = has ? (c.tol[0]==="pct" ? Math.abs(mv-c.p)/c.p*100<=c.tol[1] : Math.abs(mv-c.p)<=c.tol[1]) : null;
+      t += [c.id+" "+c.n, c.mth, c.p.toFixed(c.dec)+c.u, has?mv.toFixed(c.dec)+c.u:"", has?(ok?"OK":"보정필요"):"", c.d].join("\t")+"\n";
+    }
   } else if (b.dataset.t==="bm"){
     t="스테이지\t파밍런\t트리거\t오퍼\n";
     t+=R.rows.map((r,i)=>[r.s,r.runs,BMT[bmT[i]],BMO[bmO[i]]].join("\t")).join("\n");
@@ -642,13 +652,14 @@ document.querySelectorAll("button.copy[data-t]").forEach(b=>b.onclick=()=>{
 
 // ============ 저장/공유 ============
 const SKEY = "balsim_v30";
-function stateObj(){ return {P, gw, gsub, gproc, glb, req, mHP, mATK, bossHP, bossATK, mobGold, pool, bmT, bmO}; }
+function stateObj(){ return {P, gw, gsub, gproc, glb, req, mHP, mATK, bossHP, bossATK, mobGold, pool, bmT, bmO, meas: M}; }
 function persist(){ try{ localStorage.setItem(SKEY, JSON.stringify(stateObj())); }catch(e){} }
 function applyState(s){
   for (const k in s.P||{}) if (k in P){ P[k]=s.P[k]; const el=document.getElementById("p_"+k); if(el) el.value=s.P[k]; }
   const arrs = {gw, gsub, gproc, glb, req, bossHP, bossATK, mobGold, pool, bmT, bmO};
   if (Array.isArray(s.mHP) && s.mHP.length===3) for(let w=0;w<3;w++) mHP[w].splice(0,10,...s.mHP[w]);
   if (Array.isArray(s.mATK) && s.mATK.length===3) for(let w=0;w<3;w++) mATK[w].splice(0,10,...s.mATK[w]);
+  if (s.meas) M = s.meas;
   for (const k in arrs) if (Array.isArray(s[k]) && s[k].length===arrs[k].length) arrs[k].splice(0, arrs[k].length, ...s[k]);
   for (let i=0;i<5;i++){ document.getElementById("gw_"+i).value=gw[i]; document.getElementById("gs_"+i).value=gsub[i]; document.getElementById("gc_"+i).value=gproc[i]; document.getElementById("gm_"+i).value=glb[i]; }
 }
@@ -660,6 +671,14 @@ document.getElementById("expBtn").onclick = ()=>{
     const el=document.getElementById("toast"); el.textContent="설정 JSON 복사됨 — 채팅에 붙여넣으세요";
     el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),1600);
   });
+};
+document.getElementById("mBtn").onclick = ()=>{
+  const t = prompt("게임이 출력한 전투 결과 JSON을 붙여넣으세요:");
+  if (!t) return;
+  try{ M = JSON.parse(t); calc();
+    const el=document.getElementById("toast"); el.textContent="전투 결과 반영됨 — 판정 열 확인";
+    el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),1500);
+  }catch(e){ alert("JSON 형식 오류"); }
 };
 document.getElementById("impBtn").onclick = ()=>{
   const t = prompt("설정 JSON을 붙여넣으세요:");
