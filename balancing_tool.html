@@ -80,7 +80,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v41 · 자동 역산</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v43 · 자동 역산</span></h1>
   <span class="sub">게이지 → 3페이즈 스폰 → 보스 60초 · unit/Wave/ItemGrade 값 내장</span>
   <span class="spacer"></span>
   <button class="copy" id="expBtn">설정 복사</button>
@@ -104,7 +104,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
   </section>
 
   <section>
-    <div class="shead"><h2>근거리/원거리 분배 (unit.json용)</h2><span class="note">시트 목표값을 계수로 분배 — 스폰 가중 평균은 목표와 정확히 일치 (자동 정규화)</span><button class="copy" data-t="split">엑셀 복사</button></div>
+    <div class="shead"><h2>근거리/원거리 분배 (unit.json용)</h2><span class="note">실테이블 배치 순서: W1 근→원, W2 근→원, W3 근→원 — 복사하면 그대로 세로 60행</span><button class="copy" data-t="split">엑셀 복사</button></div>
     <div style="overflow-x:auto"><table class="data" id="splitTbl"></table></div>
   </section>
 
@@ -492,10 +492,10 @@ function render(){
   });
 
   // 근/원 분배 테이블
-  let sh2 = `<tr><th>스테이지</th><th>근 HP W1</th><th>W2</th><th>W3</th><th>원 HP W1</th><th>W2</th><th>W3</th><th>근 ATK W1</th><th>W2</th><th>W3</th><th>원 ATK W1</th><th>W2</th><th>W3</th></tr>`;
+  let sh2 = `<tr><th>스테이지</th>${[1,2,3].map(w=>`<th>W${w} 근 HP</th><th>ATK</th><th>W${w} 원 HP</th><th>ATK</th>`).join("")}</tr>`;
   for (let s=1;s<=10;s++){
     const sp = R.split[s-1];
-    sh2 += `<tr><td>s${s}</td>${sp.mh.map(v=>`<td>${v}</td>`).join("")}${sp.rh.map(v=>`<td>${v}</td>`).join("")}${sp.ma.map(v=>`<td>${v}</td>`).join("")}${sp.ra.map(v=>`<td>${v}</td>`).join("")}</tr>`;
+    sh2 += `<tr><td>s${s}</td>${[0,1,2].map(w=>`<td>${sp.mh[w]}</td><td style="color:var(--muted)">${sp.ma[w]}</td><td>${sp.rh[w]}</td><td style="color:var(--muted)">${sp.ra[w]}</td>`).join("")}</tr>`;
   }
   document.getElementById("splitTbl").innerHTML = sh2;
 
@@ -564,11 +564,13 @@ document.querySelectorAll("button.copy[data-t]").forEach(b=>b.onclick=()=>{
     t += "광고버프\t"+R.all.map(()=>(P.bfon?(1+P.aatk)*(1+P.aas):1).toFixed(2)).join("\t")+"\n";
     t += "카드(보스)\t"+R.all.map(a=>(1+(a.r0.lvl-1)*P.cardv).toFixed(2)).join("\t");
   } else if (b.dataset.t==="split"){
-    t = "스테이지\t타입\tHP_W1\tHP_W2\tHP_W3\tATK_W1\tATK_W2\tATK_W3\t골드\n";
+    t = "스테이지\t웨이브\t타입\tHP\tATK\t골드\n";
     for (let s=1;s<=10;s++){
       const sp = R.split[s-1];
-      t += [s,"melee",...sp.mh,...sp.ma,mobGold[s-1]].join("\t")+"\n";
-      t += [s,"ranged",...sp.rh,...sp.ra,mobGold[s-1]].join("\t")+"\n";
+      for (let w=0;w<3;w++){
+        t += [s,w+1,"melee",sp.mh[w],sp.ma[w],mobGold[s-1]].join("\t")+"\n";
+        t += [s,w+1,"ranged",sp.rh[w],sp.ra[w],mobGold[s-1]].join("\t")+"\n";
+      }
     }
   } else if (b.dataset.t==="drop"){
     t="스테이지\t요구등급\t슬롯풀\t유효율\t업글확률\t파밍런\t누적일\n";
