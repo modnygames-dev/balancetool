@@ -80,7 +80,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v43 · 자동 역산</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v44 · 자동 역산</span></h1>
   <span class="sub">게이지 → 3페이즈 스폰 → 보스 60초 · unit/Wave/ItemGrade 값 내장</span>
   <span class="spacer"></span>
   <button class="copy" id="expBtn">설정 복사</button>
@@ -530,6 +530,29 @@ function render(){
     <td><select class="bm" data-k="o" data-s="${s}">${BMO.map((o,i)=>`<option value="${i}" ${bmO[s-1]===i?'selected':''}>${o}</option>`).join("")}</select></td></tr>`;
   }
   document.getElementById("bmTbl").innerHTML = bh;
+
+  // 최종 데이터 체크
+  const a1 = R.all[0];
+  const chkA = [
+    ["A1 보스 처치 시간", "스톱워치 — 보스 등장~처치", `${F(a1.bsec,0)}초`, "±20%", "무기 예산 앵커 · 카드 환산"],
+    ["A2 몹 하나 녹는 시간 (런 초반)", "시작 직후 근거리 몹 1마리", `${F(a1.ttk0,2)}초`, "±20%", "무기 예산 · TTK 밴드"],
+    ["A3 게이지 300 도달", "입장~보스 등장", `${a1.r0.t?F(a1.r0.t,1):"—"}분`, "±20%", "스폰 수·간격 · 동시 타격"],
+    ["A4 보스 직전 레벨", "레벨 표시 확인", `L${a1.r0.lvl}`, "±1", "젬 줍는 비율 · 몹 경험치"],
+  ];
+  const chkB = [
+    ["B1 동시 타격 (시작/종료)", "화살 한 발에 맞는 마리 수 — 시작 직후 vs 종료 직전", `${F(P.aoe0,0)} → ${F(P.aoe0+P.aoeC*(a1.r0.lvl-1),1)}`, "카드당 광역(aoeC) · 패시브 광역(aoeP)"],
+    ["B2 젬 수집률", "획득 XP ÷ 총 킬 수", `${F(P.col*100,0)}%`, "젬 줍는 비율(col)"],
+    ["B3 전투 외 시간", "입장·보스·결과 연출 합", `${F(P.ovh,1)}분`, "전투 외 시간(ovh)"],
+    ["B4 초당 피격", "W3에서 5초간 둘러싸여 피격 수", `${F(P.hitr,1)}회/초`, "초당 맞는 횟수(hitr)"],
+    ["B5 카드 환산", "고른 카드들의 ATK 환산 평균", `${F(P.cardv*100,0)}%`, "카드 1장 공격 환산(cardv)"],
+    ["B6 피격 허용", "W3에서 가만히 서서 몇 대에 죽는지", `${F(a1.hits,1)}방`, "근/원 ATK 계수 검증"],
+  ];
+  let ch = `<tr><th>항목</th><th style="text-align:left">측정 방법</th><th>시트 예측</th><th>기준</th><th style="text-align:left">어긋나면 만질 다이얼</th></tr>`;
+  for (const r of chkA) ch += `<tr><td style="text-align:left">${r[0]}</td><td style="text-align:left;color:var(--muted)">${r[1]}</td><td style="color:var(--accent)">${r[2]}</td><td>${r[3]}</td><td style="text-align:left;color:var(--muted)">${r[4]}</td></tr>`;
+  ch += `<tr><td colspan="5" style="text-align:left;color:var(--dim);font-size:11px;padding-top:8px">B. 실측 파라미터 — 추정값(주황)을 실측으로 교체</td></tr>`;
+  for (const r of chkB) ch += `<tr><td style="text-align:left">${r[0]}</td><td style="text-align:left;color:var(--muted)">${r[1]}</td><td style="color:var(--meas)">${r[2]}</td><td>실측</td><td style="text-align:left;color:var(--muted)">${r[3]}</td></tr>`;
+  ch += `<tr><td colspan="5" style="text-align:left;color:var(--dim);font-size:11px;padding-top:6px">판정: A 4개가 오차 내면 모델 합격 → s2~10 판정 신뢰. 어긋나면 유닛 스탯이 아니라 다이얼을 보정 (자동 역산이 유닛 재생성). 실측 숫자는 설정 JSON과 함께 공유.</td></tr>`;
+  document.getElementById("chkTbl").innerHTML = ch;
   document.querySelectorAll("select.bm").forEach(el=>el.onchange=()=>{
     (el.dataset.k==="t"?bmT:bmO)[el.dataset.s-1]=+el.value; persist();
   });
@@ -575,6 +598,19 @@ document.querySelectorAll("button.copy[data-t]").forEach(b=>b.onclick=()=>{
   } else if (b.dataset.t==="drop"){
     t="스테이지\t요구등급\t슬롯풀\t유효율\t업글확률\t파밍런\t누적일\n";
     t+=R.rows.map(r=>[r.s,gname[r.g-1],pool[r.s-1],r.wslot.toFixed(2),r.pUp.toFixed(4),r.runs,r.cd.toFixed(2)].join("\t")).join("\n");
+  } else if (b.dataset.t==="chk"){
+    const a1c = R.all[0];
+    t = "항목\t측정방법\t시트예측\t실측값(기입)\t다이얼\n";
+    t += `A1 보스처치시간\t스톱워치\t${a1c.bsec.toFixed(0)}초\t\t무기예산·카드환산\n`;
+    t += `A2 몹TTK(초반)\t시작직후 1마리\t${a1c.ttk0.toFixed(2)}초\t\t무기예산·TTK밴드\n`;
+    t += `A3 게이지도달\t입장~보스\t${a1c.r0.t?a1c.r0.t.toFixed(1):"-"}분\t\t스폰·동시타격\n`;
+    t += `A4 보스직전레벨\t레벨표시\tL${a1c.r0.lvl}\t\t젬수집률·경험치\n`;
+    t += `B1 동시타격 시작/종료\t화살 한 발 타깃 수\t${P.aoe0}→${(P.aoe0+P.aoeC*(a1c.r0.lvl-1)).toFixed(1)}\t\taoeC·aoeP\n`;
+    t += `B2 젬수집률\tXP÷킬\t${(P.col*100).toFixed(0)}%\t\tcol\n`;
+    t += `B3 전투외시간\t연출 합\t${P.ovh}분\t\tovh\n`;
+    t += `B4 초당피격\tW3 5초 피격수\t${P.hitr}/초\t\thitr\n`;
+    t += `B5 카드환산\t카드 ATK환산 평균\t${(P.cardv*100).toFixed(0)}%\t\tcardv\n`;
+    t += `B6 피격허용\tW3 사망까지 피격\t${a1c.hits.toFixed(1)}방\t\t근/원 ATK계수`;
   } else if (b.dataset.t==="bm"){
     t="스테이지\t파밍런\t트리거\t오퍼\n";
     t+=R.rows.map((r,i)=>[r.s,r.runs,BMT[bmT[i]],BMO[bmO[i]]].join("\t")).join("\n");
