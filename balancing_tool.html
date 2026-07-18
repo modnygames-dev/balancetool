@@ -80,7 +80,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v34 · 실테이블 스키마</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v39 · 자동 역산</span></h1>
   <span class="sub">게이지 → 3페이즈 스폰 → 보스 60초 · unit/Wave/ItemGrade 값 내장</span>
   <span class="spacer"></span>
   <button class="copy" id="expBtn">설정 복사</button>
@@ -99,8 +99,18 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
   </section>
 
   <section>
-    <div class="shead"><h2>유닛 스탯 (실테이블 — 수정 가능)</h2><span class="note">테두리색 = 플레이어 파워 대비 판정: <span style="color:var(--ok)">초록 적정</span> · <span style="color:var(--warn)">빨강 과함</span> · <span style="color:var(--g2)">파랑 부족</span> — 권장값은 툴팁</span><button class="copy" id="fillBtn">권장값 채우기</button><button class="copy" data-t="unit">엑셀 복사</button></div>
+    <div class="shead"><h2>유닛 스탯 (실테이블 — 수정 가능)</h2><span class="note">자동 역산 모드: 값 = 플레이어 곡선 × 밴드 (다이얼 따라 실시간 갱신). 수동 모드(auto=0) 시 편집 가능 — <span style="color:var(--ok)">초록 적정</span> · <span style="color:var(--warn)">빨강 과함</span> · <span style="color:var(--g2)">파랑 부족</span> — 권장값은 툴팁</span><button class="copy" id="fillBtn">권장값 채우기</button><button class="copy" data-t="unit">엑셀 복사</button></div>
     <div style="overflow-x:auto"><table class="data" id="unitTbl"></table></div>
+  </section>
+
+  <section>
+    <div class="shead"><h2>근거리/원거리 분배 (unit.json용)</h2><span class="note">시트 목표값을 계수로 분배 — 스폰 가중 평균은 목표와 정확히 일치 (자동 정규화)</span><button class="copy" data-t="split">엑셀 복사</button></div>
+    <div style="overflow-x:auto"><table class="data" id="splitTbl"></table></div>
+  </section>
+
+  <section>
+    <div class="shead"><h2>파워 구성 (배율 스택 — 파워버짓)</h2><span class="note">스테이지별로 파워가 어느 층에서 오는지 — 각 층의 다이얼로 배분 조절</span><button class="copy" data-t="pw">엑셀 복사</button></div>
+    <div style="overflow-x:auto"><table class="data" id="pwTbl"></table></div>
   </section>
 
   <section>
@@ -114,7 +124,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
   </section>
 
   <p class="fine">
-    ※ 스폰 모델 = 필드 누적: 스폰은 maxEnemies 캡까지, 킬은 필드에서 — 못 죽인 몹이 저금됐다가 레벨업 후 회수됨. 필드 포화 = 화면 꽉 참 시점(부활 광고 좌표). ※ 웨이브 = 킬 수 기반 확정 (클리어 300, 100마다 전환). 몹 스탯은 웨이브별 수정 가능 — 기본값은 현 unit.json(전 웨이브 동일). W2/W3를 올려 웨이브 램프를 설계하면 인런 압박 곡선이 생김.<br>※ 클리어 킬 수 300은 현 Wave.json(200)과 불일치 — 테이블 갱신 대상.<br>
+    ※ 등급 프리미엄 = ItemGrade ilvlBonus × ilvl — 초반 등급 차 미미(s1 ~6%), 후반 결정적(s10 유니크 2.5배). 벽의 강도가 게임 진행에 따라 자연히 세짐. ※ 플레이어 곡선 = 앵커(@ilvl20/40/60) 기하 보간 — 스테이지마다 매끄러운 우상향, 유닛 스탯이 자동 추종. ※ 서브스탯 층 = 해금 슬롯 수 × 등급 옵션 수 × 평균 롤 × 공격 비중 — 슬롯 해금·등급 진행에 따라 자동 성장. ※ 근/원 분배: 유닛 테이블 값 = 스폰 가중 평균 목표 → 계수 분배는 정규화돼 평균 불변(TTK·페이싱 유지). 근거리 = 탱커(HP↑ ATK↓), 원거리 = 유리대포(HP↓ ATK↑). ※ 판정: OK = 게이지 도달 + 런 시간 상한 이내. 웨이브 2·3의 스폰이 처치력을 넘는 것(필드 포화)은 고장이 아니라 의도된 밀도 설계 — 포화/붕괴 행은 정보용. ※ 스폰 모델 = 필드 누적: 스폰은 maxEnemies 캡까지, 킬은 필드에서 — 못 죽인 몹이 저금됐다가 레벨업 후 회수됨. 필드 포화 = 화면 꽉 참 시점(부활 광고 좌표). ※ 웨이브 = 킬 수 기반 확정 (클리어 300, 100마다 전환). 몹 스탯은 웨이브별 수정 가능 — 기본값은 현 unit.json(전 웨이브 동일). W2/W3를 올려 웨이브 램프를 설계하면 인런 압박 곡선이 생김.<br>※ 클리어 킬 수 300은 현 Wave.json(200)과 불일치 — 테이블 갱신 대상.<br>
     ※ 플레이어 DPS = 무기 DPS 예산(티어 브래킷 t1/t2/t3) × 등급 총배율(옵션+패시브 포함) × 크리 기대 × 광고 버프(기준 ON) × 카드(런 내 합연산). 크리 기본값 = CharacterData(확률 0, 크리뎀 115%).<br>
     ※ 레벨 = battlelevel 선형(+5), 캡 10 — 런당 카드 선택 최대 9회.<br>
     ※ 보스전(초)이 제한의 50% 미만이면 "쉬움" — 실테이블 보스 HP가 모델 대비 낮다는 신호.
@@ -151,11 +161,14 @@ const PDEF = [
  {k:"col", cat:"m", n:"젬 줍는 비율", v:0.85, d:"수동 수집 손실 — 실측 [코드명 col]"},
  {k:"cardv", n:"카드 1장 공격 환산", v:0.12, d:"upgradeoption 풀 평균의 ATK 환산치 (Attack 15%·공속 10%·크리 등 혼합) [코드명 cardv]"},
  {g:"플레이어 파워 (ItemStatRanges)"},
- {k:"wb1", n:"무기 DPS 예산 t1 (~ilvl20)", v:28, d:"메인 Attack × 공속, 5종 공통 예산 (예: 14×2.0) [코드명 wb1]"},
- {k:"wb2", n:"무기 DPS 예산 t2 (~40)", v:66, d:"[코드명 wb2]"},
- {k:"wb3", n:"무기 DPS 예산 t3 (~60)", v:165, d:"[코드명 wb3]"},
+ {k:"wb1", n:"무기 DPS 예산 @ilvl20", v:28, d:"앵커 — 스테이지 곡선은 앵커 사이 기하 보간(매끄러운 우상향) [코드명 wb1]"},
+ {k:"wb2", n:"무기 DPS 예산 @ilvl40", v:66, d:"[코드명 wb2]"},
+ {k:"wb3", n:"무기 DPS 예산 @ilvl60", v:165, d:"[코드명 wb3]"},
  {k:"cch", n:"기대 크리확률(획득)", v:0.1, d:"기본 0% + 옵션/카드 기대 획득분 [코드명 cch]"},
  {k:"cdm", n:"크리뎀 배수", v:1.15, d:"CharacterData critDamage=115 [코드명 cdm]"},
+ {k:"sub1", n:"옵션 1줄 평균 롤", v:0.075, d:"서브스탯 1줄의 평균 기여 (권장 롤 4~11%의 중앙) [코드명 sub1]"},
+ {k:"satk", n:"공격 옵션 비중", v:0.5, d:"옵션 풀에서 DPS에 기여하는 줄의 비율 [코드명 satk]"},
+ {k:"shp", n:"체력 옵션 비중", v:0.25, d:"HP에 기여하는 줄의 비율 [코드명 shp]"},
  {k:"bfon", n:"밸런스 기준 (1=버프 ON)", v:1, int:1, d:"광고 버프 3종 상시 가정 [코드명 bfon]"},
  {k:"aatk", n:"광고 공격 버프", v:0.3, d:"[코드명 aatk]"},
  {k:"aas", n:"광고 공속 버프", v:0.3, d:"[코드명 aas]"},
@@ -168,12 +181,19 @@ const PDEF = [
  {k:"wu", n:"벽 추가 장비 수", v:2, d:"벽 = 등급 계단 스테이지 [코드명 wu]"},
  {g:"생존 (CharacterData/unit)"},
  {k:"php0", cat:"a", n:"기본 체력", v:50, d:"CharacterData baseHP=50 [코드명 php0]"},
- {k:"hb1", n:"장비 HP t1", v:60, d:"방어구 MaxHP 메인+서브 기대 합 (티어별) [코드명 hb1]"},
- {k:"hb2", n:"장비 HP t2", v:180, d:"[코드명 hb2]"},
- {k:"hb3", n:"장비 HP t3", v:450, d:"[코드명 hb3]"},
+ {k:"hb1", n:"장비 HP @ilvl20", v:60, d:"앵커 — 기하 보간 [코드명 hb1]"},
+ {k:"hb2", n:"장비 HP @ilvl40", v:180, d:"[코드명 hb2]"},
+ {k:"hb3", n:"장비 HP @ilvl60", v:450, d:"[코드명 hb3]"},
  {k:"hitr", cat:"m", n:"초당 맞는 횟수", v:0.5, d:"실측 — 몹 공속 0.7~1.5 × 접촉 빈도 [코드명 hitr]"},
  {k:"heal", n:"레벨업 회복 비율", v:0.3, d:"[코드명 heal]"},
+ {g:"근거리/원거리 분배"},
+ {k:"ratio", n:"근거리 스폰 비중", v:0.7, d:"근:원 = 0.7:0.3 — 가중 평균이 항상 시트 목표값과 일치하도록 자동 정규화 [코드명 ratio]"},
+ {k:"mhpM", n:"근거리 HP 계수", v:1.3, d:"탱커 역할 — 상대 계수 (자동 정규화) [코드명 mhpM]"},
+ {k:"mhpR", n:"원거리 HP 계수", v:0.6, d:"접근하면 빨리 죽는 보상 [코드명 mhpR]"},
+ {k:"matkM", n:"근거리 ATK 계수", v:0.9, d:"접촉이 잦으니 한 방은 가볍게 [코드명 matkM]"},
+ {k:"matkR", n:"원거리 ATK 계수", v:1.3, d:"맞을 일이 드무니 맞으면 아프게 [코드명 matkR]"},
  {g:"적정 밴드 (권장 범위 산출)"},
+ {k:"auto", n:"유닛 자동 역산 (1=자동)", v:1, int:1, d:"1: 유닛 스탯이 플레이어 곡선×밴드에서 항상 자동 산출 (다이얼만 조작). 0: 수동 편집 모드 [코드명 auto]"},
  {k:"ttkLo", n:"몹 TTK 하한(초)", v:0.5, d:"이보다 빨리 녹으면 몹이 무의미 [코드명 ttkLo]"},
  {k:"ttkHi", n:"몹 TTK 상한(초)", v:2.0, d:"이보다 오래 걸리면 학살감 죽음 [코드명 ttkHi]"},
  {k:"hitLo", n:"몹 피격 허용 하한(방)", v:4, d:"이보다 적으면 즉사게임 [코드명 hitLo]"},
@@ -183,6 +203,7 @@ const PDEF = [
  {k:"bhLo", n:"보스 피격 허용 하한", v:3, d:"[코드명 bhLo]"},
  {k:"bhHi", n:"보스 피격 허용 상한", v:4, d:"[코드명 bhHi]"},
  {g:"페이싱 목표"},
+ {k:"tlong", n:"런 시간 상한(분)", v:8, d:"이 시간을 넘기면 늘어짐 판정 — 포화 자체는 정상(뱀서의 화면 꽉 참) [코드명 tlong]"},
  {k:"daily", cat:"a", n:"하루 평균 플레이(분)", v:60, d:"[코드명 daily]"},
  {k:"tmid", n:"스테이지5 도달 목표(일)", v:5, d:"[코드명 tmid]"},
  {k:"tend", n:"스테이지10 도달 목표(일)", v:14, d:"[코드명 tend]"},
@@ -193,7 +214,7 @@ let gname = ["일반","매직","레어","에픽","유니크"];
 let gw   = [50, 30, 11, 3, 1];          // dropWeight
 let gsub = [0, 1, 2, 3, 3];             // subStatMin/Max
 let gproc= [0, 0.08, 0.18, 0.32, 0.5];  // procChance
-let gmult= [1, 1.3, 1.6, 1.95, 2.2];    // 등급 총배율 (옵션+패시브 포함, 설계 다이얼)
+let glb = [0.01, 0.013, 0.017, 0.02, 0.025];  // ilvlBonus — 메인스탯 = base × (1 + ilvlBonus × ilvl)
 let req  = [1,1,2,2,3,3,3,4,4,5];
 // unit.json 실값
 const _hp0 = [20,35,70,100,160,350,550,800,1800,3500];
@@ -220,9 +241,9 @@ for (const p of PDEF) {
   html += `<div class="prow ${p.cat||""}"><label title="${p.d}">${p.n}</label><input id="p_${p.k}" value="${p.v}"></div>`;
 }
 html += `</div><div class="grp"><h2>등급 테이블 (ItemGrade)</h2><table class="gradeTbl">
-<tr><td></td><td style="color:var(--dim);font-size:10px">가중치</td><td style="color:var(--dim);font-size:10px">옵션수</td><td style="color:var(--dim);font-size:10px">발동률</td><td style="color:var(--dim);font-size:10px">총배율</td></tr>`;
-for (let i=0;i<5;i++) html += `<tr><td class="gname g${i+1}">${gname[i]}</td><td><input id="gw_${i}" value="${gw[i]}"></td><td><input id="gs_${i}" value="${gsub[i]}"></td><td><input id="gc_${i}" value="${gproc[i]}"></td><td><input id="gm_${i}" value="${gmult[i]}"></td></tr>`;
-html += `</table><div class="fine">총배율 = 파워 층 (≈ 1+옵션수×평균기여 × 패시브 프리미엄) — 설계 다이얼</div></div>`;
+<tr><td></td><td style="color:var(--dim);font-size:10px">가중치</td><td style="color:var(--dim);font-size:10px">옵션수</td><td style="color:var(--dim);font-size:10px">발동률</td><td style="color:var(--dim);font-size:10px">ilvl보너스</td></tr>`;
+for (let i=0;i<5;i++) html += `<tr><td class="gname g${i+1}">${gname[i]}</td><td><input id="gw_${i}" value="${gw[i]}"></td><td><input id="gs_${i}" value="${gsub[i]}"></td><td><input id="gc_${i}" value="${gproc[i]}"></td><td><input id="gm_${i}" value="${glb[i]}"></td></tr>`;
+html += `</table><div class="fine">ilvl보너스: 메인스탯 = base × (1 + 보너스 × ilvl) — 등급 격차가 레벨에 비례해 벌어짐 (s1 ~6% → s10 최대 2.5배)</div></div>`;
 aside.innerHTML = `<div class="legend2">
 <span class="sw" style="background:var(--meas)"></span><b>실측/가정</b> — 프로토타입 로그로 보정<br>
 <span class="sw" style="background:var(--accent)"></span><b>설계 다이얼</b><br>
@@ -235,7 +256,7 @@ function readAndCalc(){
     if (isFinite(v)) P[p.k] = v;
   }
   for (let i=0;i<5;i++){
-    for (const [pre, arr] of [["gw",gw],["gs",gsub],["gc",gproc],["gm",gmult]]){
+    for (const [pre, arr] of [["gw",gw],["gs",gsub],["gc",gproc],["gm",glb]]){
       const v = parseFloat(document.getElementById(pre+"_"+i).value);
       if (isFinite(v)) arr[i] = v;
     }
@@ -267,11 +288,21 @@ function calc(){
   const critM = 1 + P.cch*(P.cdm-1);
   const bfD = P.bfon ? (1+P.aatk)*(1+P.aas) : 1;
   const bfH = P.bfon ? (1+P.ahp) : 1;
-  const wb = [P.wb1, P.wb2, P.wb3], hb = [P.hb1, P.hb2, P.hb3];
-  const dps = [], php = [];
+  const interp = (il, a20, a40, a60) => {
+    if (il <= 40){ const r = Math.pow(a40/a20, 1/20); return a20 * Math.pow(r, il-20); }
+    const r = Math.pow(a60/a40, 1/20); return a40 * Math.pow(r, il-40);
+  };
+  const dps = [], php = [], lay = [];
   for (let s=1;s<=10;s++){
-    dps[s] = wb[tier(s)] * gmult[req[s-1]-1] * critM * bfD;
-    php[s] = (P.php0 + hb[tier(s)]) * bfH;
+    const il = 6*s;
+    const gf = 1 + glb[req[s-1]-1] * il;               // 등급 프리미엄 = ilvlBonus × ilvl
+    const nOpt = pool[s-1] * gsub[req[s-1]-1];          // 착용 옵션 줄 수 = 해금 슬롯 × 등급 옵션 수
+    const subD = 1 + nOpt * P.sub1 * P.satk;            // 서브스탯 공격 층
+    const subH = 1 + nOpt * P.sub1 * P.shp;
+    const base = interp(il, P.wb1, P.wb2, P.wb3);
+    dps[s] = base * gf * subD * critM * bfD;
+    php[s] = (P.php0 + interp(il, P.hb1, P.hb2, P.hb3) * gf) * subH * bfH;
+    lay.push({base, gf, nOpt, subD, subH});
   }
 
   // 인런: 게이지 채우기 (페이즈 스폰) — 5초 스텝, 30분 지평
@@ -299,6 +330,7 @@ function calc(){
     return {t:null, lvl:levelFromXP(xp), coll, satT};
   }
 
+  function buildAll(){
   const all = [];
   for (let s=1;s<=10;s++){
     const r0 = simRun(dps[s], s);
@@ -315,7 +347,33 @@ function calc(){
     all.push({s, r0, ru, bsec, bsecU, rt, state, ttk0, ttk3,
       hits: php[s]/mATK[2][s-1], bhits: php[s]/(bossATK[s-1]*1.65)});
   }
+  return all;
+  }
+  function buildRec(all){
 
+  const rec = [];
+  for (let s=1;s<=10;s++){
+    const lvl = all[s-1].r0.lvl, lm = 1+(lvl-1)*P.cardv;
+    const dW = [dps[s], dps[s]*(1+lm)/2, dps[s]*lm];   // W1 시작 / W2 중간 / W3 보스 직전
+    rec.push({
+      mhp: dW.map(d=>[d*P.ttkLo, d*P.ttkHi]),
+      matk: [php[s]/P.hitHi, php[s]/P.hitLo],
+      bhp: [dps[s]*lm*P.bLo*P.blimit, dps[s]*lm*P.bHi*P.blimit],
+      batk: [php[s]/(P.bhHi*1.65), php[s]/(P.bhLo*1.65)],
+    });
+  }
+  return rec;
+  }
+  let all = buildAll();
+  let rec = buildRec(all);
+  if (P.auto >= 1){
+    for (let s=1;s<=10;s++){
+      const rc = rec[s-1];
+      for (let w=0;w<3;w++){ mHP[w][s-1]=Math.round((rc.mhp[w][0]+rc.mhp[w][1])/2); mATK[w][s-1]=Math.round((rc.matk[0]+rc.matk[1])/2); }
+      bossHP[s-1]=Math.round((rc.bhp[0]+rc.bhp[1])/2); bossATK[s-1]=Math.round((rc.batk[0]+rc.batk[1])/2);
+    }
+    all = buildAll(); rec = buildRec(all);
+  }
   // 드랍 경제
   const rows = []; let cmin=0;
   for (let s=1;s<=10;s++){
@@ -331,19 +389,20 @@ function calc(){
     rows.push({s, g, isWall, wslot, pUp, need, runs, gold: P.gauge*mobGold[s-1]+ (s<=10?[60,80,100,200,300,600,900,1200,2500,5000][s-1]:0),
       cmin, cd: cmin/P.daily});
   }
-  // 스테이지별 권장 범위 (플레이어 파워 역산)
-  const rec = [];
+
+  // 근거리/원거리 분배 — 가중 평균이 시트 값과 정확히 일치하도록 정규화
+  const r0m = P.ratio, r0r = 1-P.ratio;
+  const nH = r0m*P.mhpM + r0r*P.mhpR, nA = r0m*P.matkM + r0r*P.matkR;
+  const split = [];
   for (let s=1;s<=10;s++){
-    const lvl = all[s-1].r0.lvl, lm = 1+(lvl-1)*P.cardv;
-    const dW = [dps[s], dps[s]*(1+lm)/2, dps[s]*lm];   // W1 시작 / W2 중간 / W3 보스 직전
-    rec.push({
-      mhp: dW.map(d=>[d*P.ttkLo, d*P.ttkHi]),
-      matk: [php[s]/P.hitHi, php[s]/P.hitLo],
-      bhp: [dps[s]*lm*P.bLo*P.blimit, dps[s]*lm*P.bHi*P.blimit],
-      batk: [php[s]/(P.bhHi*1.65), php[s]/(P.bhLo*1.65)],
+    split.push({
+      mh: [0,1,2].map(w=>Math.round(mHP[w][s-1]*P.mhpM/nH)),
+      rh: [0,1,2].map(w=>Math.round(mHP[w][s-1]*P.mhpR/nH)),
+      ma: [0,1,2].map(w=>Math.round(mATK[w][s-1]*P.matkM/nA)),
+      ra: [0,1,2].map(w=>Math.round(mATK[w][s-1]*P.matkR/nA)),
     });
   }
-  R = {all, rows, dps, php, critM, rec};
+  R = {all, rows, dps, php, critM, rec, split, lay};
   render();
 }
 
@@ -393,13 +452,16 @@ function render(){
   for (let s=1;s<=10;s++){
     const a=R.all[s-1];
     const rc = R.rec[s-1];
+    const AUTO = P.auto>=1;
     const band = (v,r)=> v<r[0]?"bandlo":v>r[1]?"bandhi":"bandok";
     const tip = r=>`권장 ${F(r[0],0)}~${F(r[1],0)}`;
+    const cell = (v,r,attr)=> AUTO ? `<td class="okc" title="${tip(r)}">${v}</td>` : `<td><input class="un ${band(v,r)}" title="${tip(r)}" ${attr} value="${v}"></td>`;
     uh += `<tr><td>s${s}</td>`
-    + [0,1,2].map(w=>`<td><input class="un ${band(mHP[w][s-1],rc.mhp[w])}" title="${tip(rc.mhp[w])}" data-a="mHP${w}" data-s="${s}" value="${mHP[w][s-1]}"></td>`).join("")
-    + [0,1,2].map(w=>`<td><input class="un ${band(mATK[w][s-1],rc.matk)}" title="${tip(rc.matk)}" data-a="mATK${w}" data-s="${s}" value="${mATK[w][s-1]}"></td>`).join("")
-    + `<td><input class="un ${band(bossHP[s-1],rc.bhp)}" title="${tip(rc.bhp)}" data-a="bossHP" data-s="${s}" value="${bossHP[s-1]}"></td>
-    <td><input class="un ${band(bossATK[s-1],rc.batk)}" title="${tip(rc.batk)}" data-a="bossATK" data-s="${s}" value="${bossATK[s-1]}"></td>
+    + [0,1,2].map(w=>cell(mHP[w][s-1], rc.mhp[w], `data-a="mHP${w}" data-s="${s}"`)).join("")
+    + [0,1,2].map(w=>cell(mATK[w][s-1], rc.matk, `data-a="mATK${w}" data-s="${s}"`)).join("")
+    + cell(bossHP[s-1], rc.bhp, `data-a="bossHP" data-s="${s}"`)
+    + cell(bossATK[s-1], rc.batk, `data-a="bossATK" data-s="${s}"`)
+    + `
     <td><input class="un" data-a="mobGold" data-s="${s}" value="${mobGold[s-1]}"></td>
     <td>${F(R.php[s],0)}</td>
     <td class="${a.hits<4?'warnc':''}">${F(a.hits,1)}방</td>
@@ -424,6 +486,25 @@ function render(){
     else ({bossHP,bossATK,mobGold})[a][s]=v;
     calc();
   });
+
+  // 근/원 분배 테이블
+  let sh2 = `<tr><th>스테이지</th><th>근 HP W1</th><th>W2</th><th>W3</th><th>원 HP W1</th><th>W2</th><th>W3</th><th>근 ATK W1</th><th>W2</th><th>W3</th><th>원 ATK W1</th><th>W2</th><th>W3</th></tr>`;
+  for (let s=1;s<=10;s++){
+    const sp = R.split[s-1];
+    sh2 += `<tr><td>s${s}</td>${sp.mh.map(v=>`<td>${v}</td>`).join("")}${sp.rh.map(v=>`<td>${v}</td>`).join("")}${sp.ma.map(v=>`<td>${v}</td>`).join("")}${sp.ra.map(v=>`<td>${v}</td>`).join("")}</tr>`;
+  }
+  document.getElementById("splitTbl").innerHTML = sh2;
+
+  // 파워 구성 스택
+  let pw = `<tr><th>층 (다이얼)</th>${R.all.map(a=>`<th>s${a.s}</th>`).join("")}</tr>`;
+  pw += `<tr><td>무기 메인스탯 (앵커)</td>${R.lay.map(l=>`<td>${F(l.base,1)}</td>`).join("")}</tr>`;
+  pw += `<tr><td>× 등급 (ilvl보너스)</td>${R.lay.map(l=>`<td>×${F(l.gf,2)}</td>`).join("")}</tr>`;
+  pw += `<tr><td>× 서브스탯 (옵션 ${"${"}""} 줄)</td>`.replace('(옵션 ${""} 줄)','(줄 수·평균 롤)') + `${R.lay.map(l=>`<td title="${l.nOpt}줄">×${F(l.subD,2)}</td>`).join("")}</tr>`;
+  pw += `<tr><td>× 크리 기대</td>${R.all.map(()=>`<td>×${F(R.critM,3)}</td>`).join("")}</tr>`;
+  pw += `<tr><td>× 광고 버프</td>${R.all.map(()=>`<td>×${F(P.bfon?(1+P.aatk)*(1+P.aas):1,2)}</td>`).join("")}</tr>`;
+  pw += `<tr><td>× 카드 (보스 시점)</td>${R.all.map(a=>`<td>×${F(1+(a.r0.lvl-1)*P.cardv,2)}</td>`).join("")}</tr>`;
+  pw += `<tr><td style="color:var(--accent)">= 최종 DPS (보스)</td>${R.all.map(a=>`<td style="color:var(--accent)">${F(R.dps[a.s]*(1+(a.r0.lvl-1)*P.cardv),0)}</td>`).join("")}</tr>`;
+  document.getElementById("pwTbl").innerHTML = pw;
 
   // 드랍 경제
   let dh = `<tr><th>스테이지</th><th>요구 등급</th><th>슬롯 풀</th><th>유효율</th><th>업글 확률/드랍</th><th>필요 장비</th><th>파밍 런</th><th>런 골드(몹+보스)</th><th>누적(일)</th></tr>`;
@@ -470,6 +551,21 @@ document.querySelectorAll("button.copy[data-t]").forEach(b=>b.onclick=()=>{
       t+=[s,mHP[0][s-1],mHP[1][s-1],mHP[2][s-1],`${mATK[0][s-1]}/${mATK[1][s-1]}/${mATK[2][s-1]}`,bossHP[s-1],bossATK[s-1],
         `${rc.mhp[0][0].toFixed(0)}~${rc.mhp[0][1].toFixed(0)}`,`${rc.mhp[2][0].toFixed(0)}~${rc.mhp[2][1].toFixed(0)}`,
         `${rc.matk[0].toFixed(0)}~${rc.matk[1].toFixed(0)}`,`${rc.bhp[0].toFixed(0)}~${rc.bhp[1].toFixed(0)}`,`${rc.batk[0].toFixed(0)}~${rc.batk[1].toFixed(0)}`].join("\t")+"\n";}
+  } else if (b.dataset.t==="pw"){
+    t = "층\t"+R.all.map(a=>"s"+a.s).join("\t")+"\n";
+    t += "무기메인스탯\t"+R.lay.map(l=>l.base.toFixed(1)).join("\t")+"\n";
+    t += "등급배율\t"+R.lay.map(l=>l.gf.toFixed(3)).join("\t")+"\n";
+    t += "서브스탯배율\t"+R.lay.map(l=>l.subD.toFixed(3)).join("\t")+"\n";
+    t += "크리\t"+R.all.map(()=>R.critM.toFixed(3)).join("\t")+"\n";
+    t += "광고버프\t"+R.all.map(()=>(P.bfon?(1+P.aatk)*(1+P.aas):1).toFixed(2)).join("\t")+"\n";
+    t += "카드(보스)\t"+R.all.map(a=>(1+(a.r0.lvl-1)*P.cardv).toFixed(2)).join("\t");
+  } else if (b.dataset.t==="split"){
+    t = "스테이지\t타입\tHP_W1\tHP_W2\tHP_W3\tATK_W1\tATK_W2\tATK_W3\t골드\n";
+    for (let s=1;s<=10;s++){
+      const sp = R.split[s-1];
+      t += [s,"melee",...sp.mh,...sp.ma,mobGold[s-1]].join("\t")+"\n";
+      t += [s,"ranged",...sp.rh,...sp.ra,mobGold[s-1]].join("\t")+"\n";
+    }
   } else if (b.dataset.t==="drop"){
     t="스테이지\t요구등급\t슬롯풀\t유효율\t업글확률\t파밍런\t누적일\n";
     t+=R.rows.map(r=>[r.s,gname[r.g-1],pool[r.s-1],r.wslot.toFixed(2),r.pUp.toFixed(4),r.runs,r.cd.toFixed(2)].join("\t")).join("\n");
@@ -485,15 +581,15 @@ document.querySelectorAll("button.copy[data-t]").forEach(b=>b.onclick=()=>{
 
 // ============ 저장/공유 ============
 const SKEY = "balsim_v30";
-function stateObj(){ return {P, gw, gsub, gproc, gmult, req, mHP, mATK, bossHP, bossATK, mobGold, pool, bmT, bmO}; }
+function stateObj(){ return {P, gw, gsub, gproc, glb, req, mHP, mATK, bossHP, bossATK, mobGold, pool, bmT, bmO}; }
 function persist(){ try{ localStorage.setItem(SKEY, JSON.stringify(stateObj())); }catch(e){} }
 function applyState(s){
   for (const k in s.P||{}) if (k in P){ P[k]=s.P[k]; const el=document.getElementById("p_"+k); if(el) el.value=s.P[k]; }
-  const arrs = {gw, gsub, gproc, gmult, req, bossHP, bossATK, mobGold, pool, bmT, bmO};
+  const arrs = {gw, gsub, gproc, glb, req, bossHP, bossATK, mobGold, pool, bmT, bmO};
   if (Array.isArray(s.mHP) && s.mHP.length===3) for(let w=0;w<3;w++) mHP[w].splice(0,10,...s.mHP[w]);
   if (Array.isArray(s.mATK) && s.mATK.length===3) for(let w=0;w<3;w++) mATK[w].splice(0,10,...s.mATK[w]);
   for (const k in arrs) if (Array.isArray(s[k]) && s[k].length===arrs[k].length) arrs[k].splice(0, arrs[k].length, ...s[k]);
-  for (let i=0;i<5;i++){ document.getElementById("gw_"+i).value=gw[i]; document.getElementById("gs_"+i).value=gsub[i]; document.getElementById("gc_"+i).value=gproc[i]; document.getElementById("gm_"+i).value=gmult[i]; }
+  for (let i=0;i<5;i++){ document.getElementById("gw_"+i).value=gw[i]; document.getElementById("gs_"+i).value=gsub[i]; document.getElementById("gc_"+i).value=gproc[i]; document.getElementById("gm_"+i).value=glb[i]; }
 }
 function restore(){ try{ const s=JSON.parse(localStorage.getItem(SKEY)); if(s) applyState(s); }catch(e){} }
 const origCalc = calc;
