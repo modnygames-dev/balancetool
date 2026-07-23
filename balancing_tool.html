@@ -75,7 +75,7 @@ select.bm{background:var(--bg);border:1px solid var(--line);border-radius:4px;co
 <body>
 <div class="wrap">
 <header>
-  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v64 · 하향식</span></h1>
+  <h1>밸런싱 시뮬레이터 <span style="font-family:var(--mono);font-size:12px;color:var(--dim)">v65 · 하향식</span></h1>
   <span class="sub">입력 = s1 기준값 + 성장 배율 + 배분 비율 · 유닛 스탯 = 전부 읽기 전용 파생</span>
   <span class="spacer"></span>
   <button class="copy" id="expBtn">설정 복사</button>
@@ -476,17 +476,20 @@ function render(){
   let it = `<tr><th colspan="8" style="text-align:left">① 무기 메인 Attack (DPS 예산 ÷ 공속) — 공속 수정 가능</th></tr>`;
   it += `<tr><th>무기</th><th>공속</th>${R.tiers.map(t=>`<th>${t.t}</th>`).join("")}<th></th><th></th></tr>`;
   for (let i=0;i<5;i++){
-    it += `<tr><td>${wname[i]}</td><td><input class="ws" data-i="${i}" value="${wspd[i]}"></td>${R.tiers.map(t=>`<td>${F(t.lo/wspd[i],1)} ~ ${F(t.hi/wspd[i],1)}</td>`).join("")}<td></td><td></td></tr>`;
+    it += `<tr><td>${wname[i]}</td><td><input class="ws" data-i="${i}" value="${wspd[i]}"></td>${R.tiers.map(t=>`<td>${Math.max(1,Math.round(t.lo/wspd[i]))} ~ ${Math.max(1,Math.round(t.hi/wspd[i]))}</td>`).join("")}<td></td><td></td></tr>`;
   }
   it += `<tr><td class="dimc">DPS 예산 (공통)</td><td></td>${R.tiers.map(t=>`<td class="dimc">${F(t.lo,1)} ~ ${F(t.hi,1)}</td>`).join("")}<td></td><td></td></tr>`;
   it += `<tr><th colspan="7" style="text-align:left;padding-top:10px">② ilvlBonus (등급 목표 역산 — ItemGrade)</th></tr>`;
   it += `<tr>${R.ilb.map((g,i)=>`<td class="g${i+1}" style="text-align:center">${g.nm}<br><b>${g.b===null?"—":g.b.toFixed(4)}</b></td>`).join("")}<td colspan="2"></td></tr>`;
-  it += `<tr><th colspan="7" style="text-align:left;padding-top:10px">③ 서브스탯 — % 옵션 1줄의 롤 예산, 티어=값·등급=줄 수(직교 축). 적정 동선 s1~2는 일반(0줄)이지만 t1 값은 조기 매직·유니크 드랍용으로 필요 — * = 역외삽. 현 Attack% 20~40은 초과 → 하향 대상</th></tr>`;
-  it += `<tr><th>티어</th><th>스테이지</th><th>목표 평균 롤</th><th>테이블 min~max (평균×1∓${F(P.sprd,1)})</th><th colspan="4"></th></tr>`;
-  for (const sb of R.subs){
+  it += `<tr><th colspan="7" style="text-align:left;padding-top:10px">③ 서브스탯 — % 옵션 1줄의 롤 예산, 티어=값·등급=줄 수(직교 축). 공격력 옵션 = flat 정수(DPS 예산 중앙×%롤, 공속 1.0 정규화 — 속사 무기에서 상대 가치 ↑, 중병기에서 ↓ 편향 수용). * = 역외삽. 현 Attack% 20~40은 초과 → 하향 대상</th></tr>`;
+  it += `<tr><th>티어</th><th>스테이지</th><th>% 옵션 평균</th><th>% 테이블 min~max</th><th>공격력 flat (정수)</th><th colspan="3"></th></tr>`;
+  const tmid = R.tiers.map(t=>(t.lo+t.hi)/2);
+  R.subs.forEach((sb,ti)=>{
     const has = sb.hi>0;
-    it += `<tr><td>${sb.t}${sb.ext&&sb.hi>0?"*":""}</td><td>${sb.span}</td><td>${has?F(sb.lo*100,1)+"~"+F(sb.hi*100,1)+"%":"—"}</td><td>${has?F(sb.lo*(1-P.sprd)*100,1)+"~"+F(sb.hi*(1+P.sprd)*100,1)+"%":"—"}</td><td colspan="4"></td></tr>`;
-  }
+    const fLo = Math.max(1, Math.round(sb.lo*(1-P.sprd)*tmid[ti]));
+    const fHi = Math.max(fLo, Math.round(sb.hi*(1+P.sprd)*tmid[ti]));
+    it += `<tr><td>${sb.t}${sb.ext&&sb.hi>0?"*":""}</td><td>${sb.span}</td><td>${has?F(sb.lo*100,1)+"~"+F(sb.hi*100,1)+"%":"—"}</td><td>${has?F(sb.lo*(1-P.sprd)*100,1)+"~"+F(sb.hi*(1+P.sprd)*100,1)+"%":"—"}</td><td>${has?fLo+" ~ "+fHi:"—"}</td><td colspan="3"></td></tr>`;
+  });
   // 옵션 중첩 확률 (보보/보보보 계산기 — 확률 공시 원자료)
   const np = Math.max(2, Math.round(P.nPool));
   const pairAny3 = 1 - (np*(np-1)*(np-2))/(np*np*np);
@@ -602,10 +605,14 @@ document.querySelectorAll("button.copy[data-t]").forEach(b=>b.onclick=()=>{
     t+="서브스탯목표\t"+R.alloc.map(x=>x.sub.toFixed(2)).join("\t");
   } else if (b.dataset.t==="item"){
     t = "① 무기 메인 Attack\n무기\t공속\t"+R.tiers.map((x,i)=>"t"+(i+1)+"min\tt"+(i+1)+"max").join("\t")+"\n";
-    for (let i=0;i<5;i++) t += [wname[i],wspd[i],...R.tiers.flatMap(x=>[(x.lo/wspd[i]).toFixed(1),(x.hi/wspd[i]).toFixed(1)])].join("\t")+"\n";
+    for (let i=0;i<5;i++) t += [wname[i],wspd[i],...R.tiers.flatMap(x=>[Math.max(1,Math.round(x.lo/wspd[i])),Math.max(1,Math.round(x.hi/wspd[i]))])].join("\t")+"\n";
     t += "\n② ilvlBonus\n"+R.ilb.map(g=>g.nm).join("\t")+"\n"+R.ilb.map(g=>g.b===null?"":g.b.toFixed(4)).join("\t")+"\n";
-    t += "\n③ 서브스탯 (%옵션 공통)\n티어\t스테이지\t평균MIN\t평균MAX\t테이블MIN\t테이블MAX\n";
-    t += R.subs.map(sb=>[sb.t,sb.span,(sb.lo*100).toFixed(1),(sb.hi*100).toFixed(1),(sb.lo*(1-P.sprd)*100).toFixed(1),(sb.hi*(1+P.sprd)*100).toFixed(1)].join("\t")).join("\n");
+    t += "\n③ 서브스탯\n티어\t스테이지\t%MIN\t%MAX\t공격력flatMIN\t공격력flatMAX\n";
+    t += R.subs.map((sb,ti)=>{
+      const tm=(R.tiers[ti].lo+R.tiers[ti].hi)/2;
+      const fLo=Math.max(1,Math.round(sb.lo*(1-P.sprd)*tm)), fHi=Math.max(fLo,Math.round(sb.hi*(1+P.sprd)*tm));
+      return [sb.t,sb.span,(sb.lo*(1-P.sprd)*100).toFixed(1),(sb.hi*(1+P.sprd)*100).toFixed(1),fLo,fHi].join("\t");
+    }).join("\n");
   } else if (b.dataset.t==="drop"){
     t="스테이지\t요구등급\t업글확률\t파밍런\t누적일\n";
     t+=R.rows.map(r=>[r.s,gname[r.g-1],r.pUp.toFixed(4),r.runs,r.cd.toFixed(2)].join("\t")).join("\n");
